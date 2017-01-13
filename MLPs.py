@@ -37,7 +37,7 @@ def neural_network_model(data):
 
     l3 = tf.add(tf.matmul(l2, hidden_3_layer['weights']), hidden_3_layer['biases'])
     l3 = tf.nn.relu(l3)
-
+    
     output = tf.add(tf.matmul(l3, output_layer['weights']), output_layer['biases'])
 
     return output
@@ -64,6 +64,7 @@ def train_neural_network():
 
         correct = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))
         accuracy = tf.reduce_mean(tf.cast(correct, "float"))
+        #accuracy.eval() > sess.run(accuracy)
         print('Accuracy:{}'.format(accuracy.eval({x: mnist.test.images, y: mnist.test.labels})))
 
 
