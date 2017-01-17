@@ -77,7 +77,11 @@ import math
 
 # In[4]:
 
-
+# Global Dictionary of Flags
+FLAGS = {
+    'data_directory': 'data/MNIST/',
+    'summaries_dir': 'summaries/'
+}
 
 # ## Configuration of Neural Network
 # 
@@ -104,7 +108,7 @@ fc_size = 128  # Number of neurons in fully-connected layer.
 
 from tensorflow.examples.tutorials.mnist import input_data
 
-data = input_data.read_data_sets('data/MNIST/', one_hot=True)
+data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
 
 # The MNIST data-set has now been loaded and consists of 70,000 images and associated labels (i.e. classifications of the images). The data-set is split into 3 mutually exclusive sub-sets. We will only use the training and test-sets in this tutorial.
 
@@ -248,7 +252,20 @@ def new_biases(length):
 
 # In[14]:
 
-def new_conv_layer(input,  # The previous layer.
+def variable_summaries(var):
+    """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
+    with tf.name_scope('summaries'):
+        mean = tf.reduce_mean(var)
+        tf.summary.scalar('mean', mean)
+        with tf.name_scope('stddev'):
+            stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+        tf.summary.scalar('stddev', stddev)
+        tf.summary.scalar('max', tf.reduce_max(var))
+        tf.summary.scalar('min', tf.reduce_min(var))
+        tf.summary.histogram('histogram', var)
+
+
+def new_conv_layer(layer_name, input,  # The previous layer.
                    num_input_channels,  # Num. channels in prev. layer.
                    filter_size,  # Width and height of each filter.
                    num_filters,  # Number of filters.
@@ -257,53 +274,59 @@ def new_conv_layer(input,  # The previous layer.
     # Shape of the filter-weights for the convolution.
     # This format is determined by the TensorFlow API.
     shape = [filter_size, filter_size, num_input_channels, num_filters]
+    with tf.name_scope(layer_name):
+        # This Variable will hold the state of the weights for the layer
+        with tf.name_scope('weights'):
+            # Create new weights aka. filters with the given shape.
+            weights = new_weights(shape=shape)
+            variable_summaries(weights)
+        with tf.name_scope('biases'):
+            # Create new biases, one for each filter.
+            biases = new_biases(length=num_filters)
+            variable_summaries(biases)
+        with tf.name_scope('conv2d'):
+            # Create the TensorFlow operation for convolution.
+            # Note the strides are set to 1 in all dimensions.
+            # The first and last stride must always be 1,
+            # because the first is for the image-number and
+            # the last is for the input-channel.
+            # But e.g. strides=[1, 2, 2, 1] would mean that the filter
+            # is moved 2 pixels across the x- and y-axis of the image.
+            # The padding is set to 'SAME' which means the input image
+            # is padded with zeroes so the size of the output is the same.
+            layer = tf.nn.conv2d(input=input,
+                                 filter=weights,
+                                 strides=[1, 1, 1, 1],
+                                 padding='SAME')
+            # Add the biases to the results of the convolution.
+            # A bias-value is added to each filter-channel.
+            layer += biases
+            tf.summary.histogram('pre_activations', layer)
 
-    # Create new weights aka. filters with the given shape.
-    weights = new_weights(shape=shape)
+            # Use pooling to down-sample the image resolution?
+            if use_pooling:
+                # This is 2x2 max-pooling, which means that we
+                # consider 2x2 windows and select the largest value
+                # in each window. Then we move 2 pixels to the next window.
+                layer = tf.nn.max_pool(value=layer,
+                                       ksize=[1, 2, 2, 1],
+                                       strides=[1, 2, 2, 1],
+                                       padding='SAME')
 
-    # Create new biases, one for each filter.
-    biases = new_biases(length=num_filters)
+        # Rectified Linear Unit (ReLU).
+        # It calculates max(x, 0) for each input pixel x.
+        # This adds some non-linearity to the formula and allows us
+        # to learn more complicated functions.
+        layer = tf.nn.relu(layer)
 
-    # Create the TensorFlow operation for convolution.
-    # Note the strides are set to 1 in all dimensions.
-    # The first and last stride must always be 1,
-    # because the first is for the image-number and
-    # the last is for the input-channel.
-    # But e.g. strides=[1, 2, 2, 1] would mean that the filter
-    # is moved 2 pixels across the x- and y-axis of the image.
-    # The padding is set to 'SAME' which means the input image
-    # is padded with zeroes so the size of the output is the same.
-    layer = tf.nn.conv2d(input=input,
-                         filter=weights,
-                         strides=[1, 1, 1, 1],
-                         padding='SAME')
+        # Note that ReLU is normally executed before the pooling,
+        # but since relu(max_pool(x)) == max_pool(relu(x)) we can
+        # save 75% of the relu-operations by max-pooling first.
 
-    # Add the biases to the results of the convolution.
-    # A bias-value is added to each filter-channel.
-    layer += biases
+        # We return both the resulting layer and the filter-weights
+        # because we will plot the weights later.
+        tf.summary.histogram('activations', layer)
 
-    # Use pooling to down-sample the image resolution?
-    if use_pooling:
-        # This is 2x2 max-pooling, which means that we
-        # consider 2x2 windows and select the largest value
-        # in each window. Then we move 2 pixels to the next window.
-        layer = tf.nn.max_pool(value=layer,
-                               ksize=[1, 2, 2, 1],
-                               strides=[1, 2, 2, 1],
-                               padding='SAME')
-
-    # Rectified Linear Unit (ReLU).
-    # It calculates max(x, 0) for each input pixel x.
-    # This adds some non-linearity to the formula and allows us
-    # to learn more complicated functions.
-    layer = tf.nn.relu(layer)
-
-    # Note that ReLU is normally executed before the pooling,
-    # but since relu(max_pool(x)) == max_pool(relu(x)) we can
-    # save 75% of the relu-operations by max-pooling first.
-
-    # We return both the resulting layer and the filter-weights
-    # because we will plot the weights later.
     return layer, weights
 
 
@@ -404,7 +427,7 @@ layer_conv1, weights_conv1 = new_conv_layer(input=x_image,
                                             num_input_channels=num_channels,
                                             filter_size=filter_size1,
                                             num_filters=num_filters1,
-                                            use_pooling=True)
+                                            use_pooling=True, layer_name='layer1')
 
 # Check the shape of the tensor that will be output by the convolutional layer. It is (?, 14, 14, 16) which means that there is an arbitrary number of images (this is the ?), each image is 14 pixels wide and 14 pixels high, and there are 16 different channels, one channel for each of the filters.
 
@@ -422,7 +445,7 @@ layer_conv2, weights_conv2 = new_conv_layer(input=layer_conv1,
                                             num_input_channels=num_filters1,
                                             filter_size=filter_size2,
                                             num_filters=num_filters2,
-                                            use_pooling=True)
+                                            use_pooling=True, layer_name='layer2')
 
 # Check the shape of the tensor that will be output from this convolutional layer. The shape is (?, 7, 7, 36) where the ? again means that there is an arbitrary number of images, with each image having width and height of 7 pixels, and there are 36 channels, one for each filter.
 
@@ -507,13 +530,22 @@ y_pred_cls = tf.argmax(y_pred, dimension=1)
 # In[34]:
 
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
-                                                        labels=y_true)
-
-# We have now calculated the cross-entropy for each of the image classifications so we have a measure of how well the model performs on each image individually. But in order to use the cross-entropy to guide the optimization of the model's variables we need a single scalar value, so we simply take the average of the cross-entropy for all the image classifications.
+                                                        labels=y_true)  # We have now calculated the cross-entropy for each of the image classifications so we have a measure of how well the model performs on each image individually. But in order to use the cross-entropy to guide the optimization of the model's variables we need a single scalar value, so we simply take the average of the cross-entropy for all the image classifications.
 
 # In[35]:
 
-cost = tf.reduce_mean(cross_entropy)
+with tf.name_scope('cost'):
+    # The raw formulation of cross-entropy,
+    #
+    # tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(tf.softmax(y)),
+    #                               reduction_indices=[1]))
+    #
+    # can be numerically unstable.
+    #
+    # So here we use tf.nn.softmax_cross_entropy_with_logits on the
+    with tf.name_scope('total'):
+        cost = tf.reduce_mean(cross_entropy)
+        tf.summary.scalar('cost', cost)
 
 # ### Optimization Method
 
@@ -523,23 +555,27 @@ cost = tf.reduce_mean(cross_entropy)
 
 # In[36]:
 
-optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
+with tf.name_scope('train'):
+    optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
-# ### Performance Measures
+with tf.name_scope('accuracy'):
+    with tf.name_scope('correct_prediction'):
+        # ### Performance Measures
 
-# We need a few more performance measures to display the progress to the user.
-# 
-# This is a vector of booleans whether the predicted class equals the true class of each image.
+        # We need a few more performance measures to display the progress to the user.
+        #
+        # This is a vector of booleans whether the predicted class equals the true class of each image.
 
-# In[37]:
+        # In[37]:
 
-correct_prediction = tf.equal(y_pred_cls, y_true_cls)
+        correct_prediction = tf.equal(y_pred_cls, y_true_cls)
+    with tf.name_scope('accuracy'):
+        # This calculates the classification accuracy by first type-casting the vector of booleans to floats, so that False becomes 0 and True becomes 1, and then calculating the average of these numbers.
 
-# This calculates the classification accuracy by first type-casting the vector of booleans to floats, so that False becomes 0 and True becomes 1, and then calculating the average of these numbers.
+        # In[38]:
 
-# In[38]:
-
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    tf.summary.scalar('accuracy', accuracy)
 
 # ## TensorFlow Run
 
@@ -548,8 +584,12 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 # Once the TensorFlow graph has been created, we have to create a TensorFlow session which is used to execute the graph.
 
 # In[39]:
-
 session = tf.Session()
+
+merged = tf.summary.merge_all()
+train_writer = tf.train.SummaryWriter(FLAGS['summaries_dir'] + '/train',
+                                      session.graph)
+test_writer = tf.train.SummaryWriter(FLAGS['summaries_dir'] + '/test')
 
 # ### Initialize variables
 # 
@@ -597,23 +637,25 @@ def optimize(num_iterations):
         feed_dict_train = {x: x_batch,
                            y_true: y_true_batch}
 
-        # Run the optimizer using this batch of training data.
-        # TensorFlow assigns the variables in feed_dict_train
-        # to the placeholder variables and then runs the optimizer.
-        session.run(optimizer, feed_dict=feed_dict_train)
-
         # Print status every 100 iterations.
         if i % 100 == 0:
             # Calculate the accuracy on the training-set.
-            acc = session.run(accuracy, feed_dict=feed_dict_train)
+            summary, acc = session.run([merged, accuracy], feed_dict=feed_dict_train)
+            test_writer.add_summary(summary, i)
 
             # Message for printing.
             msg = "Optimization Iteration: {0:>6}, Training Accuracy: {1:>6.1%}"
 
             # Print it.
             print(msg.format(i + 1, acc))
+        else:
+            # Update the total number of iterations performed.
+            # Run the optimizer using this batch of training data.
+            # TensorFlow assigns the variables in feed_dict_train
+            # to the placeholder variables and then runs the optimizer.
+            summary, _ = session.run([merged, optimizer], feed_dict=feed_dict_train)
+            train_writer.add_summary(summary, i)
 
-    # Update the total number of iterations performed.
     total_iterations += num_iterations
 
     # Ending time.
