@@ -557,7 +557,7 @@ session = tf.Session()
 
 # In[40]:
 
-session.run(tf.initialize_all_variables())
+session.run(tf.global_variables_initializer())
 
 # ### Helper-function to perform optimization iterations
 
