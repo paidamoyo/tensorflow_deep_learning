@@ -18,8 +18,6 @@
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 
 # This was developed using Python 3.5.2 (Anaconda) and TensorFlow version:
@@ -279,7 +277,7 @@ session.run(tf.global_variables_initializer())
 
 # In[26]:
 
-batch_size = 100
+batch_size = 100 #Increasing batch size improves perfomance but makes it slower
 
 
 # Function for performing a number of optimization iterations so as to gradually improve the `weights` and `biases` of the model. In each iteration, a new batch of data is selected from the training-set and then TensorFlow executes the optimizer using those training samples.
