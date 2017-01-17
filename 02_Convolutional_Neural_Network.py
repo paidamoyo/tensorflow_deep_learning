@@ -22,56 +22,14 @@
 
 # In[1]:
 
-from IPython.display import Image
-
-Image('images/02_network_flowchart.png')
-
-# The input image is processed in the first convolutional layer using the filter-weights. This results in 16 new images, one for each filter in the convolutional layer. The images are also down-sampled so the image resolution is decreased from 28x28 to 14x14.
-# 
-# These 16 smaller images are then processed in the second convolutional layer. We need filter-weights for each of these 16 channels, and we need filter-weights for each output channel of this layer. There are 36 output channels so there are a total of 16 x 36 = 576 filters in the second convolutional layer. The resulting images are down-sampled again to 7x7 pixels.
-# 
-# The output of the second convolutional layer is 36 images of 7x7 pixels each. These are then flattened to a single vector of length 7 x 7 x 36 = 1764, which is used as the input to a fully-connected layer with 128 neurons (or elements). This feeds into another fully-connected layer with 10 neurons, one for each of the classes, which is used to determine the class of the image, that is, which number is depicted in the image.
-# 
-# The convolutional filters are initially chosen at random, so the classification is done randomly. The error between the predicted and true class of the input image is measured as the so-called cross-entropy. The optimizer then automatically propagates this error back through the Convolutional Network using the chain-rule of differentiation and updates the filter-weights so as to improve the classification error. This is done iteratively thousands of times until the classification error is sufficiently low.
-# 
-# These particular filter-weights and intermediate images are the results of one optimization run and may look different if you re-run this Notebook.
-# 
-# Note that the computation in TensorFlow is actually done on a batch of images instead of a single image, which makes the computation more efficient. This means the flowchart actually has one more data-dimension when implemented in TensorFlow.
-
-# ## Convolutional Layer
-
-# The following chart shows the basic idea of processing an image in the first convolutional layer. The input image depicts the number 7 and four copies of the image are shown here, so we can see more clearly how the filter is being moved to different positions of the image. For each position of the filter, the dot-product is being calculated between the filter and the image pixels under the filter, which results in a single pixel in the output image. So moving the filter across the entire input image results in a new image being generated.
-# 
-# The red filter-weights means that the filter has a positive reaction to black pixels in the input image, while blue pixels means the filter has a negative reaction to black pixels.
-# 
-# In this case it appears that the filter recognizes the horizontal line of the 7-digit, as can be seen from its stronger reaction to that line in the output image.
-
-# In[2]:
-
-Image('images/02_convolution.png')
-
-# The step-size for moving the filter across the input is called the stride. There is a stride for moving the filter horizontally (x-axis) and another stride for moving vertically (y-axis).
-# 
-# In the source-code below, the stride is set to 1 in both directions, which means the filter starts in the upper left corner of the input image and is being moved 1 pixel to the right in each step. When the filter reaches the end of the image to the right, then the filter is moved back to the left side and 1 pixel down the image. This continues until the filter has reached the lower right corner of the input image and the entire output image has been generated.
-# 
-# When the filter reaches the end of the right-side as well as the bottom of the input image, then it can be padded with zeroes (white pixels). This causes the output image to be of the exact same dimension as the input image.
-# 
-# Furthermore, the output of the convolution may be passed through a so-called Rectified Linear Unit (ReLU), which merely ensures that the output is positive because negative values are set to zero. The output may also be down-sampled by so-called max-pooling, which considers small windows of 2x2 pixels and only keeps the largest of those pixels. This halves the resolution of the input image e.g. from 28x28 to 14x14 pixels.
-# 
-# Note that the second convolutional layer is more complicated because it takes 16 input channels. We want a separate filter for each input channel, so we need 16 filters instead of just one. Furthermore, we want 36 output channels from the second convolutional layer, so in total we need 16 x 36 = 576 filters for the second convolutional layer. It can be a bit challenging to understand how this works.
-
-# ## Imports
-
-# In[3]:
-
-
-import matplotlib.pyplot as plt
-import tensorflow as tf
-import numpy as np
-from sklearn.metrics import confusion_matrix
+import math
 import time
 from datetime import timedelta
-import math
+
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from sklearn.metrics import confusion_matrix
 
 # This was developed using Python 3.5.2 (Anaconda) and TensorFlow version:
 
@@ -891,6 +849,7 @@ def plot_conv_weights(weights, input_channel=0):
     # Retrieve the values of the weight-variables from TensorFlow.
     # A feed-dict is not necessary because nothing is calculated.
     w = session.run(weights)
+    tf.image_summary("w", w)
 
     # Get the lowest and highest values for the weights.
     # This is used to correct the colour intensity across
@@ -947,6 +906,8 @@ def plot_conv_layer(layer, image):
     # Calculate and retrieve the output values of the layer
     # when inputting that image.
     values = session.run(layer, feed_dict=feed_dict)
+    with tf.name_scope('test_image'):
+        tf.image_summary("image", image)
 
     # Number of filters used in the conv. layer.
     num_filters = values.shape[3]
@@ -966,7 +927,8 @@ def plot_conv_layer(layer, image):
             # See new_conv_layer() for details on the format
             # of this 4-dim tensor.
             img = values[0, :, :, i]
-
+            with tf.name_scope('filters'):
+                tf.image_summary("img", img)
             # Plot image.
             ax.imshow(img, interpolation='nearest', cmap='binary')
 
@@ -998,6 +960,7 @@ def plot_image(image):
 # In[58]:
 
 image1 = data.test.images[0]
+tf.image_summary("image1", image1)
 plot_image(image1)
 
 # Plot another example image from the test-set.
@@ -1005,6 +968,7 @@ plot_image(image1)
 # In[59]:
 
 image2 = data.test.images[13]
+tf.image_summary("image2", image2)
 plot_image(image2)
 
 # ### Convolution Layer 1
