@@ -285,9 +285,9 @@ with tf.name_scope('accuracy'):
 session = tf.Session()
 
 merged = tf.summary.merge_all()
-train_writer = tf.train.SummaryWriter(FLAGS['summaries_dir'] + '/train',
-                                      session.graph)
-test_writer = tf.train.SummaryWriter(FLAGS['summaries_dir'] + '/test')
+train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
+                                     session.graph)
+test_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/test')
 
 session.run(tf.global_variables_initializer())
 
