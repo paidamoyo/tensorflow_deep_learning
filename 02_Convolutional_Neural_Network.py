@@ -102,8 +102,6 @@ def new_weights(shape):
     return tf.Variable(tf.truncated_normal(shape, stddev=0.05))
 
 
-# In[13]:
-
 def new_biases(length):
     return tf.Variable(tf.constant(0.05, shape=[length]))
 
@@ -150,6 +148,8 @@ def new_conv_layer(layer_name, input,  # The previous layer.
             layer += biases
             tf.summary.histogram('pre_activations', layer)
 
+            layer = tf.nn.relu(layer)
+
             # Use pooling to down-sample the image resolution?
             if use_pooling:
                 # This is 2x2 max-pooling, which means that we
@@ -164,7 +164,7 @@ def new_conv_layer(layer_name, input,  # The previous layer.
         # It calculates max(x, 0) for each input pixel x.
         # This adds some non-linearity to the formula and allows us
         # to learn more complicated functions.
-        layer = tf.nn.relu(layer)
+        #layer = tf.nn.relu(layer)
 
         # Note that ReLU is normally executed before the pooling,
         # but since relu(max_pool(x)) == max_pool(relu(x)) we can
