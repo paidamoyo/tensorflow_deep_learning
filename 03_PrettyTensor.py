@@ -1,9 +1,8 @@
-import math
 import time
 from datetime import timedelta
 
-import matplotlib.pyplot as plt
 import numpy as np
+import prettytensor as pt
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 from tensorflow.examples.tutorials.mnist import input_data
@@ -11,7 +10,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 # Global Dictionary of Flags
 FLAGS = {
     'data_directory': 'data/MNIST/',
-    'summaries_dir': 'summaries/'
+    'summaries_dir': 'summaries/',
+    'num_iterations': 1
 }
 
 # Convolutional Layer 1.
@@ -53,60 +53,6 @@ num_channels = 1
 num_classes = 10
 
 
-# ### Helper-function for plotting images
-def plot_images(images, cls_true, cls_pred=None):
-    assert len(images) == len(cls_true) == 9
-
-    # Create figure with 3x3 sub-plots.
-    fig, axes = plt.subplots(3, 3)
-    fig.subplots_adjust(hspace=0.3, wspace=0.3)
-
-    for i, ax in enumerate(axes.flat):
-        # Plot image.
-        ax.imshow(images[i].reshape(img_shape), cmap='binary')
-
-        # Show true and predicted classes.
-        if cls_pred is None:
-            xlabel = "True: {0}".format(cls_true[i])
-        else:
-            xlabel = "True: {0}, Pred: {1}".format(cls_true[i], cls_pred[i])
-
-        # Show the classes as the label on the x-axis.
-        ax.set_xlabel(xlabel)
-
-        # Remove ticks from the plot.
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    # Ensure the plot is shown correctly with multiple plots
-    # in a single Notebook cell.
-    plt.show()
-
-
-# ### Plot a few images to see if data is correct
-
-# In[11]:
-
-# Get the first images from the test-set.
-images = data.test.images[0:9]
-
-# Get the true classes for those images.
-cls_true = data.test.cls[0:9]
-
-# Plot the images and labels using our helper-function above.
-plot_images(images=images, cls_true=cls_true)
-
-
-# ## TensorFlow Graph
-def new_weights(shape):
-    return tf.Variable(tf.truncated_normal(shape, stddev=0.05))
-
-
-def new_biases(length):
-    return tf.Variable(tf.constant(0.05, shape=[length]))
-
-
-# ### Helper-function for creating a new Convolutional Layer
 def variable_summaries(var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
     with tf.name_scope('summaries'):
@@ -120,96 +66,6 @@ def variable_summaries(var):
         tf.summary.histogram('histogram', var)
 
 
-def new_conv_layer(layer_name, input,  # The previous layer.
-                   num_input_channels,  # Num. channels in prev. layer.
-                   filter_size,  # Width and height of each filter.
-                   num_filters,  # Number of filters.
-                   use_pooling=True):  # Use 2x2 max-pooling.
-
-    # Shape of the filter-weights for the convolution.
-    # This format is determined by the TensorFlow API.
-    shape = [filter_size, filter_size, num_input_channels, num_filters]
-    with tf.name_scope(layer_name):
-        # This Variable will hold the state of the weights for the layer
-        with tf.name_scope('weights'):
-            # Create new weights aka. filters with the given shape.
-            weights = new_weights(shape=shape)
-            variable_summaries(weights)
-        with tf.name_scope('biases'):
-            # Create new biases, one for each filter.
-            biases = new_biases(length=num_filters)
-            variable_summaries(biases)
-        with tf.name_scope('conv2d'):
-            layer = tf.nn.conv2d(input=input,
-                                 filter=weights,
-                                 strides=[1, 1, 1, 1],
-                                 padding='SAME')
-            # A bias-value is added to each filter-channel.
-            layer += biases
-            tf.summary.histogram('pre_activations', layer)
-
-            # Use pooling to down-sample the image resolution?
-            if use_pooling:
-                # This is 2x2 max-pooling, which means that we
-                # consider 2x2 windows and select the largest value
-                # in each window. Then we move 2 pixels to the next window.
-                layer = tf.nn.max_pool(value=layer,
-                                       ksize=[1, 2, 2, 1],
-                                       strides=[1, 2, 2, 1],
-                                       padding='SAME')
-
-        layer = tf.nn.relu(layer)
-        # Rectified Linear Unit (ReLU).
-        # It calculates max(x, 0) for each input pixel x.
-        # This adds some non-linearity to the formula and allows us
-        # to learn more complicated functions.
-        # layer = tf.nn.relu(layer)
-
-        # Note that ReLU is normally executed before the pooling,
-        # but since relu(max_pool(x)) == max_pool(relu(x)) we can
-        # save 75% of the relu-operations by max-pooling first.
-
-        # We return both the resulting layer and the filter-weights
-        # because we will plot the weights later.
-        tf.summary.histogram('activations', layer)
-
-    return layer, weights
-
-
-# ### Helper-function for flattening a layer
-def flatten_layer(layer):
-    # Get the shape of the input layer.
-    layer_shape = layer.get_shape()
-    # layer_shape == [num_images, img_height, img_width, num_channels]
-    # The number of features is: img_height * img_width * num_channels
-    num_features = layer_shape[1:4].num_elements()
-
-    layer_flat = tf.reshape(layer, [-1, num_features])
-
-    return layer_flat, num_features
-
-
-# ### Helper-function for creating a new Fully-Connected Layer
-def new_fc_layer(input,  # The previous layer.
-                 num_inputs,  # Num. inputs from prev. layer.
-                 num_outputs,  # Num. outputs.
-                 use_relu=True):  # Use Rectified Linear Unit (ReLU)?
-
-    # Create new weights and biases.
-    weights = new_weights(shape=[num_inputs, num_outputs])
-    biases = new_biases(length=num_outputs)
-
-    # Calculate the layer as the matrix multiplication of
-    # the input and weights, and then add the bias-values.
-    layer = tf.matmul(input, weights) + biases
-
-    # Use ReLU?
-    if use_relu:
-        layer = tf.nn.relu(layer)
-
-    return layer
-
-
 # ### Placeholder variables
 x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
 x_image = tf.reshape(x, [-1, img_size, img_size, num_channels])
@@ -217,69 +73,31 @@ x_image = tf.reshape(x, [-1, img_size, img_size, num_channels])
 y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
 y_true_cls = tf.argmax(y_true, dimension=1)
 
-# ### Convolutional Layer 1
-layer_conv1, weights_conv1 = new_conv_layer(input=x_image,
-                                            num_input_channels=num_channels,
-                                            filter_size=filter_size1,
-                                            num_filters=num_filters1,
-                                            use_pooling=True, layer_name='layer1')
 
-print("layer conv1: {}".format(layer_conv1))
-
-# ### Convolutional Layer 2
-layer_conv2, weights_conv2 = new_conv_layer(input=layer_conv1,
-                                            num_input_channels=num_filters1,
-                                            filter_size=filter_size2,
-                                            num_filters=num_filters2,
-                                            use_pooling=True, layer_name='layer2')
-
-print("layer conv2: {}".format(layer_conv2))
-
-# ### Flatten Layer
-layer_flat, num_features = flatten_layer(layer_conv2)
-
-print("layer flat: {}".format(layer_flat))
-print("num_features: {}".format(num_features))
-
-# ### Fully-Connected Layer 1
-layer_fc1 = new_fc_layer(input=layer_flat,
-                         num_inputs=num_features,
-                         num_outputs=fc_size,
-                         use_relu=True)
-
-print("layer fc1: {}".format(layer_fc1))
-
-# ### Fully-Connected Layer 2
-layer_fc2 = new_fc_layer(input=layer_fc1,
-                         num_inputs=fc_size,
-                         num_outputs=num_classes,
-                         use_relu=False)
-
-# In[31]:
+def build_network():
+    ##Pretty Tensor Graph
+    x_pretty = pt.wrap(x_image)
+    with pt.defaults_scope(activation_fn=tf.nn.relu):
+        y_pred, loss = x_pretty. \
+            conv2d(kernel=5, depth=16, name='layer_conv1'). \
+            max_pool(kernel=5, stride=2). \
+            conv2d(kernel=5, depth=36, name='layer_conv2'). \
+            max_pool(kernel=5, stride=2). \
+            flatten(). \
+            fully_connected(size=128, name='layer_fc1'). \
+            softmax_classifier(10, labels=y_true)
+    return y_pred, loss
 
 
-print("layer fc2: {}".format(layer_fc2))
+y_pred, loss = build_network()
 
-# ### Predicted Class
-y_pred = tf.nn.softmax(layer_fc2)
 y_pred_cls = tf.argmax(y_pred, dimension=1)
 
-cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2,
-                                                        labels=y_true)
-with tf.name_scope('cost'):
-    with tf.name_scope('total'):
-        cost = tf.reduce_mean(cross_entropy)
-        tf.summary.scalar('cost', cost)
+cost = tf.reduce_mean(loss)
 
-with tf.name_scope('train'):
-    optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
+optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
-with tf.name_scope('accuracy'):
-    with tf.name_scope('correct_prediction'):
-        correct_prediction = tf.equal(y_pred_cls, y_true_cls)
-    with tf.name_scope('accuracy'):
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    tf.summary.scalar('accuracy', accuracy)
+accuracy = y_pred.evaluate_classifier(y_true)
 
 session = tf.Session()
 
@@ -341,15 +159,11 @@ def plot_example_errors(cls_pred, correct):
     incorrect = (correct == False)
 
     incorrect_images = data.test.images[incorrect]
-    cls_pred = cls_pred[incorrect]
 
-    # Get the true classes for those images.
-    cls_true = data.test.cls[incorrect]
-
-    # Plot the first 9 images.
-    plot_images(images=incorrect_images[0:9],
-                cls_true=cls_true[0:9],
-                cls_pred=cls_pred[0:9])
+    ## save image
+    for i in range(0, 9):
+        with tf.variable_scope("incorrect_images"):
+            tf.image_summary('incorrect image/{}'.format(i), incorrect_images[i], max_images=1)
 
 
 def plot_confusion_matrix(cls_pred):
@@ -361,21 +175,9 @@ def plot_confusion_matrix(cls_pred):
 
     # Print the confusion matrix as text.
     print(cm)
-
-    # Plot the confusion matrix as an image.
-    plt.matshow(cm)
-
-    # Make various adjustments to the plot.
-    plt.colorbar()
-    tick_marks = np.arange(num_classes)
-    plt.xticks(tick_marks, range(num_classes))
-    plt.yticks(tick_marks, range(num_classes))
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
-
-    # Ensure the plot is shown correctly with multiple plots
-    # in a single Notebook cell.
-    plt.show()
+    ## save image
+    with tf.variable_scope('accuracy'):
+        tf.image_summary('confusion matrix', cm, max_images=1)
 
 
 test_batch_size = 256
@@ -442,31 +244,25 @@ def print_test_accuracy(show_example_errors=False,
 print_test_accuracy()
 
 # ## Performance after 1 optimization iteration
-optimize(num_iterations=1)
+optimize(FLAGS['num_iterations'])
 
 print_test_accuracy()
-
-# ## Performance after 100 optimization iterations
-optimize(num_iterations=99)  # We already performed 1 iteration above.
-
-# In[50]:
-
-print_test_accuracy(show_example_errors=True)
-
-# ## Performance after 1000 optimization iterations
-optimize(num_iterations=900)  # We performed 100 iterations above.
-
-print_test_accuracy(show_example_errors=True)
-
-# ## Performance after 10,000 optimization iterations
-optimize(num_iterations=9000)  # We performed 1000 iterations above.
 
 print_test_accuracy(show_example_errors=True,
                     show_confusion_matrix=True)
 
 
+## Get weights
+def get_variables(layer_name):
+    with tf.variable_scope(layer_name, reuse=True):
+        weights = tf.get_variable('weights')
+        # biases = tf.get_variable('biases')
+
+    return weights
+
+
 # ## Visualization of Weights and Layers
-def plot_conv_weights(weights, input_channel=0):
+def save_conv_weights(weights, layer_name, input_channel=0):
     # Assume weights are TensorFlow ops for 4-dim variables
     # e.g. weights_conv1 or weights_conv2.
 
@@ -484,118 +280,20 @@ def plot_conv_weights(weights, input_channel=0):
     # Number of filters used in the conv. layer.
     num_filters = w.shape[3]
 
-    # Number of grids to plot.
-    # Rounded-up, square-root of the number of filters.
-    num_grids = math.ceil(math.sqrt(num_filters))
+    for i in range(0, num_filters):
+        # Get the weights for the i'th filter of the input channel.
+        # See new_conv_layer() for details on the format
+        # of this 4-dim tensor.
+        img = w[:, :, input_channel, i]
 
-    # Create figure with a grid of sub-plots.
-    fig, axes = plt.subplots(num_grids, num_grids)
-
-    # Plot all the filter-weights.
-    for i, ax in enumerate(axes.flat):
-        # Only plot the valid filter-weights.
-        if i < num_filters:
-            # Get the weights for the i'th filter of the input channel.
-            # See new_conv_layer() for details on the format
-            # of this 4-dim tensor.
-            img = w[:, :, input_channel, i]
-
-            # Plot image.
-            ax.imshow(img, vmin=w_min, vmax=w_max,
-                      interpolation='nearest', cmap='seismic')
-
-        # Remove ticks from the plot.
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    # Ensure the plot is shown correctly with multiple plots
-    # in a single Notebook cell.
-    plt.show()
+        ## save image
+        with tf.variable_scope(layer_name):
+            tf.image_summary('{}/features/{}'.format(layer_name, i), img, max_images=1)
 
 
-# ### Helper-function for plotting the output of a convolutional layer
+layer_conv_1 = 'layer_conv1'
 
-# In[56]:
-
-def plot_conv_layer(layer, image):
-    # Assume layer is a TensorFlow op that outputs a 4-dim tensor
-    # which is the output of a convolutional layer,
-    # e.g. layer_conv1 or layer_conv2.
-
-    # Create a feed-dict containing just one image.
-    # Note that we don't need to feed y_true because it is
-    # not used in this calculation.
-    feed_dict = {x: [image]}
-
-    # Calculate and retrieve the output values of the layer
-    # when inputting that image.
-    values = session.run(layer, feed_dict=feed_dict)
-    with tf.name_scope('test_image'):
-        tf.summary.image("image", image)
-
-    # Number of filters used in the conv. layer.
-    num_filters = values.shape[3]
-
-    # Number of grids to plot.
-    # Rounded-up, square-root of the number of filters.
-    num_grids = math.ceil(math.sqrt(num_filters))
-
-    # Create figure with a grid of sub-plots.
-    fig, axes = plt.subplots(num_grids, num_grids)
-
-    # Plot the output images of all the filters.
-    for i, ax in enumerate(axes.flat):
-        # Only plot the images for valid filters.
-        if i < num_filters:
-            # Get the output image of using the i'th filter.
-            # See new_conv_layer() for details on the format
-            # of this 4-dim tensor.
-            img = values[0, :, :, i]
-            with tf.name_scope('filters'):
-                tf.summary.image("img", img)
-            # Plot image.
-            ax.imshow(img, interpolation='nearest', cmap='binary')
-
-        # Remove ticks from the plot.
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    # Ensure the plot is shown correctly with multiple plots
-    # in a single Notebook cell.
-    plt.show()
-
-
-# ### Input Images
-def plot_image(image):
-    plt.imshow(image.reshape(img_shape),
-               interpolation='nearest',
-               cmap='binary')
-
-    plt.show()
-
-
-# Plot an image from the test-set which will be used as an example below.
-image1 = data.test.images[0]
-tf.summary.image("image1", image1)
-plot_image(image1)
-
-image2 = data.test.images[13]
-tf.summary.image("image2", image2)
-plot_image(image2)
-
-# ### Convolution Layer 1
-plot_conv_weights(weights=weights_conv1)
-
-plot_conv_layer(layer=layer_conv1, image=image1)
-
-plot_conv_layer(layer=layer_conv1, image=image2)
-
-# ### Convolution Layer 2
-plot_conv_weights(weights=weights_conv2, input_channel=0)
-plot_conv_weights(weights=weights_conv2, input_channel=1)
-
-plot_conv_layer(layer=layer_conv2, image=image1)
-plot_conv_layer(layer=layer_conv2, image=image2)
+save_conv_weights(get_variables(layer_conv_1), layer_conv_1)
 
 # ### Close TensorFlow Session
 session.close()
