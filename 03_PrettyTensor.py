@@ -11,7 +11,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 FLAGS = {
     'data_directory': 'data/MNIST/',
     'summaries_dir': 'summaries/',
-    'num_iterations': 1
+    'num_iterations': 10000
 }
 
 # Convolutional Layer 1.
