@@ -1,6 +1,7 @@
 import time
 from datetime import timedelta
 
+import matplotlib.pyplot as plt
 import numpy as np
 import prettytensor as pt
 import tensorflow as tf
@@ -11,7 +12,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 FLAGS = {
     'data_directory': 'data/MNIST/',
     'summaries_dir': 'summaries/',
-    'num_iterations': 10000
+    'num_iterations': 10000,
+    'results': 'results/'
 }
 
 # Convolutional Layer 1.
@@ -52,10 +54,17 @@ num_channels = 1
 # Number of classes, one class for each of 10 digits.
 num_classes = 10
 
+# ### Placeholder variables
+x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
+x_image = tf.reshape(x, [-1, img_size, img_size, num_channels])
 
-def variable_summaries(var):
+y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
+y_true_cls = tf.argmax(y_true, dimension=1)
+
+
+def variable_summaries(var, summary_name):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
-    with tf.name_scope('summaries'):
+    with tf.name_scope(summary_name):
         mean = tf.reduce_mean(var)
         tf.summary.scalar('mean', mean)
         with tf.name_scope('stddev'):
@@ -66,12 +75,13 @@ def variable_summaries(var):
         tf.summary.histogram('histogram', var)
 
 
-# ### Placeholder variables
-x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
-x_image = tf.reshape(x, [-1, img_size, img_size, num_channels])
-
-y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
-y_true_cls = tf.argmax(y_true, dimension=1)
+## Get weights
+def get_variables(layer_name):
+    with tf.variable_scope(layer_name, reuse=True):
+        weights = tf.get_variable('weights')
+        bias = tf.get_variable('bias')
+        variable_summaries(bias, 'bias')
+        variable_summaries(weights, 'weights')
 
 
 def build_network():
@@ -100,6 +110,10 @@ optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 accuracy = y_pred.evaluate_classifier(y_true)
 
 session = tf.Session()
+
+get_variables('layer_conv1')
+get_variables('layer_conv2')
+get_variables('layer_fc1')
 
 merged = tf.summary.merge_all()
 train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
@@ -155,15 +169,49 @@ def optimize(num_iterations):
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
+# ### Input Images
+def plot_images(images, cls_true, cls_pred=None):
+    assert len(images) == len(cls_true) == 9
+
+    # Create figure with 3x3 sub-plots.
+    fig, axes = plt.subplots(3, 3)
+    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+
+    for i, ax in enumerate(axes.flat):
+        # Plot image.
+        ax.imshow(images[i].reshape(img_shape), cmap='binary')
+
+        # Show true and predicted classes.
+        if cls_pred is None:
+            xlabel = "True: {0}".format(cls_true[i])
+        else:
+            xlabel = "True: {0}, Pred: {1}".format(cls_true[i], cls_pred[i])
+
+        # Show the classes as the label on the x-axis.
+        ax.set_xlabel(xlabel)
+
+        # Remove ticks from the plot.
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    # Ensure the plot is shown correctly with multiple plots
+    # in a single Notebook cell.
+    plt.show()
+
+
 def plot_example_errors(cls_pred, correct):
     incorrect = (correct == False)
 
     incorrect_images = data.test.images[incorrect]
+    cls_pred = cls_pred[incorrect]
 
-    ## save image
-    for i in range(0, 9):
-        with tf.variable_scope("incorrect_images"):
-            tf.image_summary('incorrect image/{}'.format(i), incorrect_images[i], max_images=1)
+    # Get the true classes for those images.
+    cls_true = data.test.cls[incorrect]
+
+    # Plot the first 9 images.
+    plot_images(images=incorrect_images[0:9],
+                cls_true=cls_true[0:9],
+                cls_pred=cls_pred[0:9])
 
 
 def plot_confusion_matrix(cls_pred):
@@ -175,9 +223,10 @@ def plot_confusion_matrix(cls_pred):
 
     # Print the confusion matrix as text.
     print(cm)
-    ## save image
-    with tf.variable_scope('accuracy'):
-        tf.image_summary('confusion matrix', cm, max_images=1)
+    # Plot the confusion matrix as an image.
+    plt.matshow(cm)
+
+    plt.imsave(FLAGS['results'] + 'confusion_matrix', cm)
 
 
 test_batch_size = 256
@@ -250,50 +299,6 @@ print_test_accuracy()
 
 print_test_accuracy(show_example_errors=True,
                     show_confusion_matrix=True)
-
-
-## Get weights
-def get_variables(layer_name):
-    with tf.variable_scope(layer_name, reuse=True):
-        weights = tf.get_variable('weights')
-        # biases = tf.get_variable('biases')
-
-    return weights
-
-
-# ## Visualization of Weights and Layers
-def save_conv_weights(weights, layer_name, input_channel=0):
-    # Assume weights are TensorFlow ops for 4-dim variables
-    # e.g. weights_conv1 or weights_conv2.
-
-    # Retrieve the values of the weight-variables from TensorFlow.
-    # A feed-dict is not necessary because nothing is calculated.
-    w = session.run(weights)
-    tf.summary.image("w", w)
-
-    # Get the lowest and highest values for the weights.
-    # This is used to correct the colour intensity across
-    # the images so they can be compared with each other.
-    w_min = np.min(w)
-    w_max = np.max(w)
-
-    # Number of filters used in the conv. layer.
-    num_filters = w.shape[3]
-
-    for i in range(0, num_filters):
-        # Get the weights for the i'th filter of the input channel.
-        # See new_conv_layer() for details on the format
-        # of this 4-dim tensor.
-        img = w[:, :, input_channel, i]
-
-        ## save image
-        with tf.variable_scope(layer_name):
-            tf.image_summary('{}/features/{}'.format(layer_name, i), img, max_images=1)
-
-
-layer_conv_1 = 'layer_conv1'
-
-save_conv_weights(get_variables(layer_conv_1), layer_conv_1)
 
 # ### Close TensorFlow Session
 session.close()
