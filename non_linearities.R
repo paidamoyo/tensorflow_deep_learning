@@ -12,3 +12,4 @@ plot(x,
      ylab = '')
 lines(x, sig , col = 'red')
 lines(x, tanh(x), col = 'green')
+lines(x, abs(tanh(x)), col = 'blue')

@@ -87,7 +87,7 @@ def get_variables(layer_name):
 def build_network():
     ##Pretty Tensor Graph
     x_pretty = pt.wrap(x_image)
-    with pt.defaults_scope(activation_fn=tf.nn.tanh):
+    with pt.defaults_scope(activation_fn=tf.nn.relu):
         y_pred, loss = x_pretty. \
             conv2d(kernel=5, depth=16, name='layer_conv1'). \
             max_pool(kernel=5, stride=2). \
