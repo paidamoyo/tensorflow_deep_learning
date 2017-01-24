@@ -12,7 +12,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 FLAGS = {
     'data_directory': 'data/MNIST/',
     'summaries_dir': 'summaries/',
-    'num_iterations': 1,
+    'num_iterations': 10000,
     'results': 'results/',
     'save_path': 'results/best_validation',
     'test_batch_size': 256,
