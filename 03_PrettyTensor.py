@@ -12,20 +12,13 @@ from tensorflow.examples.tutorials.mnist import input_data
 FLAGS = {
     'data_directory': 'data/MNIST/',
     'summaries_dir': 'summaries/',
-    'num_iterations': 10000,
-    'results': 'results/'
+    'num_iterations': 1,
+    'results': 'results/',
+    'save_path': 'results/best_validation',
+    'test_batch_size': 256,
+    'require_improvement': 1000,
+    'train_batch_size': 64
 }
-
-# Convolutional Layer 1.
-filter_size1 = 5  # Convolution filters are 5 x 5 pixels.
-num_filters1 = 16  # There are 16 of these filters.
-
-# Convolutional Layer 2.
-filter_size2 = 5  # Convolution filters are 5 x 5 pixels.
-num_filters2 = 36  # There are 36 of these filters.
-
-# Fully-connected layer.
-fc_size = 128  # Number of neurons in fully-connected layer.
 
 # ## Load Data
 data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
@@ -35,10 +28,7 @@ print("- Training-set:\t\t{}".format(len(data.train.labels)))
 print("- Test-set:\t\t{}".format(len(data.test.labels)))
 print("- Validation-set:\t{}".format(len(data.validation.labels)))
 
-data.test.cls = np.argmax(data.test.labels, axis=1)
-
 # ## Data Dimensions
-
 # We know that MNIST images are 28 pixels in each dimension.
 img_size = 28
 
@@ -50,9 +40,6 @@ img_shape = (img_size, img_size)
 
 # Number of colour channels for the images: 1 channel for gray-scale.
 num_channels = 1
-
-# Number of classes, one class for each of 10 digits.
-num_classes = 10
 
 # ### Placeholder variables
 x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
@@ -120,45 +107,93 @@ train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
                                      session.graph)
 test_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/test')
 
-session.run(tf.global_variables_initializer())
 
-train_batch_size = 64
+def init_all_variables():
+    session.run(tf.global_variables_initializer())
+
+
+init_all_variables()
+
+## SAVER
+saver = tf.train.Saver()
+
+with tf.name_scope('early_stopping'):
+    best_validation_accuracy = 0.0
+    # Iteration number for last improvement to validation accuracy
+    last_improvement = 0
+    tf.summary.scalar('best_validation_accuracy', best_validation_accuracy)
+    tf.summary.scalar('last_improvement', last_improvement)
+
+# stop optimization if no improvement found in this many iteration
+
 
 # Counter for total number of iterations performed so far.
 total_iterations = 0
 
 
+def validation_accuracy():
+    correct, _ = predict_cls(images=data.validation.images,
+                             labels=data.validation.labels,
+                             cls_true=convert_labels_to_cls(data.validation.labels))
+    return cls_accuracy(correct)
+
+
 def optimize(num_iterations):
     # Ensure we update the global variable rather than a local copy.
     global total_iterations
+    global best_validation_accuracy
+    global last_improvement
 
     # Start-time used for printing time-usage below.
     start_time = time.time()
 
-    for i in range(total_iterations,
-                   total_iterations + num_iterations):
+    for i in range(num_iterations):
 
-        x_batch, y_true_batch = data.train.next_batch(train_batch_size)
+        total_iterations += 1
+
+        x_batch, y_true_batch = data.train.next_batch(FLAGS['train_batch_size'])
         feed_dict_train = {x: x_batch,
                            y_true: y_true_batch}
 
-        # Print status every 100 iterations.
-        if i % 100 == 0:
+        # Run the optimizer using this batch of training data.
+        # TensorFlow assigns the variables in feed_dict_train
+        # to the placeholder variables and then runs the optimizer.
+        summary, _ = session.run([merged, optimizer], feed_dict=feed_dict_train)
+        train_writer.add_summary(summary, i)
+
+        # Print status every 100 iterations and after last iteration.
+        if (total_iterations % 100 == 0) or (i == (num_iterations - 1)):
             # Calculate the accuracy on the training-set.
-            summary, acc = session.run([merged, accuracy], feed_dict=feed_dict_train)
+            summary, acc_train = session.run([merged, accuracy], feed_dict=feed_dict_train)
             test_writer.add_summary(summary, i)
 
-            # Message for printing.
-            msg = "Optimization Iteration: {0:>6}, Training Accuracy: {1:>6.1%}"
+            # Calculate the accuracy
+            acc_validation, _ = validation_accuracy()
+            if acc_validation > best_validation_accuracy:
+                # update best validation accuracy
+                best_validation_accuracy = acc_validation
+                last_improvement = total_iterations
 
+                # Save all variables of the TensorFlow graph to file.
+                saver.save(sess=session, save_path=FLAGS['save_path'])
+
+                # A string to be printed below, shows improvement found.
+                improved_str = '*'
+            else:
+                # An empty string to be printed below.
+                # Shows that no improvement was found.
+                improved_str = ''
+
+                # Status-message for printing.
+            msg = "Iter: {0:>6}, Train-Batch Accuracy: {1:>6.1%}, Validation Acc: {2:>6.1%} {3}"
             # Print it.
-            print(msg.format(i + 1, acc))
-        else:
-            summary, _ = session.run([merged, optimizer], feed_dict=feed_dict_train)
-            train_writer.add_summary(summary, i)
+            print(msg.format(i + 1, acc_train, acc_validation, improved_str))
 
-    total_iterations += num_iterations
+        if total_iterations - last_improvement > FLAGS['require_improvement']:
+            print("No improvement found in a while, stopping optimization.")
 
+            # Break out from the for-loop.
+            break
     # Ending time.
     end_time = time.time()
 
@@ -206,7 +241,7 @@ def plot_example_errors(cls_pred, correct):
     cls_pred = cls_pred[incorrect]
 
     # Get the true classes for those images.
-    cls_true = data.test.cls[incorrect]
+    cls_true = convert_labels_to_cls(data.test.labels)[incorrect]
 
     # Plot the first 9 images.
     plot_images(images=incorrect_images[0:9],
@@ -215,7 +250,7 @@ def plot_example_errors(cls_pred, correct):
 
 
 def plot_confusion_matrix(cls_pred):
-    cls_true = data.test.cls
+    cls_true = convert_labels_to_cls(data.test.labels)
 
     # Get the confusion matrix using sklearn.
     cm = confusion_matrix(y_true=cls_true,
@@ -229,54 +264,19 @@ def plot_confusion_matrix(cls_pred):
     plt.imsave(FLAGS['results'] + 'confusion_matrix', cm)
 
 
-test_batch_size = 256
-
-
 def print_test_accuracy(show_example_errors=False,
                         show_confusion_matrix=False):
-    # Number of images in the test-set.
-    num_test = len(data.test.images)
-    cls_pred = np.zeros(shape=num_test, dtype=np.int)
+    correct, cls_pred = predict_cls(images=data.test.images,
+                                    labels=data.test.labels,
+                                    cls_true=(convert_labels_to_cls(data.test.labels)))
+    acc, correct_sum = cls_accuracy(correct)
 
-    i = 0
-    while i < num_test:
-        # The ending index for the next batch is denoted j.
-        j = min(i + test_batch_size, num_test)
-
-        # Get the images from the test-set between index i and j.
-        test_images = data.test.images[i:j, :]
-
-        # Get the associated labels.
-        labels = data.test.labels[i:j, :]
-
-        # Create a feed-dict with these images and labels.
-        feed_dict = {x: test_images,
-                     y_true: labels}
-
-        # Calculate the predicted class using TensorFlow.
-        cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
-
-        # Set the start-index for the next batch to the
-        # end-index of the current batch.
-        i = j
-
-    # Convenience variable for the true class-numbers of the test-set.
-    cls_true = data.test.cls
-
-    # Create a boolean array whether each image is correctly classified.
-    correct = (cls_true == cls_pred)
-
-    # Calculate the number of correctly classified images.
-    # When summing a boolean array, False means 0 and True means 1.
-    correct_sum = correct.sum()
-
-    # Classification accuracy is the number of correctly classified
-    # images divided by the total number of images in the test-set.
-    acc = float(correct_sum) / num_test
+    # Number of images being classified.
+    num_images = len(correct)
 
     # Print the accuracy.
     msg = "Accuracy on Test-Set: {0:.1%} ({1} / {2})"
-    print(msg.format(acc, correct_sum, num_test))
+    print(msg.format(acc, correct_sum, num_images))
 
     # Plot some examples of mis-classifications, if desired.
     if show_example_errors:
@@ -289,14 +289,68 @@ def print_test_accuracy(show_example_errors=False,
         plot_confusion_matrix(cls_pred=cls_pred)
 
 
-# ## Performance before any optimization
+def convert_labels_to_cls(labels):
+    return np.argmax(labels, axis=1)
+
+
+def cls_accuracy(correct):
+    # Calculate the number of correctly classified images.
+    # When summing a boolean array, False means 0 and True means 1.
+    correct_sum = correct.sum()
+    # Classification accuracy is the number of correctly classified
+    # images divided by the total number of images in the test-set.
+    acc = float(correct_sum) / len(correct)
+    return acc, correct_sum
+
+
+def predict_cls(images, labels, cls_true):
+    # Number of images in the test-set.
+    num_images = len(images)
+
+    # Allocate an array for the predicted classes which
+    # will be calculated in batches and filled into this array.
+    cls_pred = np.zeros(shape=num_images, dtype=np.int)
+    i = 0
+    while i < num_images:
+        # The ending index for the next batch is denoted j.
+        j = min(i + FLAGS['test_batch_size'], num_images)
+
+        # Get the images from the test-set between index i and j.
+        test_images = images[i:j, :]
+
+        # Get the associated labels.
+        labels = labels[i:j, :]
+
+        # Create a feed-dict with these images and labels.
+        feed_dict = {x: test_images,
+                     y_true: labels[i:j, :]}
+
+        # Calculate the predicted class using TensorFlow.
+        cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
+
+        # Set the start-index for the next batch to the
+        # end-index of the current batch.
+        i = j
+
+    # Create a boolean array whether each image is correctly classified.
+    correct = (cls_true == cls_pred)
+
+    return correct, cls_pred
+
+
+print('Performance before any optimization:')
 print_test_accuracy()
 
-# ## Performance after 1 optimization iteration
+# ## Train Neural Net
 optimize(FLAGS['num_iterations'])
 
-print_test_accuracy()
+print('Performance after early stopping:')
+print_test_accuracy(show_example_errors=True,
+                    show_confusion_matrix=True)
 
+init_all_variables()
+saver.restore(sess=session, save_path=FLAGS['save_path'])
+print('Performance for best validation iteration:')
 print_test_accuracy(show_example_errors=True,
                     show_confusion_matrix=True)
 
