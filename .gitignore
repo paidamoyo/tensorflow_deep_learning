@@ -1,2 +1,4 @@
 summaries
 results
+*data/CIFAR-10/*
+__pycache__/*
