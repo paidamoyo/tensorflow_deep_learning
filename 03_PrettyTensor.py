@@ -96,6 +96,9 @@ optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
 accuracy = y_pred.evaluate_classifier(y_true)
 
+config = tf.ConfigProto(log_device_placement=False)
+config.gpu_options.per_process_gpu_memory_fraction = 0.1
+# session = tf.Session(config=config)
 session = tf.Session()
 
 get_variables('layer_conv1')
