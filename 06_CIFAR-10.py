@@ -757,7 +757,7 @@ plot_distorted_image(img, cls)
 # Because we are saving the checkpoints during optimization,
 # and because we are restoring the latest checkpoint when restarting the code, we can stop and continue the optimization later.
 if False:
-    optimize(num_iterations=10)
+    optimize(num_iterations=10000)
 
 # ## Results
 # After 150,000 optimization iterations, the classification accuracy is about 79-80% on the test-set.
