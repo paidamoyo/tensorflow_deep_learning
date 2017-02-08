@@ -165,4 +165,4 @@ def train_neural_network(num_iterations):
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
-train_neural_network(1000)
+train_neural_network(10000)
