@@ -83,31 +83,20 @@ tf.summary.histogram('z', z)
 tf.summary.histogram('z', z)
 
 # Decoder Model
-W_decoder_h = create_weights([latent_dim, decoder_h_dim])
-b_decoder_h = create_biases([decoder_h_dim])
-variable_summaries(W_decoder_h, 'W_decoder_h')
-variable_summaries(b_decoder_h, 'b_decoder_h')
+W_decoder_h_z = create_weights([latent_dim, decoder_h_dim])
+b_decoder_h_z = create_biases([decoder_h_dim])
+variable_summaries(W_decoder_h_z, 'W_decoder_h_z')
+variable_summaries(b_decoder_h_z, 'b_decoder_h_z')
 
-W_decoder_h_mu = create_weights([decoder_h_dim, input_dim])
-b_decoder_h_mu = create_biases([input_dim])
-variable_summaries(W_decoder_h_mu, 'W_decoder_h_mu')
-variable_summaries(b_decoder_h_mu, 'b_decoder_h_mu')
+W_decoder_r = create_weights([decoder_h_dim, input_dim])
+b_decoder_r = create_biases([input_dim])
+variable_summaries(W_decoder_r, 'W_decoder_r')
+variable_summaries(b_decoder_r, 'b_decoder_r')
 
-W_decoder_h_var = create_weights([decoder_h_dim, input_dim])
-b_decoder_h_var = create_biases([input_dim])
-variable_summaries(W_decoder_h_var, 'W_decoder_h_var')
-variable_summaries(b_decoder_h_var, 'b_decoder_h_var')
+# Decoder hidden layer
+decoder_h = tf.nn.relu(tf.add(tf.matmul(z, W_decoder_h_z), b_decoder_h_z))
 
-decoder_h = tf.nn.relu(tf.add(tf.matmul(z, W_decoder_h), b_decoder_h))
-logvar_decoder = tf.add(tf.matmul(decoder_h, W_decoder_h_var), b_decoder_h_var)
-mu_decoder = tf.add(tf.matmul(decoder_h, W_decoder_h_mu), b_decoder_h_mu)
-tf.summary.histogram('decoder_h', decoder_h)
-tf.summary.histogram('logvar_decoder', logvar_decoder)
-tf.summary.histogram('mu_decoder', mu_decoder)
-
-std_decoder = tf.exp(0.5 * logvar_decoder)
-epsilon_decoder = tf.random_normal(tf.shape(input_dim), name='epsilon')
-x_hat = mu_decoder + tf.mul(std_decoder, epsilon_decoder)
+x_hat = tf.add(tf.matmul(decoder_h, W_decoder_r), b_decoder_r)
 tf.summary.image('x_hat', tf.reshape(x_hat[0], [1, 28, 28, 1]))
 
 ##LOSS
