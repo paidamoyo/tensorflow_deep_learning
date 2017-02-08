@@ -16,7 +16,7 @@ data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
 
 encoder_h_dim = 500
 decoder_h_dim = 500
-latent_dim = 2
+latent_dim = 200
 input_dim = 784
 
 n_classes = 10
