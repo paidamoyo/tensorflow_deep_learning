@@ -39,9 +39,9 @@ def create_weights(shape):
 
 
 # ### Helper-function for creating a new Convolutional Layer
-def variable_summaries(var):
+def variable_summaries(var, summary_name):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
-    with tf.name_scope('summaries'):
+    with tf.name_scope(summary_name):
         mean = tf.reduce_mean(var)
         tf.summary.scalar('mean', mean)
         with tf.name_scope('stddev'):
@@ -57,42 +57,68 @@ def variable_summaries(var):
 # Encoder Model
 W_encoder_h = create_weights([input_dim, encoder_h_dim])
 b_encoder_h = create_biases([encoder_h_dim])
+variable_summaries(W_encoder_h, 'W_encoder_h')
+variable_summaries(b_encoder_h, 'b_encoder_h')
 
 W_enconder_h_mu = create_weights([encoder_h_dim, latent_dim])
 b_enconder_h_mu = create_biases([latent_dim])
+variable_summaries(W_enconder_h_mu, 'W_enconder_h_mu')
+variable_summaries(b_enconder_h_mu, 'b_enconder_h_mu')
 
 W_enconder_h_var = create_weights([encoder_h_dim, latent_dim])
 b_enconder_h_var = create_biases([latent_dim])
 encoder_h = tf.nn.relu(tf.add(tf.matmul(x, W_encoder_h), b_encoder_h))
+variable_summaries(W_enconder_h_var, 'W_enconder_h_var')
+variable_summaries(b_enconder_h_var, 'b_enconder_h_var')
 
 logvar_encoder = tf.add(tf.matmul(encoder_h, W_enconder_h_var), b_enconder_h_var)
 mu_encoder = tf.add(tf.matmul(encoder_h, W_enconder_h_mu), b_enconder_h_mu)
-epsilon_encoder = tf.random_normal(tf.shape(latent_dim), name='epsilon')
+tf.summary.histogram('logvar_encoder', logvar_encoder)
+tf.summary.histogram('mu_encoder', mu_encoder)
 
+epsilon_encoder = tf.random_normal(tf.shape(latent_dim), name='epsilon')
 std_encoder = tf.exp(0.5 * logvar_encoder)
 z = mu_encoder + tf.mul(std_encoder, epsilon_encoder)
+tf.summary.histogram('z', z)
+tf.summary.histogram('z', z)
 
 # Decoder Model
-W_decoder_h = create_weights(tf.shape(latent_dim, decoder_h_dim))
+W_decoder_h = create_weights([latent_dim, decoder_h_dim])
 b_decoder_h = create_biases([decoder_h_dim])
+variable_summaries(W_decoder_h, 'W_decoder_h')
+variable_summaries(b_decoder_h, 'b_decoder_h')
 
 W_decoder_h_mu = create_weights([decoder_h_dim, input_dim])
-b_decoder_h_mu = create_biases([latent_dim])
+b_decoder_h_mu = create_biases([input_dim])
+variable_summaries(W_decoder_h_mu, 'W_decoder_h_mu')
+variable_summaries(b_decoder_h_mu, 'b_decoder_h_mu')
 
 W_decoder_h_var = create_weights([decoder_h_dim, input_dim])
 b_decoder_h_var = create_biases([input_dim])
+variable_summaries(W_decoder_h_var, 'W_decoder_h_var')
+variable_summaries(b_decoder_h_var, 'b_decoder_h_var')
 
 decoder_h = tf.nn.relu(tf.add(tf.matmul(z, W_decoder_h), b_decoder_h))
 logvar_decoder = tf.add(tf.matmul(decoder_h, W_decoder_h_var), b_decoder_h_var)
 mu_decoder = tf.add(tf.matmul(decoder_h, W_decoder_h_mu), b_decoder_h_mu)
+tf.summary.histogram('decoder_h', decoder_h)
+tf.summary.histogram('logvar_decoder', logvar_decoder)
+tf.summary.histogram('mu_decoder', mu_decoder)
+
 std_decoder = tf.exp(0.5 * logvar_decoder)
 epsilon_decoder = tf.random_normal(tf.shape(input_dim), name='epsilon')
 x_hat = mu_decoder + tf.mul(std_decoder, epsilon_decoder)
+tf.summary.image('x_hat', tf.reshape(x_hat[0], [1, 28, 28, 1]))
 
 ##LOSS
 regularization = -0.5 * tf.reduce_sum(1 + logvar_encoder - tf.pow(mu_encoder, 2) - tf.exp(logvar_encoder),
                                       reduction_indices=1)
-reconstruction_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(x_hat, x), reduction_indices=1)
+reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
+
+loss = tf.reduce_mean(regularization + reconstruction_loss)
+tf.summary.scalar('loss', loss)
+
+optimizer = tf.train.AdamOptimizer().minimize(loss)
 
 session = tf.Session()
 
@@ -108,13 +134,6 @@ train_batch_size = 64
 # Counter for total number of iterations performed so far.
 total_iterations = 0
 
-with tf.name_scope('cost'):
-    with tf.name_scope('total'):
-        cost = tf.reduce_mean(regularization + reconstruction_loss)
-        tf.summary.scalar('cost', cost)
-
-optimizer = tf.train.AdamOptimizer().minimize(cost)
-
 
 def train_neural_network(num_iterations):
     # Ensure we update the global variable rather than a local copy.
@@ -123,26 +142,18 @@ def train_neural_network(num_iterations):
     # Start-time used for printing time-usage below.
     start_time = time.time()
 
-    for i in range(total_iterations,
-                   total_iterations + num_iterations):
+    for step in range(num_iterations):
 
-        x_batch, y_true_batch = data.train.next_batch(train_batch_size)
-        feed_dict_train = {x: x_batch,
-                           y_true: y_true_batch}
+        total_iterations += 1
 
-        # Print status every 100 iterations.
-        if i % 100 == 0:
-            # Calculate the accuracy on the training-set.
-            summary, cost = session.run([merged, cost], feed_dict=feed_dict_train)
-            train_writer.add_summary(summary, i)
+        x_batch, _ = data.train.next_batch(train_batch_size)
+        feed_dict_train = {x: x_batch}
 
-            # Message for printing.
-            msg = "Optimization Iteration: {0:>6}, Training Accuracy: {1:>6.1%}"
+        summary, cur_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
+        train_writer.add_summary(summary, step)
 
-            # Print it.
-            print(msg.format(i + 1, cost))
-
-    total_iterations += num_iterations
+        if total_iterations % 100 == 0:
+            print("Optimization Iteration: {}, Training Loss: {}".format(step + 1, cur_loss))
 
     # Ending time.
     end_time = time.time()
@@ -154,5 +165,4 @@ def train_neural_network(num_iterations):
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
-train_neural_network(10000)
-
+train_neural_network(1000)
