@@ -92,10 +92,10 @@ def recognition_network():
     # regularization loss
     regularization = -0.5 * tf.reduce_sum(1 + encoder_logvar - tf.pow(encoder_mu, 2) - tf.exp(encoder_logvar),
                                           reduction_indices=1)
-    l2_loss = tf.nn.l2_loss(W_encoder_h_1) + tf.nn.l2_loss(W_encoder_h_2) + tf.nn.l2_loss(
-        W_enconder_h_mu) + tf.nn.l2_loss(W_enconder_h_var)
+    # l2_loss = tf.nn.l2_loss(W_encoder_h_1) + tf.nn.l2_loss(W_encoder_h_2) + tf.nn.l2_loss(
+    # W_enconder_h_mu) + tf.nn.l2_loss(W_enconder_h_var)
 
-    return z, (regularization + l2_loss)
+    return z, regularization
 
 
 # Encoder Model
@@ -127,16 +127,15 @@ def generator_network():
     x_hat = tf.add(tf.matmul(decoder_h_2, W_decoder_r), b_decoder_r)
     tf.summary.image('x_hat', tf.reshape(x_hat[0], [1, 28, 28, 1]))
 
-    l2_loss = tf.nn.l2_loss(W_decoder_h_1) + tf.nn.l2_loss(W_decoder_h_2) + tf.nn.l2_loss(
-        W_decoder_r)
+    # l2_loss = tf.nn.l2_loss(W_decoder_h_1) + tf.nn.l2_loss(W_decoder_h_2) + tf.nn.l2_loss(W_decoder_r)
 
-    return x_hat, l2_loss
+    return x_hat
 
 
 # Decoder Model
-x_hat, l2_loss = generator_network()
+x_hat = generator_network()
 
-reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1) + l2_loss
+reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
 
 loss = tf.reduce_mean(recognition_loss + reconstruction_loss)
 tf.summary.scalar('loss', loss)
@@ -259,5 +258,5 @@ def svm_classifier():
 
 train_neural_network(10000)
 # test_reconstruction()
-svm_classifier()
+# svm_classifier()
 session.close()
