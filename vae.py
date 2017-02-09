@@ -1,9 +1,11 @@
 import time
 from datetime import timedelta
 
+import idx2numpy
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from sklearn.svm import SVC
 from tensorflow.examples.tutorials.mnist import input_data
 
 # Global Dictionary of Flags
@@ -13,7 +15,6 @@ FLAGS = {
     'save_path': 'results/train_weights',
 }
 
-mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
 
 encoder_h_dim = 500
@@ -79,7 +80,8 @@ def recognition_network():
     encoder_h_2 = tf.nn.relu(tf.add(tf.matmul(encoder_h_1, W_encoder_h_2), b_encoder_h_2))
 
     # latent layer mu and var
-    encoder_logvar = tf.add(tf.matmul(encoder_h_2, W_enconder_h_var), b_enconder_h_var)
+    encoder_logvar = tf.nn.relu(
+        tf.add(tf.matmul(encoder_h_2, W_enconder_h_var), b_enconder_h_var))  # ensure that var >0
     encoder_mu = tf.add(tf.matmul(encoder_h_1, W_enconder_h_mu), b_enconder_h_mu)
 
     # latent layer
@@ -90,11 +92,14 @@ def recognition_network():
     # regularization loss
     regularization = -0.5 * tf.reduce_sum(1 + encoder_logvar - tf.pow(encoder_mu, 2) - tf.exp(encoder_logvar),
                                           reduction_indices=1)
-    return z, regularization
+    l2_loss = tf.nn.l2_loss(W_encoder_h_1) + tf.nn.l2_loss(W_encoder_h_2) + tf.nn.l2_loss(
+        W_enconder_h_mu) + tf.nn.l2_loss(W_enconder_h_var)
+
+    return z, (regularization + l2_loss)
 
 
 # Encoder Model
-z, regularization_loss = recognition_network()
+z, recognition_loss = recognition_network()
 
 
 def generator_network():
@@ -122,15 +127,18 @@ def generator_network():
     x_hat = tf.add(tf.matmul(decoder_h_2, W_decoder_r), b_decoder_r)
     tf.summary.image('x_hat', tf.reshape(x_hat[0], [1, 28, 28, 1]))
 
-    return x_hat
+    l2_loss = tf.nn.l2_loss(W_decoder_h_1) + tf.nn.l2_loss(W_decoder_h_2) + tf.nn.l2_loss(
+        W_decoder_r)
+
+    return x_hat, l2_loss
 
 
 # Decoder Model
-x_hat = generator_network()
+x_hat, l2_loss = generator_network()
 
-reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
+reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1) + l2_loss
 
-loss = tf.reduce_mean(regularization_loss + reconstruction_loss)
+loss = tf.reduce_mean(recognition_loss + reconstruction_loss)
 tf.summary.scalar('loss', loss)
 
 optimizer = tf.train.AdamOptimizer().minimize(loss)
@@ -207,12 +215,49 @@ def plot_images(x_test, x_reconstruct):
 
 def test_reconstruction():
     saver.restore(sess=session, save_path=FLAGS['save_path'])
-    x_test = mnist.test.next_batch(100)[0][0:5, ]
+    x_test = data.test.next_batch(100)[0][10:15, ]
     print(np.shape(x_test))
     x_reconstruct = reconstruct(x_test)
     plot_images(x_test, x_reconstruct)
 
 
+def svm_classifier():
+    # train_batch_size = 50000
+    # test_batch_size = 10000
+    #
+    # saver.restore(sess=session, save_path=FLAGS['save_path'])
+    #
+    # train_images, train_labels = data.train.next_batch(train_batch_size)
+    #
+    # train_images_latent = session.run(z, feed_dict={x: train_images})
+    # train_cls = tf.argmax(train_labels, dimension=1)
+    #
+    # print(np.array([train_cls]))
+    # print("train_images_latent:{},train_cls:{} ".format(np.shape(train_images_latent), tf.shape(train_cls)))
+    #
+    # test_images, test_labels = data.test.next_batch(test_batch_size)
+    # test_cls = tf.argmax(test_labels, dimension=1)
+    saver.restore(sess=session, save_path=FLAGS['save_path'])
+    train_images = idx2numpy.convert_from_file('mnist_idx/train-images-idx3-ubyte').reshape(60000, 784)
+    train_labels = idx2numpy.convert_from_file('mnist_idx/train-labels-idx1-ubyte')
+    train_images_latent = session.run(z, feed_dict={x: train_images})
+    print(train_labels[1], train_images_latent[1])
+    test_images = idx2numpy.convert_from_file('mnist_idx/t10k-images-idx3-ubyte').reshape(10000, 784)
+    test_labels = idx2numpy.convert_from_file('mnist_idx/t10k-labels-idx1-ubyte')
+
+    # SUPPORT VECTOR MACHINE
+    sv = SVC(probability=True)
+
+    # train the model
+    sv.fit(train_images_latent, train_labels)
+
+    # predict the labels and report accuracy
+    hard_pred = sv.predict(test_images)
+    acc = np.isclose(hard_pred, test_labels).sum() / len(hard_pred)
+    print("Accuracy: {}".format(acc))
+
+
 train_neural_network(10000)
-#test_reconstruction()
+# test_reconstruction()
+svm_classifier()
 session.close()
