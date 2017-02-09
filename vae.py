@@ -10,7 +10,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 FLAGS = {
     'data_directory': 'data/MNIST/',
     'summaries_dir': 'summaries/',
-    'save_path': 'results/train_weights',
+    'save_path': 'results/results/train_weights',
 }
 
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
@@ -121,8 +121,6 @@ train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
                                      session.graph)
 test_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/test')
 
-session.run(tf.global_variables_initializer())
-
 train_batch_size = 64
 
 # Counter for total number of iterations performed so far.
@@ -132,7 +130,8 @@ total_iterations = 0
 saver = tf.train.Saver()
 
 
-def train_neural_network(num_iterations):
+def train_neural_network(num_iterations, train):
+    session.run(tf.global_variables_initializer())
     # Ensure we update the global variable rather than a local copy.
     global total_iterations
 
@@ -150,6 +149,8 @@ def train_neural_network(num_iterations):
         train_writer.add_summary(summary, step)
 
         if total_iterations % 100 == 0:
+            # Save all variables of the TensorFlow graph to file.
+            saver.save(sess=session, save_path=FLAGS['save_path'])
             print("Optimization Iteration: {}, Training Loss: {}".format(step + 1, cur_loss))
 
     # Ending time.
@@ -161,14 +162,11 @@ def train_neural_network(num_iterations):
     # Print the time-usage.
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
-    # Save all variables of the TensorFlow graph to file.
-    saver.save(sess=session, save_path=FLAGS['save_path'])
+
+# train_neural_network(10000)
 
 
-train_neural_network(10000)
-
-
-# saver.restore(sess=session, save_path=FLAGS['save_path'])
+saver.restore(sess=session, save_path=FLAGS['save_path'])
 
 
 def reconstruct(x_test):
@@ -191,7 +189,7 @@ def plot_images(x_test, x_reconstruct):
         plt.colorbar()
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig("reconstructed digit")
 
 
 x_test = mnist.test.next_batch(100)[0][0:5, ]
