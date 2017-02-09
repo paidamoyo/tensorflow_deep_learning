@@ -45,8 +45,6 @@ num_channels = 1
 x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
 x_image = tf.reshape(x, [-1, img_size, img_size, num_channels])
 
-y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
-y_true_cls = tf.argmax(y_true, dimension=1)
 
 
 def variable_summaries(var, summary_name):

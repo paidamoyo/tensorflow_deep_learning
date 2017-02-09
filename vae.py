@@ -1,7 +1,6 @@
 import time
 from datetime import timedelta
 
-import idx2numpy
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -13,6 +12,11 @@ FLAGS = {
     'data_directory': 'data/MNIST/',
     'summaries_dir': 'summaries/',
     'save_path': 'results/train_weights',
+    'train_batch_size': 64,
+    'test_batch_size': 10000,
+    'svmC': 1,
+    'num_iterations': 10000
+
 }
 
 data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
@@ -21,6 +25,7 @@ encoder_h_dim = 500
 decoder_h_dim = 500
 latent_dim = 200
 img_size = 28
+num_classes = 10
 # Images are stored in one-dimensional arrays of this length.
 img_size_flat = img_size * img_size
 # Tuple with height and width of images used to reshape arrays.
@@ -28,6 +33,9 @@ img_shape = (img_size, img_size)
 
 # ### Placeholder variables
 x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
+
+y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
+y_true_cls = tf.argmax(y_true, dimension=1)
 
 
 def create_biases(shape):
@@ -147,7 +155,6 @@ session = tf.Session()
 merged = tf.summary.merge_all()
 train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
                                      session.graph)
-train_batch_size = 64
 
 # Counter for total number of iterations performed so far.
 total_iterations = 0
@@ -159,7 +166,7 @@ saver = tf.train.Saver()
 def train_neural_network(num_iterations):
     session.run(tf.global_variables_initializer())
     # Ensure we update the global variable rather than a local copy.
-    global total_iterations
+    total_iterations = 0
 
     # Start-time used for printing time-usage below.
     start_time = time.time()
@@ -168,7 +175,7 @@ def train_neural_network(num_iterations):
 
         total_iterations += 1
 
-        x_batch, _ = data.train.next_batch(train_batch_size)
+        x_batch, _ = data.train.next_batch(FLAGS['train_batch_size'])
         feed_dict_train = {x: x_batch}
 
         summary, cur_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
@@ -220,43 +227,34 @@ def test_reconstruction():
     plot_images(x_test, x_reconstruct)
 
 
-def svm_classifier():
-    # train_batch_size = 50000
-    # test_batch_size = 10000
-    #
-    # saver.restore(sess=session, save_path=FLAGS['save_path'])
-    #
-    # train_images, train_labels = data.train.next_batch(train_batch_size)
-    #
-    # train_images_latent = session.run(z, feed_dict={x: train_images})
-    # train_cls = tf.argmax(train_labels, dimension=1)
-    #
-    # print(np.array([train_cls]))
-    # print("train_images_latent:{},train_cls:{} ".format(np.shape(train_images_latent), tf.shape(train_cls)))
-    #
-    # test_images, test_labels = data.test.next_batch(test_batch_size)
-    # test_cls = tf.argmax(test_labels, dimension=1)
+def svm_classifier(num_iterations):
     saver.restore(sess=session, save_path=FLAGS['save_path'])
-    train_images = idx2numpy.convert_from_file('mnist_idx/train-images-idx3-ubyte').reshape(60000, 784)
-    train_labels = idx2numpy.convert_from_file('mnist_idx/train-labels-idx1-ubyte')
-    train_images_latent = session.run(z, feed_dict={x: train_images})
-    print(train_labels[1], train_images_latent[1])
-    test_images = idx2numpy.convert_from_file('mnist_idx/t10k-images-idx3-ubyte').reshape(10000, 784)
-    test_labels = idx2numpy.convert_from_file('mnist_idx/t10k-labels-idx1-ubyte')
-
-    # SUPPORT VECTOR MACHINE
     sv = SVC(probability=True)
+    total_iterations = 0
 
-    # train the model
-    sv.fit(train_images_latent, train_labels)
+    for step in range(num_iterations):
+        total_iterations += 1
+
+        train_images, train_labels = data.train.next_batch(FLAGS['train_batch_size'])
+
+        train_images_latent = session.run(z, feed_dict={x: train_images})
+        train_cls = np.argmax(train_labels, axis=1)
+
+        # train the model
+        sv.fit(train_images_latent, train_cls)
+
+    test_images = data.test.images
+    test_labels = data.test.labels
+    test_images_latent = session.run(z, feed_dict={x: test_images})
+    test_cls = np.argmax(test_labels, axis=1)
 
     # predict the labels and report accuracy
-    hard_pred = sv.predict(test_images)
-    acc = np.isclose(hard_pred, test_labels).sum() / len(hard_pred)
+    hard_pred = sv.predict(test_images_latent)
+    acc = np.isclose(hard_pred, test_cls).sum() / len(hard_pred)
     print("Accuracy: {}".format(acc))
 
 
-train_neural_network(10000)
+train_neural_network(FLAGS['num_iterations'])
 # test_reconstruction()
-# svm_classifier()
+svm_classifier(FLAGS['num_iterations'])
 session.close()
