@@ -10,7 +10,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 FLAGS = {
     'data_directory': 'data/MNIST/',
     'summaries_dir': 'summaries/',
-    'save_path': 'results/results/train_weights',
+    'save_path': 'results/train_weights',
 }
 
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
@@ -206,7 +206,7 @@ def plot_images(x_test, x_reconstruct):
 
 
 def test_reconstruction():
-    saver.restore(sess=session, save_path=FLAGS['save_path'])
+    saver.restore(sess=session, save_path="results/results/train_weights")  # Need to fix this 
     x_test = mnist.test.next_batch(100)[0][0:5, ]
     print(np.shape(x_test))
     x_reconstruct = reconstruct(x_test)
