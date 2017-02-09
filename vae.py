@@ -15,7 +15,8 @@ FLAGS = {
     'train_batch_size': 64,
     'test_batch_size': 10000,
     'svmC': 1,
-    'num_iterations': 10000
+    'num_iterations': 10000,
+    'svm_rain_batch_size': 3000
 
 }
 
@@ -230,18 +231,14 @@ def test_reconstruction():
 def svm_classifier(num_iterations):
     saver.restore(sess=session, save_path=FLAGS['save_path'])
     sv = SVC(probability=True)
-    total_iterations = 0
 
-    for step in range(num_iterations):
-        total_iterations += 1
+    train_images, train_labels = data.train.next_batch(FLAGS['svm_rain_batch_size'])
 
-        train_images, train_labels = data.train.next_batch(FLAGS['train_batch_size'])
+    train_images_latent = session.run(z, feed_dict={x: train_images})
+    train_cls = np.argmax(train_labels, axis=1)
 
-        train_images_latent = session.run(z, feed_dict={x: train_images})
-        train_cls = np.argmax(train_labels, axis=1)
-
-        # train the model
-        sv.fit(train_images_latent, train_cls)
+    # train the model
+    sv.fit(train_images_latent, train_cls)
 
     test_images = data.test.images
     test_labels = data.test.labels
@@ -254,7 +251,7 @@ def svm_classifier(num_iterations):
     print("Accuracy: {}".format(acc))
 
 
-train_neural_network(FLAGS['num_iterations'])
+# train_neural_network(FLAGS['num_iterations'])
 # test_reconstruction()
 svm_classifier(FLAGS['num_iterations'])
 session.close()
