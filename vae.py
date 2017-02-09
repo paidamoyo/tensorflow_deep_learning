@@ -206,7 +206,7 @@ def plot_images(x_test, x_reconstruct):
 
 
 def test_reconstruction():
-    saver.restore(sess=session, save_path="results/results/train_weights")  # Need to fix this 
+    saver.restore(sess=session, save_path=FLAGS['save_path'])
     x_test = mnist.test.next_batch(100)[0][0:5, ]
     print(np.shape(x_test))
     x_reconstruct = reconstruct(x_test)
@@ -214,5 +214,5 @@ def test_reconstruction():
 
 
 train_neural_network(10000)
-# test_reconstruction()
+#test_reconstruction()
 session.close()
