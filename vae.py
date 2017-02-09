@@ -16,7 +16,7 @@ FLAGS = {
     'test_batch_size': 10000,
     'svmC': 1,
     'num_iterations': 10000,
-    'svm_rain_batch_size': 3000
+    'svm_rain_batch_size': 50000
 
 }
 
@@ -251,7 +251,7 @@ def svm_classifier(num_iterations):
     print("Accuracy: {}".format(acc))
 
 
-# train_neural_network(FLAGS['num_iterations'])
+train_neural_network(FLAGS['num_iterations'])
 # test_reconstruction()
 svm_classifier(FLAGS['num_iterations'])
 session.close()
