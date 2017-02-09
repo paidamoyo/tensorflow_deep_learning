@@ -1,33 +1,38 @@
 import time
 from datetime import timedelta
 
+import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 # Global Dictionary of Flags
 FLAGS = {
     'data_directory': 'data/MNIST/',
-    'summaries_dir': 'summaries/'
+    'summaries_dir': 'summaries/',
+    'save_path': 'results/train_weights',
 }
 
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
-## Load Data
 data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
 
 encoder_h_dim = 500
 decoder_h_dim = 500
 latent_dim = 200
-input_dim = 784
 
 n_classes = 10
 batch_size = 100
 
-# Height and width
-x = tf.placeholder('float', [None, 784])
-y = tf.placeholder('float')
+img_size = 28
 
-y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
-y_true_cls = tf.argmax(y_true, dimension=1)
+# Images are stored in one-dimensional arrays of this length.
+img_size_flat = img_size * img_size
+
+# Tuple with height and width of images used to reshape arrays.
+img_shape = (img_size, img_size)
+
+# ### Placeholder variables
+x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
 
 
 def create_biases(shape):
@@ -55,7 +60,7 @@ def variable_summaries(var, summary_name):
 ##Build Model
 
 # Encoder Model
-W_encoder_h = create_weights([input_dim, encoder_h_dim])
+W_encoder_h = create_weights([img_size_flat, encoder_h_dim])
 b_encoder_h = create_biases([encoder_h_dim])
 variable_summaries(W_encoder_h, 'W_encoder_h')
 variable_summaries(b_encoder_h, 'b_encoder_h')
@@ -88,8 +93,8 @@ b_decoder_h_z = create_biases([decoder_h_dim])
 variable_summaries(W_decoder_h_z, 'W_decoder_h_z')
 variable_summaries(b_decoder_h_z, 'b_decoder_h_z')
 
-W_decoder_r = create_weights([decoder_h_dim, input_dim])
-b_decoder_r = create_biases([input_dim])
+W_decoder_r = create_weights([decoder_h_dim, img_size_flat])
+b_decoder_r = create_biases([img_size_flat])
 variable_summaries(W_decoder_r, 'W_decoder_r')
 variable_summaries(b_decoder_r, 'b_decoder_r')
 
@@ -123,6 +128,9 @@ train_batch_size = 64
 # Counter for total number of iterations performed so far.
 total_iterations = 0
 
+## SAVER
+saver = tf.train.Saver()
+
 
 def train_neural_network(num_iterations):
     # Ensure we update the global variable rather than a local copy.
@@ -153,5 +161,42 @@ def train_neural_network(num_iterations):
     # Print the time-usage.
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
+    # Save all variables of the TensorFlow graph to file.
+    saver.save(sess=session, save_path=FLAGS['save_path'])
+
 
 train_neural_network(10000)
+
+
+# saver.restore(sess=session, save_path=FLAGS['save_path'])
+
+
+def reconstruct(x_test):
+    return session.run(x_hat, feed_dict={x: x_test})
+
+
+def plot_images(x_test, x_reconstruct):
+    assert len(x_test) == 5
+
+    plt.figure(figsize=(8, 12))
+    for i in range(5):
+        # Plot image.
+        plt.subplot(5, 2, 2 * i + 1)
+        plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        plt.title("Test input")
+        plt.colorbar()
+        plt.subplot(5, 2, 2 * i + 2)
+        plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        plt.title("Reconstruction")
+        plt.colorbar()
+
+    plt.tight_layout()
+    plt.show()
+
+
+x_test = mnist.test.next_batch(100)[0][0:5, ]
+print(np.shape(x_test))
+x_reconstruct = reconstruct(x_test)
+plot_images(x_test, x_reconstruct)
+
+session.close()
