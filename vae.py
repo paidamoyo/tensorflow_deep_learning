@@ -24,7 +24,7 @@ data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
 
 encoder_h_dim = 500
 decoder_h_dim = 500
-latent_dim = 200
+latent_dim = 50
 img_size = 28
 num_classes = 10
 # Images are stored in one-dimensional arrays of this length.
