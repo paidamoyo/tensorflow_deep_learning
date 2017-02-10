@@ -222,7 +222,7 @@ def plot_images(x_test, x_reconstruct):
 
 def test_reconstruction():
     saver.restore(sess=session, save_path=FLAGS['save_path'])
-    x_test = data.test.next_batch(100)[0][10:15, ]
+    x_test = data.test.next_batch(100)[0][0:5, ]
     print(np.shape(x_test))
     x_reconstruct = reconstruct(x_test)
     plot_images(x_test, x_reconstruct)
@@ -232,7 +232,7 @@ def svm_classifier():
     saver.restore(sess=session, save_path=FLAGS['save_path'])
     sv = SVC(probability=True)
 
-    train_images_latent = np.empty((55000, 200), int)
+    train_images_latent = np.empty((55000, latent_dim), int)
     train_labels = data.train.labels
 
     total_train_batch = int(data.train.num_examples / FLAGS['svm_train_batch_size'])
@@ -245,12 +245,15 @@ def svm_classifier():
     print("train_images_latent:{}, train_cls:{}".format(np.shape(train_images_latent), np.shape(train_labels)))
     train_cls = np.argmax(train_labels, axis=1)
     print("train_cls:{}".format(train_cls))
+
+    print("training_images:")
     sv.fit(train_images_latent, train_cls)
 
-    test_images_latent = np.empty((10000, 200), int)
+    test_images_latent = np.empty((10000, latent_dim), int)
     test_labels = data.test.labels
 
     total_test_batch = int(data.test.num_examples / FLAGS['svm_test_batch_size'])
+    print("testing_images")
     # Loop over all batches
     for i in range(total_test_batch):
         batch_x_test, batch_y_test = data.train.next_batch(FLAGS['svm_test_batch_size'])
