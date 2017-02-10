@@ -217,7 +217,7 @@ def plot_images(x_test, x_reconstruct):
         plt.colorbar()
 
     plt.tight_layout()
-    plt.savefig("reconstructed digit")
+    plt.savefig("reconstructed_digit")
 
 
 def test_reconstruction():
