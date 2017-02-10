@@ -13,10 +13,10 @@ FLAGS = {
     'summaries_dir': 'summaries/',
     'save_path': 'results/train_weights',
     'train_batch_size': 64,
-    'test_batch_size': 10000,
+    'svm_test_batch_size': 100,
     'svmC': 1,
     'num_iterations': 10000,
-    'svm_rain_batch_size': 50000
+    'svm_train_batch_size': 100
 
 }
 
@@ -228,30 +228,43 @@ def test_reconstruction():
     plot_images(x_test, x_reconstruct)
 
 
-def svm_classifier(num_iterations):
+def svm_classifier():
     saver.restore(sess=session, save_path=FLAGS['save_path'])
     sv = SVC(probability=True)
 
-    train_images, train_labels = data.train.next_batch(FLAGS['svm_rain_batch_size'])
+    train_images_latent = np.empty((55000, 200), int)
+    train_labels = data.train.labels
 
-    train_images_latent = session.run(z, feed_dict={x: train_images})
-    train_cls = np.argmax(train_labels, axis=1)
+    total_train_batch = int(data.train.num_examples / FLAGS['svm_train_batch_size'])
+    # Loop over all batches
+    for i in range(total_train_batch):
+        batch_x_train, batch_y_train = data.train.next_batch(FLAGS['svm_train_batch_size'])
+        np.append(train_images_latent, session.run(z, feed_dict={x: batch_x_train}))
 
     # train the model
+    print("train_images_latent:{}, train_cls:{}".format(np.shape(train_images_latent), np.shape(train_labels)))
+    train_cls = np.argmax(train_labels, axis=1)
+    print("train_cls:{}".format(train_cls))
     sv.fit(train_images_latent, train_cls)
 
-    test_images = data.test.images
+    test_images_latent = np.empty((10000, 200), int)
     test_labels = data.test.labels
-    test_images_latent = session.run(z, feed_dict={x: test_images})
-    test_cls = np.argmax(test_labels, axis=1)
 
-    # predict the labels and report accuracy
+    total_test_batch = int(data.test.num_examples / FLAGS['svm_test_batch_size'])
+    # Loop over all batches
+    for i in range(total_test_batch):
+        batch_x_test, batch_y_test = data.train.next_batch(FLAGS['svm_test_batch_size'])
+        np.append(test_images_latent, session.run(z, feed_dict={x: batch_x_test}))
+        np.append(test_labels, batch_y_test)
+
+    print("test_images_latent:{}, test_cls:{}".format(np.shape(test_images_latent), np.shape(test_labels)))
+    test_cls = np.argmax(test_labels, axis=1)  # predict the labels and report accuracy
     hard_pred = sv.predict(test_images_latent)
     acc = np.isclose(hard_pred, test_cls).sum() / len(hard_pred)
     print("Accuracy: {}".format(acc))
 
 
 train_neural_network(FLAGS['num_iterations'])
-# test_reconstruction()
-svm_classifier(FLAGS['num_iterations'])
+test_reconstruction()
+svm_classifier()
 session.close()
