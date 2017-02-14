@@ -158,10 +158,9 @@ def mcmc(data, death, exposure, n_intervals):
             trace_ = pm.sample(n_samples, step, random_seed=SEED)
             trace = trace_[burn::thin]
             print("trace:{}".format(trace))
-            print('beta mean:{}'.format(np.exp(trace['beta'].mean())))
+            print("beta mean:{}".format(np.exp(trace['beta'].mean())))
 
             pm.traceplot(trace, ['beta'])
-            pm.traceplot(trace, ['obs'])
             pm.autocorrplot(trace, ['beta'])
 
     return trace
