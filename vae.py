@@ -7,37 +7,6 @@ import tensorflow as tf
 from sklearn.svm import SVC
 from tensorflow.examples.tutorials.mnist import input_data
 
-# Global Dictionary of Flags
-FLAGS = {
-    'data_directory': 'data/MNIST/',
-    'summaries_dir': 'summaries/',
-    'save_path': 'results/train_weights',
-    'train_batch_size': 64,
-    'svm_test_batch_size': 100,
-    'svmC': 1,
-    'num_iterations': 10000,
-    'svm_train_batch_size': 100
-
-}
-
-data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
-
-encoder_h_dim = 500
-decoder_h_dim = 500
-latent_dim = 50
-img_size = 28
-num_classes = 10
-# Images are stored in one-dimensional arrays of this length.
-img_size_flat = img_size * img_size
-# Tuple with height and width of images used to reshape arrays.
-img_shape = (img_size, img_size)
-
-# ### Placeholder variables
-x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
-
-y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
-y_true_cls = tf.argmax(y_true, dimension=1)
-
 
 def create_biases(shape):
     return tf.Variable(tf.random_normal(shape))
@@ -47,7 +16,6 @@ def create_weights(shape):
     return tf.Variable(tf.truncated_normal(shape, stddev=0.05))
 
 
-# ### Helper-function for creating a new Convolutional Layer
 def variable_summaries(var, summary_name):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
     with tf.name_scope(summary_name):
@@ -107,10 +75,6 @@ def recognition_network():
     return z, regularization
 
 
-# Encoder Model
-z, recognition_loss = recognition_network()
-
-
 def generator_network():
     # Variables
     W_decoder_h_1 = create_weights([latent_dim, decoder_h_dim])
@@ -139,29 +103,6 @@ def generator_network():
     # l2_loss = tf.nn.l2_loss(W_decoder_h_1) + tf.nn.l2_loss(W_decoder_h_2) + tf.nn.l2_loss(W_decoder_r)
 
     return x_hat
-
-
-# Decoder Model
-x_hat = generator_network()
-
-reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
-
-loss = tf.reduce_mean(recognition_loss + reconstruction_loss)
-tf.summary.scalar('loss', loss)
-
-optimizer = tf.train.AdamOptimizer().minimize(loss)
-
-session = tf.Session()
-
-merged = tf.summary.merge_all()
-train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
-                                     session.graph)
-
-# Counter for total number of iterations performed so far.
-total_iterations = 0
-
-## SAVER
-saver = tf.train.Saver()
 
 
 def train_neural_network(num_iterations):
@@ -267,7 +208,63 @@ def svm_classifier():
     print("Accuracy: {}".format(acc))
 
 
-train_neural_network(FLAGS['num_iterations'])
-test_reconstruction()
-svm_classifier()
-session.close()
+if __name__ == '__main__':
+    # Global Dictionary of Flags
+    FLAGS = {
+        'data_directory': 'data/MNIST/',
+        'summaries_dir': 'summaries/',
+        'save_path': 'results/train_weights',
+        'train_batch_size': 64,
+        'svm_test_batch_size': 100,
+        'svmC': 1,
+        'num_iterations': 10000,
+        'svm_train_batch_size': 100
+
+    }
+
+    data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
+
+    encoder_h_dim = 500
+    decoder_h_dim = 500
+    latent_dim = 50
+    img_size = 28
+    num_classes = 10
+    # Images are stored in one-dimensional arrays of this length.
+    img_size_flat = img_size * img_size
+    # Tuple with height and width of images used to reshape arrays.
+    img_shape = (img_size, img_size)
+
+    # ### Placeholder variables
+    x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
+
+    y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
+    y_true_cls = tf.argmax(y_true, dimension=1)
+
+    # Encoder Model
+    z, recognition_loss = recognition_network()
+
+    # Decoder Model
+    x_hat = generator_network()
+
+    reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
+
+    loss = tf.reduce_mean(recognition_loss + reconstruction_loss)
+    tf.summary.scalar('loss', loss)
+
+    optimizer = tf.train.AdamOptimizer().minimize(loss)
+
+    session = tf.Session()
+
+    merged = tf.summary.merge_all()
+    train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
+                                         session.graph)
+
+    # Counter for total number of iterations performed so far.
+    total_iterations = 0
+
+    ## SAVER
+    saver = tf.train.Saver()
+    train_neural_network(FLAGS['num_iterations'])
+    test_reconstruction()
+    svm_classifier()
+    session.close()
