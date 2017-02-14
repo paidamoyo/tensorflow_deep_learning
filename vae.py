@@ -4,7 +4,7 @@ from datetime import timedelta
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix
 from tensorflow.examples.tutorials.mnist import input_data
 
 
@@ -117,8 +117,8 @@ def train_neural_network(num_iterations):
 
         total_iterations += 1
 
-        x_batch, _ = data.train.next_batch(FLAGS['train_batch_size'])
-        feed_dict_train = {x: x_batch}
+        x_batch, y_true_batch = data.train.next_batch(FLAGS['train_batch_size'])
+        feed_dict_train = {x: x_batch, y_true: y_true_batch}
 
         summary, cur_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
         train_writer.add_summary(summary, step)
@@ -169,43 +169,93 @@ def test_reconstruction():
     plot_images(x_test, x_reconstruct)
 
 
-def svm_classifier():
-    saver.restore(sess=session, save_path=FLAGS['save_path'])
-    sv = SVC(probability=True)
+def mlp_classifier(latent_x):
+    W_mlp_h1 = create_weights([latent_dim, num_classes])
+    b_mlp_h1 = create_biases([num_classes])
 
-    train_images_latent = np.empty((55000, latent_dim), int)
-    train_labels = data.train.labels
+    logits = tf.matmul(latent_x, W_mlp_h1) + b_mlp_h1
+    y_pred = tf.nn.softmax(logits)
+    y_pred_cls = tf.argmax(y_pred, dimension=1)
 
-    total_train_batch = int(data.train.num_examples / FLAGS['svm_train_batch_size'])
-    # Loop over all batches
-    for i in range(total_train_batch):
-        batch_x_train, batch_y_train = data.train.next_batch(FLAGS['svm_train_batch_size'])
-        np.append(train_images_latent, session.run(z, feed_dict={x: batch_x_train}))
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                                                            labels=y_true)
+    return cross_entropy, y_pred_cls
 
-    # train the model
-    print("train_images_latent:{}, train_cls:{}".format(np.shape(train_images_latent), np.shape(train_labels)))
-    train_cls = np.argmax(train_labels, axis=1)
-    print("train_cls:{}".format(train_cls))
 
-    print("training_images:")
-    sv.fit(train_images_latent, train_cls)
+def predict_cls(images, labels, cls_true):
+    num_images = len(images)
 
-    test_images_latent = np.empty((10000, latent_dim), int)
-    test_labels = data.test.labels
+    cls_pred = np.zeros(shape=num_images, dtype=np.int)
+    i = 0
+    while i < num_images:
+        # The ending index for the next batch is denoted j.
+        j = min(i + FLAGS['test_batch_size'], num_images)
 
-    total_test_batch = int(data.test.num_examples / FLAGS['svm_test_batch_size'])
-    print("testing_images")
-    # Loop over all batches
-    for i in range(total_test_batch):
-        batch_x_test, batch_y_test = data.train.next_batch(FLAGS['svm_test_batch_size'])
-        np.append(test_images_latent, session.run(z, feed_dict={x: batch_x_test}))
-        np.append(test_labels, batch_y_test)
+        # Get the images from the test-set between index i and j.
+        test_images = images[i:j, :]
 
-    print("test_images_latent:{}, test_cls:{}".format(np.shape(test_images_latent), np.shape(test_labels)))
-    test_cls = np.argmax(test_labels, axis=1)  # predict the labels and report accuracy
-    hard_pred = sv.predict(test_images_latent)
-    acc = np.isclose(hard_pred, test_cls).sum() / len(hard_pred)
-    print("Accuracy: {}".format(acc))
+        # Get the associated labels.
+        labels = labels[i:j, :]
+
+        # Create a feed-dict with these images and labels.
+        feed_dict = {x: test_images,
+                     y_true: labels[i:j, :]}
+
+        # Calculate the predicted class using TensorFlow.
+        cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
+
+        # Set the start-index for the next batch to the
+        # end-index of the current batch.
+        i = j
+
+    # Create a boolean array whether each image is correctly classified.
+    correct = (cls_true == cls_pred)
+
+    return correct, cls_pred
+
+
+def convert_labels_to_cls(labels):
+    return np.argmax(labels, axis=1)
+
+
+def cls_accuracy(correct):
+    # Calculate the number of correctly classified images.
+    # When summing a boolean array, False means 0 and True means 1.
+    correct_sum = correct.sum()
+    # Classification accuracy is the number of correctly classified
+    # images divided by the total number of images in the test-set.
+    acc = float(correct_sum) / len(correct)
+    return acc, correct_sum
+
+
+def plot_confusion_matrix(cls_pred):
+    cls_true = convert_labels_to_cls(data.test.labels)
+
+    # Get the confusion matrix using sklearn.
+    cm = confusion_matrix(y_true=cls_true,
+                          y_pred=cls_pred)
+
+    # Print the confusion matrix as text.
+    print(cm)
+    # Plot the confusion matrix as an image.
+    plt.matshow(cm)
+
+
+def print_test_accuracy():
+    correct, cls_pred = predict_cls(images=data.test.images,
+                                    labels=data.test.labels,
+                                    cls_true=(convert_labels_to_cls(data.test.labels)))
+    acc, correct_sum = cls_accuracy(correct)
+
+    # Number of images being classified.
+    num_images = len(correct)
+
+    # Print the accuracy.
+    msg = "Accuracy on Test-Set: {0:.1%} ({1} / {2})"
+    print(msg.format(acc, correct_sum, num_images))
+
+    print("Confusion Matrix:")
+    plot_confusion_matrix(cls_pred=cls_pred)
 
 
 if __name__ == '__main__':
@@ -215,11 +265,8 @@ if __name__ == '__main__':
         'summaries_dir': 'summaries/',
         'save_path': 'results/train_weights',
         'train_batch_size': 64,
-        'svm_test_batch_size': 100,
-        'svmC': 1,
+        'test_batch_size': 256,
         'num_iterations': 10000,
-        'svm_train_batch_size': 100
-
     }
 
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
@@ -243,12 +290,15 @@ if __name__ == '__main__':
     # Encoder Model
     z, recognition_loss = recognition_network()
 
+    # MLP Classification Network
+    class_loss, y_pred_cls = mlp_classifier(z)
+
     # Decoder Model
     x_hat = generator_network()
 
     reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
 
-    loss = tf.reduce_mean(recognition_loss + reconstruction_loss)
+    loss = tf.reduce_mean(recognition_loss + reconstruction_loss + class_loss)
     tf.summary.scalar('loss', loss)
 
     optimizer = tf.train.AdamOptimizer().minimize(loss)
@@ -266,5 +316,6 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
     train_neural_network(FLAGS['num_iterations'])
     test_reconstruction()
-    svm_classifier()
+    print_test_accuracy()
+
     session.close()
