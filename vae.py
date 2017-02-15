@@ -304,12 +304,14 @@ if __name__ == '__main__':
     # MLP Classification Network
     class_loss, y_pred_cls = mlp_classifier(z)
 
+    alpha = 0.1
+
     # Decoder Model
     x_hat = generator_network()
 
     reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
 
-    loss = tf.reduce_mean(recognition_loss + reconstruction_loss + class_loss)
+    loss = tf.reduce_mean(recognition_loss + reconstruction_loss + alpha * FLAGS['train_batch_size'] * class_loss)
     tf.summary.scalar('loss', loss)
 
     optimizer = tf.train.AdamOptimizer().minimize(loss)
