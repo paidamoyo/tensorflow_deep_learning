@@ -1,11 +1,15 @@
+import sys
 import time
 from datetime import timedelta
 
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from MNSIT_prepocess import create_semisupervised
 from sklearn.metrics import confusion_matrix
 from tensorflow.examples.tutorials.mnist import input_data
+
+sys.path.append('../')
 
 
 def create_biases(shape):
@@ -267,9 +271,16 @@ if __name__ == '__main__':
         'train_batch_size': 64,
         'test_batch_size': 256,
         'num_iterations': 10000,
+        'seed': 12000,
     }
 
+    np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
+
+    # create labeled/unlabeled split in training set
+    n_labeled = 10000
+    x_l, y_l, x_u, y_u = create_semisupervised(n_labeled)
+    print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(x_l.shape, y_l.shape, x_u.shape, y_u.shape))
 
     encoder_h_dim = 500
     decoder_h_dim = 500
