@@ -63,12 +63,12 @@ def recognition_network():
     # latent layer mu and var
     encoder_logvar = tf.nn.relu(
         tf.add(tf.matmul(encoder_h_2, W_enconder_h_var), b_enconder_h_var))  # ensure that var >0
-    encoder_mu = tf.add(tf.matmul(encoder_h_1, W_enconder_h_mu), b_enconder_h_mu)
+    encoder_mu = tf.add(tf.matmul(encoder_h_2, W_enconder_h_mu), b_enconder_h_mu)
 
     # latent layer
     epsilon_encoder = tf.random_normal(tf.shape(latent_dim), name='epsilon')
     std_encoder = tf.exp(0.5 * encoder_logvar)
-    z = encoder_mu + tf.mul(std_encoder, epsilon_encoder)
+    z_1 = encoder_mu + tf.mul(std_encoder, epsilon_encoder)
 
     # regularization loss
     regularization = -0.5 * tf.reduce_sum(1 + encoder_logvar - tf.pow(encoder_mu, 2) - tf.exp(encoder_logvar),
@@ -76,7 +76,7 @@ def recognition_network():
     # l2_loss = tf.nn.l2_loss(W_encoder_h_1) + tf.nn.l2_loss(W_encoder_h_2) + tf.nn.l2_loss(
     # W_enconder_h_mu) + tf.nn.l2_loss(W_enconder_h_var)
 
-    return z, regularization
+    return z_1, regularization
 
 
 def generator_network():
@@ -302,7 +302,7 @@ if __name__ == '__main__':
     z, recognition_loss = recognition_network()
 
     # MLP Classification Network
-    class_loss, y_pred_cls = mlp_classifier(z)
+    cross_entropy_loss, y_pred_cls = mlp_classifier(z)
 
     alpha = 0.1
 
@@ -311,7 +311,7 @@ if __name__ == '__main__':
 
     reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
 
-    loss = tf.reduce_mean(recognition_loss + reconstruction_loss + alpha * FLAGS['train_batch_size'] * class_loss)
+    loss = tf.reduce_mean(recognition_loss + reconstruction_loss + alpha * FLAGS['train_batch_size'] * cross_entropy_loss)
     tf.summary.scalar('loss', loss)
 
     optimizer = tf.train.AdamOptimizer().minimize(loss)

@@ -168,5 +168,5 @@ def mcmc(data, death, exposure, n_intervals):
 
 if __name__ == '__main__':
     df, pat = load_data()
-    # visualize_data(df, pat)
+    visualize_data(df, pat)
     build_model(df, pat)
