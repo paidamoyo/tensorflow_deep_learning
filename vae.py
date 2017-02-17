@@ -36,18 +36,15 @@ def variable_summaries(var, summary_name):
 ## Build Model
 def recognition_network():
     # Variables
-    W_encoder_h_1, b_encoder_h_1 = create_h_weights('h1', 'encoder', [img_size_flat, encoder_h_dim])
-    W_encoder_h_2, b_encoder_h_2 = create_h_weights('h2', 'encoder', [encoder_h_dim, encoder_h_dim])
-    W_enconder_h_mu_z1, W_enconder_h_var_z1, b_enconder_h_mu_z1, b_enconder_h_var_z1 = create_z_weights('z_1',
-                                                                                                        [encoder_h_dim,
+    W_encoder_h_1, b_encoder_h_1 = create_h_weights('h1', 'encoder', [img_size_flat, FLAGS['encoder_h_dim']])
+    W_encoder_h_2, b_encoder_h_2 = create_h_weights('h2', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+    W_enconder_h_mu_z1, W_enconder_h_var_z1, b_enconder_h_mu_z1, \
+    b_enconder_h_var_z1 = create_z_weights('z_1', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
+    W_encoder_h_3, b_encoder_h_3 = create_h_weights('h3', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
+    W_encoder_h_4, b_encoder_h_4 = create_h_weights('h4', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
 
-                                                                                                         latent_dim])
-    W_encoder_h_3, b_encoder_h_3 = create_h_weights('h3', 'encoder', [latent_dim, encoder_h_dim])
-    W_encoder_h_4, b_encoder_h_4 = create_h_weights('h4', 'encoder', [encoder_h_dim, encoder_h_dim])
-
-    W_enconder_h_mu_z2, W_enconder_h_var_z2, b_enconder_h_mu_z2, b_enconder_h_var_z2 = create_z_weights('z_2',
-                                                                                                        [encoder_h_dim,
-                                                                                                         latent_dim])
+    W_enconder_h_mu_z2, W_enconder_h_var_z2, b_enconder_h_mu_z2, \
+    b_enconder_h_var_z2 = create_z_weights('z_2', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
 
     # Model
 
@@ -58,7 +55,7 @@ def recognition_network():
     # Z1 latent layer mu and var
     encoder_logvar_z1 = activated_neuron(encoder_h_2, W_enconder_h_var_z1, b_enconder_h_var_z1)
     encoder_mu_z1 = non_activated_neuron(encoder_h_2, W_enconder_h_mu_z1, b_enconder_h_mu_z1)
-    z_1 = draw_z(latent_dim, encoder_mu_z1, encoder_logvar_z1)
+    z_1 = draw_z(FLAGS['latent_dim'], encoder_mu_z1, encoder_logvar_z1)
 
     # Hidden layers
     encoder_h_3 = activated_neuron(z_1, W_encoder_h_3, b_encoder_h_3)
@@ -67,7 +64,7 @@ def recognition_network():
     # Z2 latent layer mu and var
     encoder_logvar_z2 = activated_neuron(encoder_h_4, W_enconder_h_var_z2, b_enconder_h_var_z2)
     encoder_mu_z2 = non_activated_neuron(encoder_h_4, W_enconder_h_mu_z2, b_enconder_h_mu_z2)
-    z_2 = draw_z(latent_dim, encoder_mu_z2, encoder_logvar_z2)
+    z_2 = draw_z(FLAGS['latent_dim'], encoder_mu_z2, encoder_logvar_z2)
 
     # regularization loss
     regularization = -0.5 * tf.reduce_sum(1 + encoder_logvar_z2 - tf.pow(encoder_mu_z2, 2) - tf.exp(encoder_logvar_z2),
@@ -130,9 +127,9 @@ def create_z_weights(layer, shape):
 
 def generator_network():
     # Variables
-    W_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder', [latent_dim, decoder_h_dim])
-    W_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder', [decoder_h_dim, decoder_h_dim])
-    W_decoder_r, b_decoder_r = create_h_weights('r', 'decoder', [decoder_h_dim, img_size_flat])
+    W_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
+    W_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
+    W_decoder_r, b_decoder_r = create_h_weights('r', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
 
     # Model
     # Decoder hidden layer
@@ -179,17 +176,17 @@ def train_neural_network(num_iterations):
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
-def train_batch(idx_labeled, x_images, y_labels, loss, optimizer):
-    # Labeled Training
+def train_batch(idx, x_images, y_labels, loss, optimizer):
+    # Batch Training
     num_images = x_images.shape[0]
-    if idx_labeled == num_images:
-        idx_labeled = 0
+    if idx == num_images:
+        idx = 0
         # The ending index for the next batch is denoted j.
-    j = min(idx_labeled + FLAGS['train_batch_size'], num_images)
+    j = min(idx + FLAGS['train_batch_size'], num_images)
     # Get the mages from the test-set between index idx_labeled and j.
-    x_batch = x_images[idx_labeled:j, :]
+    x_batch = x_images[idx:j, :]
     # Get the associated labels.
-    y_true_batch = y_labels[idx_labeled:j, :]
+    y_true_batch = y_labels[idx:j, :]
     feed_dict_train = {x: x_batch, y_true: y_true_batch}
     summary, batch_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
     # Set the start-index for the next batch to the
@@ -251,7 +248,7 @@ def test_reconstruction():
 
 
 def mlp_classifier(latent_x):
-    W_mlp_h1 = create_weights([latent_dim, num_classes])
+    W_mlp_h1 = create_weights([FLAGS['latent_dim'], num_classes])
     b_mlp_h1 = create_biases([num_classes])
 
     logits = tf.matmul(latent_x, W_mlp_h1) + b_mlp_h1
@@ -349,15 +346,16 @@ if __name__ == '__main__':
         'test_batch_size': 256,
         'num_iterations': 10000,
         'seed': 12000,
-        'n_labeled': 10000
+        'n_labeled': 10000,
+        'alpha': 0.1,
+        'encoder_h_dim': 500,
+        'decoder_h_dim': 500,
+        'latent_dim': 50
     }
 
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
 
-    encoder_h_dim = 500
-    decoder_h_dim = 500
-    latent_dim = 50
     img_size = 28
     num_classes = 10
     # Images are stored in one-dimensional arrays of this length.
@@ -377,15 +375,13 @@ if __name__ == '__main__':
     # MLP Classification Network
     cross_entropy_loss, y_pred_cls = mlp_classifier(z)
 
-    alpha = 0.1
-
     # Decoder Model
     x_hat = generator_network()
 
     reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
 
     labeled_loss = tf.reduce_mean(
-        recognition_loss + reconstruction_loss + alpha * FLAGS['train_batch_size'] * cross_entropy_loss)
+        recognition_loss + reconstruction_loss + FLAGS['alpha'] * FLAGS['train_batch_size'] * cross_entropy_loss)
     tf.summary.scalar('labeled_loss', labeled_loss)
 
     unlabeled_loss = tf.reduce_mean(
@@ -401,15 +397,10 @@ if __name__ == '__main__':
     labeled_optimizer = tf.train.AdamOptimizer().minimize(labeled_loss)
     unlabeled_optimizer = tf.train.AdamOptimizer().minimize(unlabeled_loss)
 
-    # Counter for total number of iterations performed so far.
-    total_iterations = 0
-
     ## SAVER
     saver = tf.train.Saver()
-    # train Multi-task Network
 
     train_neural_network(FLAGS['num_iterations'])
-    # train unlabeled
     test_reconstruction()
     print_test_accuracy()
 
