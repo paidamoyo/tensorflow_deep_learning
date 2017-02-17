@@ -152,9 +152,8 @@ def train_neural_network(num_iterations, loss_function, input_data):
     total_iterations = 0
 
     start_time = time.time()
-    x_images = input_data[0]
-    y_labels = input_data[1]
-    num_images = x_images.shape[0]
+    num_images, x_images, y_labels = preprocess_train_data(input_data)
+
     i = 0
 
     for epoch in range(num_iterations):
@@ -189,6 +188,17 @@ def train_neural_network(num_iterations, loss_function, input_data):
 
     # Print the time-usage.
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
+
+
+def preprocess_train_data(input_data):
+    x_images = input_data[0]
+    y_labels = input_data[1]
+    num_images = x_images.shape[0]
+    randomize = np.arange(num_images)
+    np.random.shuffle(randomize)
+    x_images = x_images[randomize]
+    y_labels = y_labels[randomize]
+    return num_images, x_images, y_labels
 
 
 def reconstruct(x_test):
