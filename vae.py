@@ -149,6 +149,8 @@ def train_neural_network(num_iterations, loss_function, input_data, init=False):
     optimizer = tf.train.AdamOptimizer().minimize(loss_function)
     if init:
         session.run(tf.global_variables_initializer())
+    else:
+        saver.restore(sess=session, save_path=FLAGS['save_path'])
 
     start_time = time.time()
     num_images, x_images, y_labels = preprocess_train_data(input_data)
