@@ -145,7 +145,7 @@ def generator_network():
     return x_hat
 
 
-def train_neural_network(num_iterations, loss_function, input_data):
+def train_neural_network(num_iterations, loss_function, input_data, init=False):
     optimizer = tf.train.AdamOptimizer().minimize(loss_function)
     session.run(tf.global_variables_initializer())
     # Ensure we update the global variable rather than a local copy.
@@ -391,9 +391,9 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
     # train labeled
     print("labeled training:")
-    train_neural_network(FLAGS['num_iterations'], labeled_loss, [x_l, y_l])
+    train_neural_network(FLAGS['num_iterations'], loss_function=labeled_loss, input_data=[x_l, y_l], init=True)
     print("unlabeled training:")
-    train_neural_network(FLAGS['num_iterations'], unlabeled, [x_u, y_u])
+    train_neural_network(FLAGS['num_iterations'], loss_function=unlabeled, input_data=[x_u, y_u])
     # train unlabeled
     test_reconstruction()
     print_test_accuracy()
