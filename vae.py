@@ -145,28 +145,41 @@ def generator_network():
     return x_hat
 
 
-def train_neural_network(num_iterations):
+def train_neural_network(num_iterations, loss_function, input_data):
+    optimizer = tf.train.AdamOptimizer().minimize(loss_function)
     session.run(tf.global_variables_initializer())
     # Ensure we update the global variable rather than a local copy.
     total_iterations = 0
 
-    # Start-time used for printing time-usage below.
     start_time = time.time()
+    x_images = input_data[0]
+    y_labels = input_data[1]
+    num_images = x_images.shape[0]
+    i = 0
 
-    for step in range(num_iterations):
+    for epoch in range(num_iterations):
+        if i == num_images:
+            i = 0
+        # The ending index for the next batch is denoted j.
+        j = min(i + FLAGS['train_batch_size'], num_images)
 
-        total_iterations += 1
+        # Get the images from the test-set between index i and j.
+        x_batch = x_images[i:j, :]
 
-        x_batch, y_true_batch = data.train.next_batch(FLAGS['train_batch_size'])
+        # Get the associated labels.
+        y_true_batch = y_labels[i:j, :]
+
         feed_dict_train = {x: x_batch, y_true: y_true_batch}
+        summary, batch_loss, _ = session.run([merged, loss_function, optimizer], feed_dict=feed_dict_train)
+        # Set the start-index for the next batch to the
+        # end-index of the current batch.
+        train_writer.add_summary(summary, batch_loss)
+        i = j
 
-        summary, cur_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
-        train_writer.add_summary(summary, step)
-
-        if total_iterations % 100 == 0:
+        if epoch % 100 == 0:
             # Save all variables of the TensorFlow graph to file.
             saver.save(sess=session, save_path=FLAGS['save_path'])
-            print("Optimization Iteration: {}, Training Loss: {}".format(step + 1, cur_loss))
+            print("Optimization Iteration: {}, Training Loss: {}".format(epoch + 1, batch_loss))
 
     # Ending time.
     end_time = time.time()
@@ -313,11 +326,6 @@ if __name__ == '__main__':
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
 
-    # create labeled/unlabeled split in training set
-    n_labeled = 10000
-    x_l, y_l, x_u, y_u = create_semisupervised(n_labeled)
-    print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(x_l.shape, y_l.shape, x_u.shape, y_u.shape))
-
     encoder_h_dim = 500
     decoder_h_dim = 500
     latent_dim = 50
@@ -347,11 +355,13 @@ if __name__ == '__main__':
 
     reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
 
-    loss = tf.reduce_mean(
+    labeled_loss = tf.reduce_mean(
         recognition_loss + reconstruction_loss + alpha * FLAGS['train_batch_size'] * cross_entropy_loss)
-    tf.summary.scalar('loss', loss)
+    tf.summary.scalar('labeled_loss', labeled_loss)
 
-    optimizer = tf.train.AdamOptimizer().minimize(loss)
+    unlabeled = tf.reduce_mean(
+        recognition_loss + reconstruction_loss)
+    tf.summary.scalar('unlabeled_loss', unlabeled)
 
     session = tf.Session()
 
@@ -362,9 +372,19 @@ if __name__ == '__main__':
     # Counter for total number of iterations performed so far.
     total_iterations = 0
 
+    # create labeled/unlabeled split in training set
+    n_labeled = 10000
+    x_l, y_l, x_u, y_u = create_semisupervised(n_labeled)
+    print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(x_l.shape, y_l.shape, x_u.shape, y_u.shape))
+
     ## SAVER
     saver = tf.train.Saver()
-    train_neural_network(FLAGS['num_iterations'])
+    # train labeled
+    print("labeled training:")
+    train_neural_network(FLAGS['num_iterations'], labeled_loss, [x_l, y_l])
+    print("unlabeled training:")
+    train_neural_network(FLAGS['num_iterations'], unlabeled, [x_u, y_u])
+    # train unlabeled
     test_reconstruction()
     print_test_accuracy()
 

@@ -27,7 +27,6 @@ def load_numpy_split(n_train=50000):
         result_y = [0] * num_classes
         for i in range(num_classes):
             idx_i = np.where(y_cls == i)[0]
-            print("y_cls:{}, class:{}, index_data:{}".format(y_cls, i, idx_i))
             result_x[i] = x[idx_i]
             result_y[i] = y[idx_i]
         return result_x, result_y
@@ -54,9 +53,7 @@ def create_semisupervised(n_labeled):
     y_unlabeled = [0] * n_classes
     for i in range(n_classes):
         idx = np.arange(x[i].shape[0])
-        print("idx:{}".format(idx))
         np.random.shuffle(idx)
-        print("idx shuffled:{}".format(idx))
         label_idx = idx[:n_labels_per_class]
         unlabeled_idx = idx[n_labels_per_class:]
 
