@@ -33,79 +33,115 @@ def variable_summaries(var, summary_name):
         tf.summary.histogram('histogram', var)
 
 
-##Build Model
+## Build Model
 def recognition_network():
     # Variables
-    W_encoder_h_1 = create_weights([img_size_flat, encoder_h_dim])
-    b_encoder_h_1 = create_biases([encoder_h_dim])
-    variable_summaries(W_encoder_h_1, 'W_encoder_h_1')
-    variable_summaries(b_encoder_h_1, 'b_encoder_h_1')
+    W_encoder_h_1, b_encoder_h_1 = create_h_weights('h1', 'encoder', [img_size_flat, encoder_h_dim])
+    W_encoder_h_2, b_encoder_h_2 = create_h_weights('h2', 'encoder', [encoder_h_dim, encoder_h_dim])
+    W_enconder_h_mu_z1, W_enconder_h_var_z1, b_enconder_h_mu_z1, b_enconder_h_var_z1 = create_z_weights('z_1',
+                                                                                                        [encoder_h_dim,
 
-    W_encoder_h_2 = create_weights([encoder_h_dim, encoder_h_dim])
-    b_encoder_h_2 = create_biases([encoder_h_dim])
-    variable_summaries(W_encoder_h_2, 'W_encoder_h_2')
-    variable_summaries(b_encoder_h_2, 'b_encoder_h_2')
+                                                                                                         latent_dim])
+    W_encoder_h_3, b_encoder_h_3 = create_h_weights('h3', 'encoder', [latent_dim, encoder_h_dim])
+    W_encoder_h_4, b_encoder_h_4 = create_h_weights('h4', 'encoder', [encoder_h_dim, encoder_h_dim])
 
-    W_enconder_h_mu = create_weights([encoder_h_dim, latent_dim])
-    b_enconder_h_mu = create_biases([latent_dim])
-    variable_summaries(W_enconder_h_mu, 'W_enconder_h_mu')
-    variable_summaries(b_enconder_h_mu, 'b_enconder_h_mu')
+    W_enconder_h_mu_z2, W_enconder_h_var_z2, b_enconder_h_mu_z2, b_enconder_h_var_z2 = create_z_weights('z_2',
+                                                                                                        [encoder_h_dim,
+                                                                                                         latent_dim])
 
-    W_enconder_h_var = create_weights([encoder_h_dim, latent_dim])
-    b_enconder_h_var = create_biases([latent_dim])
-    variable_summaries(W_enconder_h_var, 'W_enconder_h_var')
-    variable_summaries(b_enconder_h_var, 'b_enconder_h_var')
+    # Model
 
     # Hidden layers
-    encoder_h_1 = tf.nn.relu(tf.add(tf.matmul(x, W_encoder_h_1), b_encoder_h_1))
-    encoder_h_2 = tf.nn.relu(tf.add(tf.matmul(encoder_h_1, W_encoder_h_2), b_encoder_h_2))
+    encoder_h_1 = activated_neuron(x, W_encoder_h_1, b_encoder_h_1)
+    encoder_h_2 = activated_neuron(encoder_h_1, W_encoder_h_2, b_encoder_h_2)
 
-    # latent layer mu and var
-    encoder_logvar = tf.nn.relu(
-        tf.add(tf.matmul(encoder_h_2, W_enconder_h_var), b_enconder_h_var))  # ensure that var >0
-    encoder_mu = tf.add(tf.matmul(encoder_h_2, W_enconder_h_mu), b_enconder_h_mu)
+    # Z1 latent layer mu and var
+    encoder_logvar_z1 = activated_neuron(encoder_h_2, W_enconder_h_var_z1, b_enconder_h_var_z1)
+    encoder_mu_z1 = non_activated_neuron(encoder_h_2, W_enconder_h_mu_z1, b_enconder_h_mu_z1)
+    z_1 = draw_z(latent_dim, encoder_mu_z1, encoder_logvar_z1)
 
-    # latent layer
-    epsilon_encoder = tf.random_normal(tf.shape(latent_dim), name='epsilon')
-    std_encoder = tf.exp(0.5 * encoder_logvar)
-    z_1 = encoder_mu + tf.mul(std_encoder, epsilon_encoder)
+    # Hidden layers
+    encoder_h_3 = activated_neuron(z_1, W_encoder_h_3, b_encoder_h_3)
+    encoder_h_4 = activated_neuron(encoder_h_3, W_encoder_h_4, b_encoder_h_4)
+
+    # Z2 latent layer mu and var
+    encoder_logvar_z2 = activated_neuron(encoder_h_4, W_enconder_h_var_z2, b_enconder_h_var_z2)
+    encoder_mu_z2 = non_activated_neuron(encoder_h_4, W_enconder_h_mu_z2, b_enconder_h_mu_z2)
+    z_2 = draw_z(latent_dim, encoder_mu_z2, encoder_logvar_z2)
 
     # regularization loss
-    regularization = -0.5 * tf.reduce_sum(1 + encoder_logvar - tf.pow(encoder_mu, 2) - tf.exp(encoder_logvar),
+    regularization = -0.5 * tf.reduce_sum(1 + encoder_logvar_z2 - tf.pow(encoder_mu_z2, 2) - tf.exp(encoder_logvar_z2),
                                           reduction_indices=1)
-    # l2_loss = tf.nn.l2_loss(W_encoder_h_1) + tf.nn.l2_loss(W_encoder_h_2) + tf.nn.l2_loss(
-    # W_enconder_h_mu) + tf.nn.l2_loss(W_enconder_h_var)
 
-    return z_1, regularization
+    return z_2, regularization
+
+
+def draw_z(dim, mu, logvar):
+    epsilon_encoder = tf.random_normal(tf.shape(dim), name='epsilon')
+    std_encoder_z1 = tf.exp(0.5 * logvar)
+    z = mu + tf.mul(std_encoder_z1, epsilon_encoder)
+    return z
+
+
+def non_activated_neuron(input, Weights, biases):
+    return tf.add(tf.matmul(input, Weights), biases)
+
+
+def activated_neuron(input, Weights, biases):
+    return tf.nn.relu(tf.add(tf.matmul(input, Weights), biases))
+
+
+def create_h_weights(layer, network, shape):
+    h_vars = {}
+    W_h = 'W_' + network + '_' + layer
+    b_h = 'b_' + network + '_' + layer
+    print("layer:{}, network:{}, shape:{}".format(layer, network, shape))
+    h_vars[W_h] = create_weights(shape)
+    h_vars[b_h] = create_biases([shape[1]])
+    variable_summaries(h_vars[W_h], W_h)
+    variable_summaries(h_vars[b_h], b_h)
+
+    return h_vars[W_h], h_vars[b_h]
+
+
+def create_z_weights(layer, shape):
+    print("layer:{}, z_latent, shape:{}".format(layer, shape))
+    z_vars = {}
+    network = 'encoder'
+
+    # Mean
+    W_z_mu = 'W_' + network + '_h_mu_' + layer
+    b_z_mu = 'b_' + network + '_h_mu_' + layer
+    z_vars[W_z_mu] = create_weights(shape)
+    z_vars[b_z_mu] = create_biases([shape[1]])
+    variable_summaries(z_vars[W_z_mu], W_z_mu)
+    variable_summaries(z_vars[b_z_mu], b_z_mu)
+
+    # Variance
+    W_z_var = 'W_' + network + '_h_var_' + layer
+    b_z_var = 'b_' + network + '_h_var_' + layer
+    z_vars[W_z_var] = create_weights(shape)
+    z_vars[b_z_var] = create_biases([shape[1]])
+    variable_summaries(z_vars[W_z_var], W_z_var)
+    variable_summaries(z_vars[b_z_var], b_z_var)
+
+    return z_vars[W_z_mu], z_vars[W_z_var], z_vars[b_z_mu], z_vars[b_z_var]
 
 
 def generator_network():
     # Variables
-    W_decoder_h_1 = create_weights([latent_dim, decoder_h_dim])
-    b_decoder_h_1 = create_biases([decoder_h_dim])
-    variable_summaries(W_decoder_h_1, 'W_decoder_h_1')
-    variable_summaries(b_decoder_h_1, 'b_decoder_h_1')
+    W_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder', [latent_dim, decoder_h_dim])
+    W_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder', [decoder_h_dim, decoder_h_dim])
+    W_decoder_r, b_decoder_r = create_h_weights('r', 'decoder', [decoder_h_dim, img_size_flat])
 
-    W_decoder_h_2 = create_weights([decoder_h_dim, decoder_h_dim])
-    b_decoder_h_2 = create_biases([decoder_h_dim])
-    variable_summaries(W_decoder_h_2, 'W_decoder_h_2')
-    variable_summaries(b_decoder_h_2, 'b_decoder_h_2')
-
-    W_decoder_r = create_weights([decoder_h_dim, img_size_flat])
-    b_decoder_r = create_biases([img_size_flat])
-    variable_summaries(W_decoder_r, 'W_decoder_r')
-    variable_summaries(b_decoder_r, 'b_decoder_r')
-
+    # Model
     # Decoder hidden layer
-    decoder_h_1 = tf.nn.relu(tf.add(tf.matmul(z, W_decoder_h_1), b_decoder_h_1))
-    decoder_h_2 = tf.nn.relu(tf.add(tf.matmul(decoder_h_1, W_decoder_h_2), b_decoder_h_2))
+    decoder_h_1 = activated_neuron(z, W_decoder_h_1, b_decoder_h_1)
+    decoder_h_2 = activated_neuron(decoder_h_1, W_decoder_h_2, b_decoder_h_2)
 
     # Reconstrunction layer
-    x_hat = tf.add(tf.matmul(decoder_h_2, W_decoder_r), b_decoder_r)
+    x_hat = non_activated_neuron(decoder_h_2, W_decoder_r, b_decoder_r)
     tf.summary.image('x_hat', tf.reshape(x_hat[0], [1, 28, 28, 1]))
-
-    # l2_loss = tf.nn.l2_loss(W_decoder_h_1) + tf.nn.l2_loss(W_decoder_h_2) + tf.nn.l2_loss(W_decoder_r)
-
     return x_hat
 
 
@@ -311,7 +347,8 @@ if __name__ == '__main__':
 
     reconstruction_loss = tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
 
-    loss = tf.reduce_mean(recognition_loss + reconstruction_loss + alpha * FLAGS['train_batch_size'] * cross_entropy_loss)
+    loss = tf.reduce_mean(
+        recognition_loss + reconstruction_loss + alpha * FLAGS['train_batch_size'] * cross_entropy_loss)
     tf.summary.scalar('loss', loss)
 
     optimizer = tf.train.AdamOptimizer().minimize(loss)
