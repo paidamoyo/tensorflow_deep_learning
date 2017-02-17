@@ -182,7 +182,7 @@ def generator_network(z):
     decoder_h_1 = activated_neuron(z, W_decoder_h_1, b_decoder_h_1)
     decoder_h_2 = activated_neuron(decoder_h_1, W_decoder_h_2, b_decoder_h_2)
 
-    # Reconstrunction layer
+    # Reconstruction layer
     x_hat = non_activated_neuron(decoder_h_2, W_decoder_r, b_decoder_r)
     tf.summary.image('x_hat', tf.reshape(x_hat[0], [1, 28, 28, 1]))
     return x_hat
@@ -263,11 +263,6 @@ def preprocess_train_data():
 
 
 def reconstruct(x_test):
-    # Encoder Model
-    z, recognition_loss = labeled_recognition_network()
-
-    # Decoder Model
-    x_hat = generator_network(z)
     return session.run(x_hat, feed_dict={x: x_test})
 
 
@@ -389,23 +384,19 @@ def print_test_accuracy():
 
 
 def compute_labeled_loss():
-    cross_entropy_loss, recognition_loss, x_hat, _ = labeled_vars()
-    loss = tf.reduce_mean(
-        recognition_loss + reconstrunction_loss(x_hat) + FLAGS['alpha'] * FLAGS[
-            'train_batch_size'] * cross_entropy_loss)
-    tf.summary.scalar('labeled_loss', loss)
-
-    return loss
-
-
-def labeled_vars():
+    global x_hat
     # Encoder Model
     z, recognition_loss = labeled_recognition_network()
     # Decoder Model
     x_hat = generator_network(z)
     # MLP Classification Network
     cross_entropy_loss, y_pred_cls = mlp_classifier(z)
-    return cross_entropy_loss, recognition_loss, x_hat, y_pred_cls
+    loss = tf.reduce_mean(
+        recognition_loss + reconstruction_loss(x_hat) + FLAGS['alpha'] * FLAGS[
+            'train_batch_size'] * cross_entropy_loss)
+    tf.summary.scalar('labeled_loss', loss)
+
+    return loss
 
 
 def compute_unlabeled_loss():
@@ -413,14 +404,13 @@ def compute_unlabeled_loss():
     z, recognition_loss = un_labeled_recognition_network()
 
     # Decoder Model
-    x_hat = generator_network(z)
     loss = tf.reduce_mean(
-        recognition_loss + reconstrunction_loss(x_hat))
+        recognition_loss + reconstruction_loss(generator_network(z)))
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
 
-def reconstrunction_loss(x_hat):
+def reconstruction_loss(x_hat):
     return tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
 
 
@@ -474,7 +464,7 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
 
     train_neural_network(FLAGS['num_iterations'])
-    test_reconstruction()
     print_test_accuracy()
+    test_reconstruction()
 
     session.close()
