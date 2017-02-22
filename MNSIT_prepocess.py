@@ -45,7 +45,7 @@ def create_semisupervised(n_labeled):
 
     if n_labeled % n_classes != 0: raise (
         "n_labeled (wished number of labeled samples) not divisible by n_classes (number of classes)")
-    n_labels_per_class = n_labeled / n_classes
+    n_labels_per_class = int(n_labeled / n_classes)
     print("n_labels_per_class:{}".format(n_labels_per_class))
     x_labeled = [0] * n_classes
     x_unlabeled = [0] * n_classes

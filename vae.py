@@ -116,13 +116,13 @@ def un_labeled_recognition_network():
 
 def calculate_regularization_loss(encoder_logvar_z2, encoder_mu_z2):
     return -0.5 * tf.reduce_sum(1 + encoder_logvar_z2 - tf.pow(encoder_mu_z2, 2) - tf.exp(encoder_logvar_z2),
-                                reduction_indices=1)
+                                axis=1)
 
 
 def draw_z(dim, mu, logvar):
     epsilon_encoder = tf.random_normal(tf.shape(dim), name='epsilon')
     std_encoder_z1 = tf.exp(0.5 * logvar)
-    z = mu + tf.mul(std_encoder_z1, epsilon_encoder)
+    z = mu + tf.multiply(std_encoder_z1, epsilon_encoder)
     return z
 
 
@@ -300,7 +300,7 @@ def mlp_classifier(latent_x):
 
     logits = tf.matmul(latent_x, W_mlp_h1) + b_mlp_h1
     y_pred = tf.nn.softmax(logits)
-    y_pred_cls = tf.argmax(y_pred, dimension=1)
+    y_pred_cls = tf.argmax(y_pred, axis=1)
 
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
                                                             labels=y_true)
@@ -411,7 +411,7 @@ def compute_unlabeled_loss():
 
 
 def reconstruction_loss(x_hat):
-    return tf.reduce_sum(tf.squared_difference(x_hat, x), reduction_indices=1)
+    return tf.reduce_sum(tf.squared_difference(x_hat, x), axis=1)
 
 
 if __name__ == '__main__':
@@ -445,7 +445,7 @@ if __name__ == '__main__':
     x = tf.placeholder(tf.float32, shape=[None, img_size_flat], name='x')
 
     y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
-    y_true_cls = tf.argmax(y_true, dimension=1)
+    y_true_cls = tf.argmax(y_true, axis=1)
 
     labeled_loss = compute_labeled_loss()
 
