@@ -210,11 +210,11 @@ def train_neural_network(num_iterations):
             idx_unlabeled = j
 
         if (epoch % 100 == 0) or (epoch == (num_iterations - 1)):
-            # Save all variables of the TensorFlow graph to file.
-            saver.save(sess=session, save_path=FLAGS['save_path'])
             # Calculate the accuracy
             acc_validation, _ = validation_accuracy()
             if acc_validation > best_validation_accuracy:
+                # Save  Best Perfoming all variables of the TensorFlow graph to file.
+                saver.save(sess=session, save_path=FLAGS['save_path'])
                 # update best validation accuracy
                 best_validation_accuracy = acc_validation
                 last_improvement = epoch
@@ -455,7 +455,7 @@ if __name__ == '__main__':
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
         'latent_dim': 50,
-        'require_improvement': 500
+        'require_improvement': 1000
     }
 
     np.random.seed(FLAGS['seed'])
