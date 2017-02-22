@@ -190,6 +190,8 @@ def generator_network(z):
 
 def train_neural_network(num_iterations):
     session.run(tf.global_variables_initializer())
+    best_validation_accuracy = 0
+    last_improvement = 0
 
     start_time = time.time()
     x_l, y_l, x_u, y_u = preprocess_train_data()
@@ -207,10 +209,27 @@ def train_neural_network(num_iterations):
             batch_loss, j = train_batch(idx_unlabeled, x_u, y_u, unlabeled_loss, unlabeled_optimizer)
             idx_unlabeled = j
 
-        if epoch % 100 == 0:
+        if (epoch % 100 == 0) or (epoch == (num_iterations - 1)):
             # Save all variables of the TensorFlow graph to file.
             saver.save(sess=session, save_path=FLAGS['save_path'])
-            print("Optimization Iteration: {}, Training Loss: {}".format(epoch + 1, batch_loss))
+            # Calculate the accuracy
+            acc_validation, _ = validation_accuracy()
+            if acc_validation > best_validation_accuracy:
+                # update best validation accuracy
+                best_validation_accuracy = acc_validation
+                last_improvement = num_iterations
+                improved_str = '*'
+            else:
+                improved_str = ''
+
+            print("Optimization Iteration: {}, Training Loss: {},  Validation Acc:{}, {}".format(epoch + 1, batch_loss,
+                                                                                                 acc_validation,
+                                                                                                 improved_str))
+        if epoch - last_improvement > FLAGS['require_improvement']:
+            print("No improvement found in a while, stopping optimization.")
+
+            # Break out from the for-loop.
+            break
 
     # Ending time.
     end_time = time.time()
@@ -366,6 +385,13 @@ def plot_confusion_matrix(cls_pred):
     plt.matshow(cm)
 
 
+def validation_accuracy():
+    correct, _ = predict_cls(images=data.validation.images,
+                             labels=data.validation.labels,
+                             cls_true=convert_labels_to_cls(data.validation.labels))
+    return cls_accuracy(correct)
+
+
 def print_test_accuracy():
     correct, cls_pred = predict_cls(images=data.test.images,
                                     labels=data.test.labels,
@@ -428,7 +454,8 @@ if __name__ == '__main__':
         'alpha': 0.1,
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
-        'latent_dim': 50
+        'latent_dim': 50,
+        'require_improvement': 1000
     }
 
     np.random.seed(FLAGS['seed'])
