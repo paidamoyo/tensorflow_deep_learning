@@ -217,7 +217,7 @@ def train_neural_network(num_iterations):
             if acc_validation > best_validation_accuracy:
                 # update best validation accuracy
                 best_validation_accuracy = acc_validation
-                last_improvement = num_iterations
+                last_improvement = epoch
                 improved_str = '*'
             else:
                 improved_str = ''
@@ -455,7 +455,7 @@ if __name__ == '__main__':
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
         'latent_dim': 50,
-        'require_improvement': 1000
+        'require_improvement': 500
     }
 
     np.random.seed(FLAGS['seed'])
