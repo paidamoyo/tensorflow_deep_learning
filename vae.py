@@ -379,7 +379,8 @@ def compute_labeled_loss():
     # logpx, logpz, logqz, gv_labeled, gw_labeled
 
     # Reweight gu_labeled and logqy
-    beta = FLAGS['alpha'] * (1.0 * FLAGS['train_batch_size'] / FLAGS['n_labeled'])
+    # beta = FLAGS['alpha'] * (1.0 * FLAGS['train_batch_size'] / FLAGS['n_labeled'])
+    beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
 
     cross_entropy_loss, y_pred_cls = mlp_classifier(z)
     weighted_classification_loss = beta * cross_entropy_loss
@@ -401,7 +402,7 @@ def compute_unlabeled_loss():
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
     loss = tf.reduce_mean(
-        weighted_loss)
+        weighted_loss + entropy)
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
