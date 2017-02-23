@@ -427,7 +427,7 @@ def compute_labeled_loss():
 
 def compute_unlabeled_loss():
     # Encoder Model
-    z, recognition_loss = un_labeled_recognition_network()
+    z, recognition_loss = labeled_recognition_network()
 
     # Decoder Model
     loss = tf.reduce_mean(
