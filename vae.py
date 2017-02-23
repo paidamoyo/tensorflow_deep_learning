@@ -168,10 +168,12 @@ def train_neural_network(num_iterations):
         if np.random.rand() < 0.5:
             batch_loss, j = train_batch(idx_labeled, x_l, y_l, labeled_loss, labeled_optimizer)
             idx_labeled = j
+            loss_string = "LABELED"
 
         else:
             batch_loss, j = train_batch(idx_unlabeled, x_u, y_u, unlabeled_loss, unlabeled_optimizer)
             idx_unlabeled = j
+            loss_string = "UNLABELED"
 
         if (epoch % 100 == 0) or (epoch == (num_iterations - 1)):
             # Calculate the accuracy
@@ -186,9 +188,11 @@ def train_neural_network(num_iterations):
             else:
                 improved_str = ''
 
-            print("Optimization Iteration: {}, Training Loss: {},  Validation Acc:{}, {}".format(epoch + 1, batch_loss,
-                                                                                                 acc_validation,
-                                                                                                 improved_str))
+            print("Optimization Iteration: {}, {} Training Loss: {},  Validation Acc:{}, {}".format(epoch + 1,
+                                                                                                    loss_string,
+                                                                                                    batch_loss,
+                                                                                                    acc_validation,
+                                                                                                    improved_str))
         if epoch - last_improvement > FLAGS['require_improvement']:
             print("No improvement found in a while, stopping optimization.")
 
