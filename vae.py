@@ -402,7 +402,7 @@ def compute_unlabeled_loss():
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
     loss = tf.reduce_mean(
-        weighted_loss + entropy)
+        weighted_loss)
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
