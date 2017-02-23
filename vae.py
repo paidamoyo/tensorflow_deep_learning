@@ -379,7 +379,7 @@ def compute_labeled_loss():
     # logpx, logpz, logqz, gv_labeled, gw_labeled
 
     # Reweight gu_labeled and logqy
-    beta = FLAGS['alpha'] * FLAGS['n_labeled']
+    beta = FLAGS['alpha'] * (1.0 * FLAGS['train_batch_size'] / FLAGS['n_labeled'])
 
     cross_entropy_loss, y_pred_cls = mlp_classifier(z)
     weighted_classification_loss = beta * cross_entropy_loss
@@ -396,12 +396,12 @@ def compute_unlabeled_loss():
     # Approach where outer expectation (over q(z|x,y)) is taken as explicit sum (instead of sampling)
     # logpx, logpz, logqz, _gv, _gw = model.dL_dw(v, w, {'x':x_minibatch['x'],'y':new_y}, eps)
     # Decoder Model
-    cross_entropy, y_dist, logits = infer_y()
+    entropy, pi = infer_y()
     vae_loss = recognition_loss + reconstruction_loss()
-    predi_cls = tf.argmax(y_dist, axis=1)
-    weighted_loss = tf.losses.sparse_softmax_cross_entropy(predi_cls, logits, vae_loss)
+    weighted_loss = vae_loss
+    print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
     loss = tf.reduce_mean(
-        weighted_loss)
+        weighted_loss + entropy)
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
@@ -420,10 +420,10 @@ def infer_y():
 
     # Pi latent layer mu and var
     logits = non_activated_neuron(encoder_p_4, W_encoder_pi_4, b_encoder_pi_4)
-    y_dist = tf.nn.softmax(logits)
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
-                                                            labels=y_dist)
-    return cross_entropy, y_dist, logits
+    pi = tf.nn.softmax(logits)
+    entropy = tf.reduce_sum(tf.multiply(pi, tf.log(pi)), axis=1)
+
+    return entropy, pi
 
 
 def reconstruction_loss():
