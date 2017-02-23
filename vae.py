@@ -402,7 +402,7 @@ def compute_unlabeled_loss():
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
     loss = tf.reduce_mean(
-        weighted_loss)
+        weighted_loss + entropy)
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
@@ -422,7 +422,7 @@ def infer_y():
     # Pi latent layer mu and var
     logits = non_activated_neuron(encoder_p_4, W_encoder_pi_4, b_encoder_pi_4)
     pi = tf.nn.softmax(logits)
-    entropy = tf.reduce_sum(tf.multiply(pi, tf.log(pi)), axis=1)
+    entropy = tf.einsum('ij,ij <-i', pi, tf.log(pi))
 
     return entropy, pi
 
