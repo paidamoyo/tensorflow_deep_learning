@@ -33,7 +33,7 @@ def variable_summaries(var, summary_name):
         tf.summary.histogram('histogram', var)
 
 
-def shared_recognition_model():
+def generate_z1():
     # Variables
     W_encoder_h_1, b_encoder_h_1 = create_h_weights('h1', 'encoder', [img_size_flat, FLAGS['encoder_h_dim']])
     W_encoder_h_2, b_encoder_h_2 = create_h_weights('h2', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
@@ -53,7 +53,7 @@ def shared_recognition_model():
 
 
 ## Build Model
-def labeled_recognition_network():
+def recognition_network():
     # Variables
     W_encoder_h_3, b_encoder_h_3 = create_h_weights('h3', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
     W_encoder_h_4, b_encoder_h_4 = create_h_weights('h4', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
@@ -62,7 +62,7 @@ def labeled_recognition_network():
     b_enconder_h_var_z2 = create_z_weights('z_2', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
 
     # Model
-    z_1 = shared_recognition_model()
+    z_1 = generate_z1()
     # Hidden layers
     encoder_h_3 = activated_neuron(z_1, W_encoder_h_3, b_encoder_h_3)
     encoder_h_4 = activated_neuron(encoder_h_3, W_encoder_h_4, b_encoder_h_4)
@@ -70,42 +70,6 @@ def labeled_recognition_network():
     # Z2 latent layer mu and var
     encoder_logvar_z2 = activated_neuron(encoder_h_4, W_enconder_h_var_z2, b_enconder_h_var_z2)
     encoder_mu_z2 = non_activated_neuron(encoder_h_4, W_enconder_h_mu_z2, b_enconder_h_mu_z2)
-    z_2 = draw_z(FLAGS['latent_dim'], encoder_mu_z2, encoder_logvar_z2)
-
-    # regularization loss
-    regularization = calculate_regularization_loss(encoder_logvar_z2, encoder_mu_z2)
-
-    return z_2, regularization
-
-
-def un_labeled_recognition_network():
-    # Variables
-    W_encoder_h_3, b_encoder_h_3 = create_h_weights('u_h3', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
-    W_encoder_h_4, b_encoder_h_4 = create_h_weights('u_h4', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
-
-    W_encoder_pi, b_encoder_pi = create_h_weights('pi', 'encoder', [FLAGS['encoder_h_dim'], num_classes])
-    W_encoder_mu_h_1, b_encoder_mu_h_1 = create_h_weights('mu_h_1', 'encoder', [num_classes, FLAGS['encoder_h_dim']])
-    W_encoder_mu_h_2, b_encoder_mu_h_2 = create_h_weights('mu_h_2', 'encoder',
-                                                          [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
-
-    W_enconder_h_mu_z2, W_enconder_h_var_z2, b_enconder_h_mu_z2, \
-    b_enconder_h_var_z2 = create_z_weights('u_z_2', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
-
-    # Model
-    z_1 = shared_recognition_model()
-
-    # Hidden layers
-    encoder_h_3 = activated_neuron(z_1, W_encoder_h_3, b_encoder_h_3)
-    encoder_h_4 = activated_neuron(encoder_h_3, W_encoder_h_4, b_encoder_h_4)
-
-    encoder_pi = tf.nn.log_softmax(non_activated_neuron(encoder_h_4, W_encoder_pi, b_encoder_pi))
-    encoder_mu_h_1 = activated_neuron(encoder_pi, W_encoder_mu_h_1, b_encoder_mu_h_1)
-    encoder_mu_h_2 = activated_neuron(encoder_mu_h_1, W_encoder_mu_h_2, b_encoder_mu_h_2)
-
-    # Z2 latent layer mu and var
-    # Z2 latent layer mu and var
-    encoder_logvar_z2 = activated_neuron(encoder_h_4, W_enconder_h_var_z2, b_enconder_h_var_z2)
-    encoder_mu_z2 = non_activated_neuron(encoder_mu_h_2, W_enconder_h_mu_z2, b_enconder_h_mu_z2)
     z_2 = draw_z(FLAGS['latent_dim'], encoder_mu_z2, encoder_logvar_z2)
 
     # regularization loss
@@ -410,33 +374,35 @@ def print_test_accuracy():
 
 
 def compute_labeled_loss():
-    global x_hat
-    # Encoder Model
-    z, recognition_loss = labeled_recognition_network()
-    # Decoder Model
-    x_hat = generator_network(z)
-    # MLP Classification Network
+    # === Get gradient for labeled data
+    # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
+    # logpx, logpz, logqz, gv_labeled, gw_labeled
+
+    # Reweight gu_labeled and logqy
+    beta = FLAGS['alpha'] / (1. - FLAGS['alpha']) * (1. * FLAGS['n_labeled'] / FLAGS['n_labeled'])
+
     cross_entropy_loss, y_pred_cls = mlp_classifier(z)
+    weighted_classification_loss = beta * cross_entropy_loss
     loss = tf.reduce_mean(
-        recognition_loss + reconstruction_loss(x_hat) + FLAGS['alpha'] * FLAGS[
-            'train_batch_size'] * cross_entropy_loss)
+        recognition_loss + reconstruction_loss() + weighted_classification_loss)
     tf.summary.scalar('labeled_loss', loss)
 
     return loss
 
 
 def compute_unlabeled_loss():
-    # Encoder Model
-    z, recognition_loss = labeled_recognition_network()
-
+    # === Get gradient for unlabeled data
+    # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
+    # Approach where outer expectation (over q(z|x,y)) is taken as explicit sum (instead of sampling)
+    # logpx, logpz, logqz, _gv, _gw = model.dL_dw(v, w, {'x':x_minibatch['x'],'y':new_y}, eps)
     # Decoder Model
     loss = tf.reduce_mean(
-        recognition_loss + reconstruction_loss(generator_network(z)))
+        recognition_loss + reconstruction_loss())
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
 
-def reconstruction_loss(x_hat):
+def reconstruction_loss():
     return tf.reduce_sum(tf.squared_difference(x_hat, x), axis=1)
 
 
@@ -455,7 +421,7 @@ if __name__ == '__main__':
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
         'latent_dim': 50,
-        'require_improvement': 1000
+        'require_improvement': 2000
     }
 
     np.random.seed(FLAGS['seed'])
@@ -473,6 +439,12 @@ if __name__ == '__main__':
 
     y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
     y_true_cls = tf.argmax(y_true, axis=1)
+
+    # Encoder Model
+    z, recognition_loss = recognition_network()
+    # Decoder Model
+    x_hat = generator_network(z)
+    # MLP Classification Network
 
     labeled_loss = compute_labeled_loss()
 
