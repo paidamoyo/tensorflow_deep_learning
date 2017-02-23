@@ -450,7 +450,7 @@ if __name__ == '__main__':
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
         'latent_dim': 50,
-        'require_improvement': 10000,
+        'require_improvement': 1500,
         'n_total': 50000
     }
 
