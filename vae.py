@@ -450,7 +450,7 @@ if __name__ == '__main__':
         'test_batch_size': 256,
         'num_iterations': 10000,
         'seed': 12000,
-        'n_labeled': 3000,
+        'n_labeled': 100,
         'alpha': 0.1,
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
