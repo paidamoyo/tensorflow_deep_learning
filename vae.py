@@ -398,7 +398,7 @@ def compute_unlabeled_loss():
     # Decoder Model
     entropy, pi = infer_y()
     vae_loss = recognition_loss + reconstruction_loss()
-    weighted_loss = vae_loss
+    weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
     loss = tf.reduce_mean(
         weighted_loss + entropy)
