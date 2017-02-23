@@ -379,7 +379,7 @@ def compute_labeled_loss():
     # logpx, logpz, logqz, gv_labeled, gw_labeled
 
     # Reweight gu_labeled and logqy
-    beta = FLAGS['alpha'] * (1. * FLAGS['n_total'] / FLAGS['n_labeled'])
+    beta = FLAGS['alpha'] * FLAGS['n_labeled']
 
     cross_entropy_loss, y_pred_cls = mlp_classifier(z)
     weighted_classification_loss = beta * cross_entropy_loss
@@ -421,7 +421,7 @@ if __name__ == '__main__':
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
         'latent_dim': 50,
-        'require_improvement': 2000,
+        'require_improvement': 1000,
         'n_total': 50000
     }
 
