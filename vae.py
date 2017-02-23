@@ -399,7 +399,7 @@ def compute_unlabeled_loss():
     cross_entropy, y_dist, logits = infer_y()
     vae_loss = recognition_loss + reconstruction_loss()
     predi_cls = tf.argmax(y_dist, axis=1)
-    weighted_loss = tf.losses.sparse_softmax_cross_entropy(predi_cls, y_dist, vae_loss)
+    weighted_loss = tf.losses.sparse_softmax_cross_entropy(predi_cls, logits, vae_loss)
     loss = tf.reduce_mean(
         weighted_loss)
     tf.summary.scalar('unlabeled_loss', loss)
