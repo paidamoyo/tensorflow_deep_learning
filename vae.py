@@ -135,7 +135,7 @@ def create_z_weights(layer, shape):
     return z_vars[W_z_mu], z_vars[W_z_var], z_vars[b_z_mu], z_vars[b_z_var]
 
 
-def generator_network(z):
+def generator_network():
     # Variables
     W_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
     W_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
@@ -396,10 +396,34 @@ def compute_unlabeled_loss():
     # Approach where outer expectation (over q(z|x,y)) is taken as explicit sum (instead of sampling)
     # logpx, logpz, logqz, _gv, _gw = model.dL_dw(v, w, {'x':x_minibatch['x'],'y':new_y}, eps)
     # Decoder Model
+    cross_entropy, y_dist, logits = infer_y()
+    vae_loss = recognition_loss + reconstruction_loss()
+    predi_cls = tf.argmax(y_dist, axis=1)
+    weighted_loss = tf.losses.sparse_softmax_cross_entropy(predi_cls, logits, vae_loss)
     loss = tf.reduce_mean(
-        recognition_loss + reconstruction_loss())
+        weighted_loss + cross_entropy)
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
+
+
+def infer_y():
+    # Variables
+    W_encoder_h_3, b_encoder_h_3 = create_h_weights('p3', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
+    W_encoder_h_4, b_encoder_h_4 = create_h_weights('p4', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+    W_encoder_pi_4, b_encoder_pi_4 = create_h_weights('prob', 'encoder', [FLAGS['encoder_h_dim'], num_classes])
+
+    # Model
+    z_1 = generate_z1()
+    # Hidden layers
+    encoder_p_3 = activated_neuron(z_1, W_encoder_h_3, b_encoder_h_3)
+    encoder_p_4 = activated_neuron(encoder_p_3, W_encoder_h_4, b_encoder_h_4)
+
+    # Pi latent layer mu and var
+    logits = non_activated_neuron(encoder_p_4, W_encoder_pi_4, b_encoder_pi_4)
+    y_dist = tf.nn.softmax(logits)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                                                            labels=y_dist)
+    return cross_entropy, y_dist, logits
 
 
 def reconstruction_loss():
@@ -444,7 +468,7 @@ if __name__ == '__main__':
     # Encoder Model
     z, recognition_loss = recognition_network()
     # Decoder Model
-    x_hat = generator_network(z)
+    x_hat = generator_network()
     # MLP Classification Network
 
     labeled_loss = compute_labeled_loss()
