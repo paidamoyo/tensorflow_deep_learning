@@ -438,7 +438,7 @@ if __name__ == '__main__':
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
         'latent_dim': 50,
-        'require_improvement': 1500,
+        'require_improvement': 2000,
         'n_total': 50000,
         'learning_rate': 3e-4,
         'beta1': 0.9,
