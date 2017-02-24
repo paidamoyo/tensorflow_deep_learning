@@ -451,7 +451,10 @@ if __name__ == '__main__':
         'decoder_h_dim': 500,
         'latent_dim': 50,
         'require_improvement': 1500,
-        'n_total': 50000
+        'n_total': 50000,
+        'learning_rate': 3e-4,
+        'beta1': 0.9,
+        'beta2': 0.999
     }
 
     np.random.seed(FLAGS['seed'])
@@ -486,8 +489,12 @@ if __name__ == '__main__':
     train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
                                          session.graph)
 
-    labeled_optimizer = tf.train.AdamOptimizer().minimize(labeled_loss)
-    unlabeled_optimizer = tf.train.AdamOptimizer().minimize(unlabeled_loss)
+    labeled_optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
+                                               beta2=FLAGS['beta2']).minimize(
+        labeled_loss)
+    unlabeled_optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
+                                                 beta2=FLAGS['beta2']).minimize(
+        unlabeled_loss)
 
     ## SAVER
     saver = tf.train.Saver()
