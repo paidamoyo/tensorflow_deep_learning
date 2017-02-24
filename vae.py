@@ -282,18 +282,22 @@ def test_reconstruction():
     plot_images(x_test, x_reconstruct)
 
 
-def mlp_classifier(latent_x):
+def mlp_classifier():
     global y_pred_cls
-    W_mlp_h1 = create_weights([FLAGS['latent_dim'], num_classes])
-    b_mlp_h1 = create_biases([num_classes])
-
-    logits = tf.matmul(latent_x, W_mlp_h1) + b_mlp_h1
-    y_pred = tf.nn.softmax(logits)
+    logits, y_pred = predict_y()
     y_pred_cls = tf.argmax(y_pred, axis=1)
 
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
                                                             labels=y_true)
     return cross_entropy, y_pred_cls
+
+
+def predict_y():
+    W_mlp_h1 = create_weights([FLAGS['latent_dim'], num_classes])
+    b_mlp_h1 = create_biases([num_classes])
+    logits = tf.matmul(z, W_mlp_h1) + b_mlp_h1
+    y_pred = tf.nn.softmax(logits)
+    return logits, y_pred
 
 
 def predict_cls(images, labels, cls_true):
@@ -388,7 +392,7 @@ def compute_labeled_loss():
     # beta = FLAGS['alpha'] * (1.0 * FLAGS['train_batch_size'] / FLAGS['n_labeled'])
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
 
-    cross_entropy_loss, y_pred_cls = mlp_classifier(z)
+    cross_entropy_loss, y_pred_cls = mlp_classifier()
     weighted_classification_loss = beta * cross_entropy_loss
     loss = tf.reduce_mean(
         recognition_loss + reconstruction_loss() + weighted_classification_loss)
@@ -403,34 +407,14 @@ def compute_unlabeled_loss():
     # Approach where outer expectation (over q(z|x,y)) is taken as explicit sum (instead of sampling)
     # logpx, logpz, logqz, _gv, _gw = model.dL_dw(v, w, {'x':x_minibatch['x'],'y':new_y}, eps)
     # Decoder Model
-    entropy, pi = infer_y()
+    _, pi = predict_y()
+    entropy = tf.einsum('ij,ij->i', pi, tf.log(pi))
     vae_loss = recognition_loss + reconstruction_loss()
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
-    loss = tf.reduce_mean(
-        weighted_loss + entropy)
+    loss = tf.reduce_mean(weighted_loss)
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
-
-
-def infer_y():
-    # Variables
-    W_encoder_h_3, b_encoder_h_3 = create_h_weights('p3', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
-    W_encoder_h_4, b_encoder_h_4 = create_h_weights('p4', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
-    W_encoder_pi_4, b_encoder_pi_4 = create_h_weights('prob', 'encoder', [FLAGS['encoder_h_dim'], num_classes])
-
-    # Model
-    z_1 = generate_z1()
-    # Hidden layers
-    encoder_p_3 = activated_neuron(z_1, W_encoder_h_3, b_encoder_h_3)
-    encoder_p_4 = activated_neuron(encoder_p_3, W_encoder_h_4, b_encoder_h_4)
-
-    # Pi latent layer mu and var
-    logits = non_activated_neuron(encoder_p_4, W_encoder_pi_4, b_encoder_pi_4)
-    pi = tf.nn.softmax(logits)
-    entropy = tf.einsum('ij,ij->i', pi, tf.log(pi))
-
-    return entropy, pi
 
 
 def reconstruction_loss():
