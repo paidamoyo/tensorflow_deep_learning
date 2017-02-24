@@ -434,9 +434,9 @@ def infer_y():
 
 
 def reconstruction_loss():
-    exp_term = tf.squared_difference(x_hat, x) / (2.0 * tf.exp(x_logvar))
-    reconstruction_1D = tf.add(0.5 * x_logvar, exp_term)
-    return tf.reduce_sum(reconstruction_1D, 1)
+    # exp_term = tf.squared_difference(x_hat, x) / (2.0 * tf.exp(x_logvar))
+    # reconstruction_1D = tf.add(0.5 * x_logvar, exp_term)
+    return tf.reduce_sum(tf.squared_difference(x_hat, x), 1)
 
 
 if __name__ == '__main__':
