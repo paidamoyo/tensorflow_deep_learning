@@ -45,7 +45,7 @@ def generate_z1():
     encoder_h_2 = activated_neuron(encoder_h_1, W_encoder_h_2, b_encoder_h_2)
 
     # Z1 latent layer mu and var
-    encoder_logvar_z1 = activated_neuron(encoder_h_2, W_enconder_h_var_z1, b_enconder_h_var_z1)
+    encoder_logvar_z1 = non_activated_neuron(encoder_h_2, W_enconder_h_var_z1, b_enconder_h_var_z1)
     encoder_mu_z1 = non_activated_neuron(encoder_h_2, W_enconder_h_mu_z1, b_enconder_h_mu_z1)
     z_1 = draw_z(FLAGS['latent_dim'], encoder_mu_z1, encoder_logvar_z1)
 
@@ -68,7 +68,7 @@ def recognition_network():
     encoder_h_4 = activated_neuron(encoder_h_3, W_encoder_h_4, b_encoder_h_4)
 
     # Z2 latent layer mu and var
-    encoder_logvar_z2 = activated_neuron(encoder_h_4, W_enconder_h_var_z2, b_enconder_h_var_z2)
+    encoder_logvar_z2 = non_activated_neuron(encoder_h_4, W_enconder_h_var_z2, b_enconder_h_var_z2)
     encoder_mu_z2 = non_activated_neuron(encoder_h_4, W_enconder_h_mu_z2, b_enconder_h_mu_z2)
     z_2 = draw_z(FLAGS['latent_dim'], encoder_mu_z2, encoder_logvar_z2)
 
