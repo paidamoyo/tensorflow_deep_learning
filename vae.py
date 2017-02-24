@@ -139,7 +139,8 @@ def generator_network():
     # Variables
     W_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
     W_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
-    W_decoder_r, b_decoder_r = create_h_weights('r', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
+    W_decoder_mu, b_decoder_mu = create_h_weights('mu', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
+    W_decoder_var, b_decoder_var = create_h_weights('var', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
 
     # Model
     # Decoder hidden layer
@@ -147,9 +148,10 @@ def generator_network():
     decoder_h_2 = activated_neuron(decoder_h_1, W_decoder_h_2, b_decoder_h_2)
 
     # Reconstruction layer
-    x_hat = non_activated_neuron(decoder_h_2, W_decoder_r, b_decoder_r)
+    x_hat = non_activated_neuron(decoder_h_2, W_decoder_mu, b_decoder_mu)
+    x_logvar = non_activated_neuron(decoder_h_2, W_decoder_var, b_decoder_var)
     tf.summary.image('x_hat', tf.reshape(x_hat[0], [1, 28, 28, 1]))
-    return x_hat
+    return x_hat, x_logvar
 
 
 def train_neural_network(num_iterations):
@@ -432,7 +434,9 @@ def infer_y():
 
 
 def reconstruction_loss():
-    return tf.reduce_sum(tf.squared_difference(x_hat, x), axis=1)
+    exp_term = tf.squared_difference(x_hat, x) / (2.0 * tf.exp(x_logvar))
+    reconstruction_1D = tf.add(0.5 * x_logvar, exp_term)
+    return tf.reduce_sum(reconstruction_1D, 1)
 
 
 if __name__ == '__main__':
@@ -476,7 +480,7 @@ if __name__ == '__main__':
     # Encoder Model
     z, recognition_loss = recognition_network()
     # Decoder Model
-    x_hat = generator_network()
+    x_hat, x_logvar = generator_network()
     # MLP Classification Network
 
     labeled_loss = compute_labeled_loss()
