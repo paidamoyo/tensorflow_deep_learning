@@ -286,15 +286,12 @@ def mlp_classifier():
     global y_pred_cls
     logits, y_pred = predict_y()
     y_pred_cls = tf.argmax(y_pred, axis=1)
-
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
-                                                            labels=y_true)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_true)
     return cross_entropy, y_pred_cls
 
 
 def predict_y():
-    W_mlp_h1 = create_weights([FLAGS['latent_dim'], num_classes])
-    b_mlp_h1 = create_biases([num_classes])
+    W_mlp_h1, b_mlp_h1 = create_h_weights('mlp_h1', 'classifier', [FLAGS['latent_dim'], num_classes])
     logits = tf.matmul(z, W_mlp_h1) + b_mlp_h1
     y_pred = tf.nn.softmax(logits)
     return logits, y_pred
@@ -390,8 +387,8 @@ def compute_labeled_loss():
 
     # Reweight gu_labeled and logqy
     # beta = FLAGS['alpha'] * (1.0 * FLAGS['train_batch_size'] / FLAGS['n_labeled'])
-    beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
-
+    # beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
+    beta = FLAGS['alpha']
     cross_entropy_loss, y_pred_cls = mlp_classifier()
     weighted_classification_loss = beta * cross_entropy_loss
     loss = tf.reduce_mean(
@@ -438,7 +435,7 @@ if __name__ == '__main__':
         'encoder_h_dim': 500,
         'decoder_h_dim': 500,
         'latent_dim': 50,
-        'require_improvement': 2000,
+        'require_improvement': 1500,
         'n_total': 50000,
         'learning_rate': 3e-4,
         'beta1': 0.9,
