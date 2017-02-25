@@ -1,9 +1,5 @@
 import os
-
-os.getcwd()
-
 import sys
-print(sys.path)
 import time
 from datetime import timedelta
 
