@@ -1,15 +1,16 @@
+import sys
 import time
 from datetime import timedelta
-import sys
+
 sys.path.append('../')
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
-from MNSIT_prepocess import split_data
-from metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
-from tf_helper import create_h_weights, create_z_weights, activated_neuron, non_activated_neuron
+from VAE.utils.MNSIT_prepocess import split_data
+from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
+from VAE.utils.tf_helpers import create_h_weights, create_z_weights, activated_neuron, non_activated_neuron
 
 
 def generate_z1():
