@@ -1,3 +1,5 @@
+tensorflow
+numpy
 alabaster (0.7.9)
 appdirs (1.4.0)
 appnope (0.1.0)

@@ -23,3 +23,9 @@ def tf_gaussian_marg(mu, log_sigma_sq):
 
 def tf_binary_xentropy(x, y, const=1e-10):
     return - (x * tf.log(tf.clip_by_value(y, const, 1.0)) + (1.0 - x) * tf.log(tf.clip_by_value(1.0 - y, const, 1.0)))
+
+
+def draw_z(dim, mu, logvar):
+    epsilon_encoder = tf.random_normal(tf.shape(dim), name='epsilon')
+    std_encoder_z1 = tf.exp(0.5 * logvar)
+    return mu + tf.multiply(std_encoder_z1, epsilon_encoder)
