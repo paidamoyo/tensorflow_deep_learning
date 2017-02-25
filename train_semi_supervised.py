@@ -1,17 +1,22 @@
+import os
+
+os.getcwd()
+
 import sys
+print(sys.path)
 import time
 from datetime import timedelta
+
+import numpy as np
+import tensorflow as tf
+from tensorflow.examples.tutorials.mnist import input_data
 
 from VAE.semi_supervised.decoder import generator_network
 from VAE.semi_supervised.encoder import recognition_network
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 
-sys.path.append('../')
-
-import numpy as np
-import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+sys.path.append(os.getcwd())
 
 
 def train_neural_network(num_iterations):

@@ -1,9 +1,6 @@
-VAE/summaries
-VAE/results
-VAE/__pycache__/
-VAE/checkpoints/
-VAE/data/
-VAE/utils/__pycache__/
-__pycache__/
+
+*results/*
+checkpoints/
 data/
 tensorflow_tutorial/MNIST_data/
+summaries/
