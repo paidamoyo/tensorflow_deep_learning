@@ -13,7 +13,7 @@ def generator_network(FLAGS, y_logits, z_latent_rep):
     w_decoder_mu, b_decoder_mu = create_h_weights('mu', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['input_dim']])
     # Model
     # Decoder hidden layer
-    decoder_h_3 = activated_neuron(decoder_z1(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent_rep), w_decoder_h_3,
+    decoder_h_3 = activated_neuron(pz1_given_z2y(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent_rep), w_decoder_h_3,
                                    b_decoder_h_3)
     decoder_h_4 = activated_neuron(decoder_h_3, w_decoder_h_4, b_decoder_h_4)
 
@@ -23,7 +23,7 @@ def generator_network(FLAGS, y_logits, z_latent_rep):
     return x_mu
 
 
-def decoder_z1(FLAGS, y_logits, z_latent_rep):
+def pz1_given_z2y(FLAGS, y_logits, z_latent_rep):
     w_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder',
                                                     [FLAGS['latent_dim'] + FLAGS['num_classes'],
                                                      FLAGS['decoder_h_dim']])

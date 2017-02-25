@@ -488,7 +488,7 @@ def plot_weights():
 #
 # # ## Performance after 1000 optimization iterations
 # #
-# # After 1000 optimization iterations, the model only mis-classifies about one in ten images. As demonstrated below, some of the mis-classifications are justified because the images are very hard to determine with certainty even for humans, while others are quite obvious and should have been classified correctly by a good model. But this simple model cannot reach much better performance and more complex models are therefore needed.
+# # After 1000 optimization iterations, the model only mis-classifies about one in ten images. As demonstrated below, some of the mis-classifications are justified because the images are very hard to determine with certainty even for humans, while others are quite obvious and should have been classified correctly by a good model. But this simple model cannot reach much better performance and more complex semi_supervised are therefore needed.
 #
 # # In[43]:
 #
@@ -535,7 +535,7 @@ print_confusion_matrix()
 # * Change the optimizer to e.g. `AdagradOptimizer` or `AdamOptimizer`.
 # * Change the batch-size to e.g. 1 or 1000.
 # * How do these changes affect the performance?
-# * Do you think these changes will have the same effect (if any) on other classification problems and mathematical models?
+# * Do you think these changes will have the same effect (if any) on other classification problems and mathematical semi_supervised?
 # * Do you get the exact same results if you run the Notebook multiple times without changing any parameters? Why or why not?
 # * Change the function `plot_example_errors()` so it also prints the `logits` and `y_pred` values for the mis-classified examples.
 # * Use `sparse_softmax_cross_entropy_with_logits` instead of `softmax_cross_entropy_with_logits`. This may require several changes to multiple places in the source-code. Discuss the advantages and disadvantages of using the two methods.

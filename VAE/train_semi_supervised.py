@@ -2,9 +2,9 @@ import sys
 import time
 from datetime import timedelta
 
-from VAE.models.decoder import generator_network
-from VAE.models.encoder import recognition_network
-from VAE.utils.MNSIT_prepocess import split_data
+from VAE.semi_supervised.decoder import generator_network
+from VAE.semi_supervised.encoder import recognition_network
+from VAE.utils.MNSIT_prepocess import preprocess_train_data
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 
 sys.path.append('../')
@@ -20,7 +20,7 @@ def train_neural_network(num_iterations):
     last_improvement = 0
 
     start_time = time.time()
-    x_l, y_l, x_u, y_u = preprocess_train_data()
+    x_l, y_l, x_u, y_u = preprocess_train_data(data=data, n_labeled=FLAGS['n_labeled'], n_train=FLAGS['n_train'])
 
     idx_labeled = 0
     idx_unlabeled = 0
@@ -53,24 +53,16 @@ def train_neural_network(num_iterations):
             else:
                 improved_str = ''
 
-            print("Optimization Iteration: {}, {} Training Loss: {},  Validation Acc:{}, {}".format(epoch + 1,
-                                                                                                    loss_string,
-                                                                                                    batch_loss,
-                                                                                                    acc_validation,
-                                                                                                    improved_str))
+            print("Optimization Iteration: {}, {} Training Loss: {}, "
+                  " Validation Acc:{}, {}".format(epoch + 1, loss_string, batch_loss, acc_validation, improved_str))
         if epoch - last_improvement > FLAGS['require_improvement']:
             print("No improvement found in a while, stopping optimization.")
 
             # Break out from the for-loop.
             break
-
     # Ending time.
     end_time = time.time()
-
-    # Difference between start and end-times.
     time_dif = end_time - start_time
-
-    # Print the time-usage.
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
@@ -91,27 +83,6 @@ def train_batch(idx, x_images, y_labels, loss, optimizer):
     # end-index of the current batch.
     train_writer.add_summary(summary, batch_loss)
     return batch_loss, j
-
-
-def preprocess_train_data():
-    # create labeled/unlabeled split in training set
-    n_labeled = FLAGS['n_labeled']
-    x_l, y_l, x_u, y_u = split_data(n_labeled)
-    print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(x_l.shape, y_l.shape, x_u.shape, y_u.shape))
-    # Labeled
-    num_l = x_l.shape[0]
-    randomize_l = np.arange(num_l)
-    np.random.shuffle(randomize_l)
-    x_l = x_l[randomize_l]
-    y_l = y_l[randomize_l]
-
-    # Unlabeled
-    num_u = x_u.shape[0]
-    randomize_u = np.arange(num_u)
-    x_u = x_u[randomize_u]
-    y_u = y_u[randomize_u]
-
-    return x_l, y_l, x_u, y_u
 
 
 def reconstruct(x_test):
@@ -195,7 +166,7 @@ if __name__ == '__main__':
         'decoder_h_dim': 500,
         'latent_dim': 50,
         'require_improvement': 1500,
-        'n_total': 50000,
+        'n_train': 50000,
         'learning_rate': 3e-4,
         'beta1': 0.9,
         'beta2': 0.999,
