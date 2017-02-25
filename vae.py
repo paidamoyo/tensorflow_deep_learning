@@ -138,22 +138,41 @@ def create_z_weights(layer, shape):
 
 def generator_network():
     # Variables
-    w_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
-    w_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder',
-                                                    [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim'] - num_classes])
+    w_decoder_h_3, b_decoder_h_3 = create_h_weights('h3', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
+    w_decoder_h_4, b_decoder_h_4 = create_h_weights('h4', 'decoder',
+                                                    [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
     w_decoder_mu, b_decoder_mu = create_h_weights('mu', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
     # w_decoder_var, b_decoder_var = create_h_weights('var', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
     # Model
     # Decoder hidden layer
-    decoder_h_1 = activated_neuron(z_latent_rep, w_decoder_h_1, b_decoder_h_1)
-    decoder_h_2 = activated_neuron(decoder_h_1, w_decoder_h_2, b_decoder_h_2)
-    y_logits, _ = predict_y()
+    decoder_h_3 = activated_neuron(decoder_z1(), w_decoder_h_3, b_decoder_h_3)
+    decoder_h_4 = activated_neuron(decoder_h_3, w_decoder_h_4, b_decoder_h_4)
 
     # Reconstruction layer
-    x_mu = non_activated_neuron(tf.concat((decoder_h_2, y_logits), axis=1), w_decoder_mu, b_decoder_mu)
+    x_mu = non_activated_neuron(decoder_h_4, w_decoder_mu, b_decoder_mu)
     # x_logvar = non_activated_neuron(decoder_h_2, w_decoder_var, b_decoder_var)
     tf.summary.image('x_mu', tf.reshape(x_mu[0], [1, 28, 28, 1]))
     return x_mu
+
+
+def decoder_z1():
+    w_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder',
+                                                    [FLAGS['latent_dim'] + num_classes, FLAGS['decoder_h_dim']])
+    w_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder',
+                                                    [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
+
+    w_mu_z1, w_var_z1, b_mu_z1, b_var_z1 = create_z_weights('z_1_decoder',
+                                                            [FLAGS['decoder_h_dim'], FLAGS['latent_dim']])
+    # Model
+    # Decoder hidden layer
+    y_logits, _ = predict_y()
+    decoder_h_1 = activated_neuron(tf.concat((y_logits, z_latent_rep), axis=1), w_decoder_h_1, b_decoder_h_1)
+    decoder_h_2 = activated_neuron(decoder_h_1, w_decoder_h_2, b_decoder_h_2)
+
+    # Z1 latent layer mu and var
+    decoder_logvar_z1 = non_activated_neuron(decoder_h_2, w_var_z1, b_var_z1)
+    decoder_mu_z1 = non_activated_neuron(decoder_h_2, w_mu_z1, b_mu_z1)
+    return draw_z(FLAGS['latent_dim'], decoder_mu_z1, decoder_logvar_z1)
 
 
 def train_neural_network(num_iterations):
