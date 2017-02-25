@@ -55,8 +55,8 @@ def recognition_network(FLAGS, x):
 
 
 def qy_given_x(z_1, FLAGS):
-    w_mlp_h1, b_mlp_h1 = create_h_weights('mlp_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['latent_dim']])
-    w_mlp_h2, b_mlp_h2 = create_h_weights('mlp_h2', 'classifier', [FLAGS['latent_dim'], FLAGS['num_classes']])
+    w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['latent_dim']])
+    w_mlp_h2, b_mlp_h2 = create_h_weights('y_h2', 'classifier', [FLAGS['latent_dim'], FLAGS['num_classes']])
 
     h1 = activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
     return non_activated_neuron(h1, w_mlp_h2, b_mlp_h2)
