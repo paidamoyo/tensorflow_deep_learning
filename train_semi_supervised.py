@@ -54,8 +54,9 @@ def train_neural_network(num_iterations):
             else:
                 improved_str = ''
 
-            print("Optimization Iteration: {}, {} Training Loss: {}, "
-                  " Validation Acc:{}, {}".format(epoch + 1, loss_string, batch_loss, acc_validation, improved_str))
+            print("Optimization Iteration: {}, Batch idx: L{}, U{}, {} Training Loss: {}, "
+                  " Validation Acc:{}, {}".format(epoch + 1, idx_labeled, idx_unlabeled, loss_string, batch_loss,
+                                                  acc_validation, improved_str))
         if epoch - last_improvement > FLAGS['require_improvement']:
             print("No improvement found in a while, stopping optimization.")
 
@@ -72,16 +73,11 @@ def train_batch(idx, x_images, y_labels, loss, optimizer):
     num_images = x_images.shape[0]
     if idx == num_images:
         idx = 0
-        # The ending index for the next batch is denoted j.
     j = min(idx + FLAGS['train_batch_size'], num_images)
-    # Get the mages from the test-set between index idx_labeled and j.
     x_batch = x_images[idx:j, :]
-    # Get the associated labels.
     y_true_batch = y_labels[idx:j, :]
     feed_dict_train = {x: x_batch, y_true: y_true_batch}
     summary, batch_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
-    # Set the start-index for the next batch to the
-    # end-index of the current batch.
     train_writer.add_summary(summary, batch_loss)
     return batch_loss, j
 
