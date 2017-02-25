@@ -3,7 +3,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 
 def load_numpy():
-    data = input_data.read_data_sets('data/MNIST/', one_hot=True)
+    data = input_data.read_data_sets('../data/MNIST/', one_hot=True)
     train_images = data.train.images
     train_labels = data.train.labels
     val_images = data.validation.images
@@ -36,7 +36,7 @@ def load_numpy_split(n_train=50000):
     return train_x, train_y, valid_x, valid_y, test_x, test_y
 
 
-def create_semisupervised(n_labeled):
+def split_data(n_labeled):
     x, y, _, _, _, _ = load_numpy_split()
     print("x:{}, y:{}".format(x[0].shape, y[0].shape))
     n_x = x[0].shape[0]
@@ -68,4 +68,4 @@ def create_semisupervised(n_labeled):
 
 if __name__ == '__main__':
     train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split()
-    create_semisupervised(10000)
+    split_data(10000)

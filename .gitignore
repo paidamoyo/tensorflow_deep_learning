@@ -1,4 +1,4 @@
-summaries
-results
+VAE/summaries
+VAE/results
 *data/CIFAR-10/*
 __pycache__/*
