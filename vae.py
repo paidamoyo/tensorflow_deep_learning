@@ -35,41 +35,43 @@ def variable_summaries(var, summary_name):
 
 def generate_z1():
     # Variables
-    W_encoder_h_1, b_encoder_h_1 = create_h_weights('h1', 'encoder', [img_size_flat, FLAGS['encoder_h_dim']])
-    W_encoder_h_2, b_encoder_h_2 = create_h_weights('h2', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
-    W_enconder_h_mu_z1, W_enconder_h_var_z1, b_enconder_h_mu_z1, \
-    b_enconder_h_var_z1 = create_z_weights('z_1', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
+    w_encoder_h_1, b_encoder_h_1 = create_h_weights('h1', 'encoder', [img_size_flat, FLAGS['encoder_h_dim']])
+    w_encoder_h_2, b_encoder_h_2 = create_h_weights('h2', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+    w_mu_z1, w_var_z1, b_mu_z1, b_var_z1 = create_z_weights('z_1', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
 
     # Hidden layers
-    encoder_h_1 = activated_neuron(x, W_encoder_h_1, b_encoder_h_1)
-    encoder_h_2 = activated_neuron(encoder_h_1, W_encoder_h_2, b_encoder_h_2)
+    encoder_h_1 = activated_neuron(x, w_encoder_h_1, b_encoder_h_1)
+    encoder_h_2 = activated_neuron(encoder_h_1, w_encoder_h_2, b_encoder_h_2)
 
     # Z1 latent layer mu and var
-    encoder_logvar_z1 = non_activated_neuron(encoder_h_2, W_enconder_h_var_z1, b_enconder_h_var_z1)
-    encoder_mu_z1 = non_activated_neuron(encoder_h_2, W_enconder_h_mu_z1, b_enconder_h_mu_z1)
-    z_1 = draw_z(FLAGS['latent_dim'], encoder_mu_z1, encoder_logvar_z1)
-
-    return z_1
+    encoder_logvar_z1 = non_activated_neuron(encoder_h_2, w_var_z1, b_var_z1)
+    encoder_mu_z1 = non_activated_neuron(encoder_h_2, w_mu_z1, b_mu_z1)
+    return draw_z(FLAGS['latent_dim'], encoder_mu_z1, encoder_logvar_z1)
 
 
-## Build Model
+# Build Model
 def recognition_network():
+    global z_1
     # Variables
-    W_encoder_h_3, b_encoder_h_3 = create_h_weights('h3', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
-    W_encoder_h_4, b_encoder_h_4 = create_h_weights('h4', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+    w_encoder_h_3, b_encoder_h_3 = create_h_weights('h3', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
+    w_encoder_h_4, b_encoder_h_4 = create_h_weights('h4', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+    w_encoder_h_4_mu, b_encoder_h_4_mu = create_h_weights('h4_mu', 'encoder', [FLAGS['encoder_h_dim'],
+                                                                               FLAGS['encoder_h_dim'] - num_classes])
 
-    W_enconder_h_mu_z2, W_enconder_h_var_z2, b_enconder_h_mu_z2, \
-    b_enconder_h_var_z2 = create_z_weights('z_2', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
+    w_mu_z2, w_var_z2, b_mu_z2, b_var_z2 = create_z_weights('z_2', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
 
     # Model
     z_1 = generate_z1()
     # Hidden layers
-    encoder_h_3 = activated_neuron(z_1, W_encoder_h_3, b_encoder_h_3)
-    encoder_h_4 = activated_neuron(encoder_h_3, W_encoder_h_4, b_encoder_h_4)
+    encoder_h_3 = activated_neuron(z_1, w_encoder_h_3, b_encoder_h_3)
+    encoder_h_4 = activated_neuron(encoder_h_3, w_encoder_h_4, b_encoder_h_4)
+    encoder_h_4_mu = activated_neuron(encoder_h_3, w_encoder_h_4_mu, b_encoder_h_4_mu)
 
     # Z2 latent layer mu and var
-    encoder_logvar_z2 = non_activated_neuron(encoder_h_4, W_enconder_h_var_z2, b_enconder_h_var_z2)
-    encoder_mu_z2 = non_activated_neuron(encoder_h_4, W_enconder_h_mu_z2, b_enconder_h_mu_z2)
+    y_logits, _ = predict_y()
+    encoder_logvar_z2 = non_activated_neuron(encoder_h_4, w_var_z2, b_var_z2)
+    encoder_mu_z2 = non_activated_neuron(tf.concat((y_logits, encoder_h_4_mu), axis=1), w_mu_z2,
+                                         b_mu_z2)
     z_2 = draw_z(FLAGS['latent_dim'], encoder_mu_z2, encoder_logvar_z2)
 
     # regularization loss
@@ -86,29 +88,28 @@ def calculate_regularization_loss(encoder_logvar_z2, encoder_mu_z2):
 def draw_z(dim, mu, logvar):
     epsilon_encoder = tf.random_normal(tf.shape(dim), name='epsilon')
     std_encoder_z1 = tf.exp(0.5 * logvar)
-    z = mu + tf.multiply(std_encoder_z1, epsilon_encoder)
-    return z
+    return mu + tf.multiply(std_encoder_z1, epsilon_encoder)
 
 
-def non_activated_neuron(input, Weights, biases):
-    return tf.add(tf.matmul(input, Weights), biases)
+def non_activated_neuron(layer_input, weights, biases):
+    return tf.add(tf.matmul(layer_input, weights), biases)
 
 
-def activated_neuron(input, Weights, biases):
-    return tf.nn.relu(tf.add(tf.matmul(input, Weights), biases))
+def activated_neuron(layer_nput, weights, biases):
+    return tf.nn.relu(tf.add(tf.matmul(layer_nput, weights), biases))
 
 
 def create_h_weights(layer, network, shape):
     h_vars = {}
-    W_h = 'W_' + network + '_' + layer
+    w_h = 'W_' + network + '_' + layer
     b_h = 'b_' + network + '_' + layer
     print("layer:{}, network:{}, shape:{}".format(layer, network, shape))
-    h_vars[W_h] = create_weights(shape)
+    h_vars[w_h] = create_weights(shape)
     h_vars[b_h] = create_biases([shape[1]])
-    variable_summaries(h_vars[W_h], W_h)
+    variable_summaries(h_vars[w_h], w_h)
     variable_summaries(h_vars[b_h], b_h)
 
-    return h_vars[W_h], h_vars[b_h]
+    return h_vars[w_h], h_vars[b_h]
 
 
 def create_z_weights(layer, shape):
@@ -117,41 +118,40 @@ def create_z_weights(layer, shape):
     network = 'encoder'
 
     # Mean
-    W_z_mu = 'W_' + network + '_h_mu_' + layer
+    w_z_mu = 'W_' + network + '_h_mu_' + layer
     b_z_mu = 'b_' + network + '_h_mu_' + layer
-    z_vars[W_z_mu] = create_weights(shape)
+    z_vars[w_z_mu] = create_weights(shape)
     z_vars[b_z_mu] = create_biases([shape[1]])
-    variable_summaries(z_vars[W_z_mu], W_z_mu)
+    variable_summaries(z_vars[w_z_mu], w_z_mu)
     variable_summaries(z_vars[b_z_mu], b_z_mu)
 
     # Variance
-    W_z_var = 'W_' + network + '_h_var_' + layer
+    w_z_var = 'W_' + network + '_h_var_' + layer
     b_z_var = 'b_' + network + '_h_var_' + layer
-    z_vars[W_z_var] = create_weights(shape)
+    z_vars[w_z_var] = create_weights(shape)
     z_vars[b_z_var] = create_biases([shape[1]])
-    variable_summaries(z_vars[W_z_var], W_z_var)
+    variable_summaries(z_vars[w_z_var], w_z_var)
     variable_summaries(z_vars[b_z_var], b_z_var)
 
-    return z_vars[W_z_mu], z_vars[W_z_var], z_vars[b_z_mu], z_vars[b_z_var]
+    return z_vars[w_z_mu], z_vars[w_z_var], z_vars[b_z_mu], z_vars[b_z_var]
 
 
 def generator_network():
     # Variables
-    W_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
-    W_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
-    W_decoder_mu, b_decoder_mu = create_h_weights('mu', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
-    W_decoder_var, b_decoder_var = create_h_weights('var', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
-
+    w_decoder_h_1, b_decoder_h_1 = create_h_weights('h1', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
+    w_decoder_h_2, b_decoder_h_2 = create_h_weights('h2', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
+    w_decoder_mu, b_decoder_mu = create_h_weights('mu', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
+    # w_decoder_var, b_decoder_var = create_h_weights('var', 'decoder', [FLAGS['decoder_h_dim'], img_size_flat])
     # Model
     # Decoder hidden layer
-    decoder_h_1 = activated_neuron(z, W_decoder_h_1, b_decoder_h_1)
-    decoder_h_2 = activated_neuron(decoder_h_1, W_decoder_h_2, b_decoder_h_2)
+    decoder_h_1 = activated_neuron(z_latent_rep, w_decoder_h_1, b_decoder_h_1)
+    decoder_h_2 = activated_neuron(decoder_h_1, w_decoder_h_2, b_decoder_h_2)
 
     # Reconstruction layer
-    x_hat = non_activated_neuron(decoder_h_2, W_decoder_mu, b_decoder_mu)
-    x_logvar = non_activated_neuron(decoder_h_2, W_decoder_var, b_decoder_var)
-    tf.summary.image('x_hat', tf.reshape(x_hat[0], [1, 28, 28, 1]))
-    return x_hat, x_logvar
+    x_mu = non_activated_neuron(decoder_h_2, w_decoder_mu, b_decoder_mu)
+    # x_logvar = non_activated_neuron(decoder_h_2, w_decoder_var, b_decoder_var)
+    tf.summary.image('x_mu', tf.reshape(x_mu[0], [1, 28, 28, 1]))
+    return x_mu
 
 
 def train_neural_network(num_iterations):
@@ -291,9 +291,13 @@ def mlp_classifier():
 
 
 def predict_y():
-    W_mlp_h1, b_mlp_h1 = create_h_weights('mlp_h1', 'classifier', [FLAGS['latent_dim'], num_classes])
-    logits = tf.matmul(z, W_mlp_h1) + b_mlp_h1
+    w_mlp_h1, b_mlp_h1 = create_h_weights('mlp_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['latent_dim']])
+    w_mlp_h2, b_mlp_h2 = create_h_weights('mlp_h2', 'classifier', [FLAGS['latent_dim'], num_classes])
+
+    h1 = activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
+    logits = non_activated_neuron(h1, w_mlp_h2, b_mlp_h2)
     y_pred = tf.nn.softmax(logits)
+    print("logits:{}".format(logits))
     return logits, y_pred
 
 
@@ -388,7 +392,7 @@ def compute_labeled_loss():
     # Reweight gu_labeled and logqy
     # beta = FLAGS['alpha'] * (1.0 * FLAGS['train_batch_size'] / FLAGS['n_labeled'])
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
-    cross_entropy_loss, y_pred_cls = mlp_classifier()
+    cross_entropy_loss, _ = mlp_classifier()
     weighted_classification_loss = beta * cross_entropy_loss
     loss = tf.reduce_mean(
         recognition_loss + reconstruction_loss() + weighted_classification_loss)
@@ -458,9 +462,9 @@ if __name__ == '__main__':
     y_true_cls = tf.argmax(y_true, axis=1)
 
     # Encoder Model
-    z, recognition_loss = recognition_network()
+    z_latent_rep, recognition_loss = recognition_network()
     # Decoder Model
-    x_hat, x_logvar = generator_network()
+    x_hat = generator_network()
     # MLP Classification Network
 
     labeled_loss = compute_labeled_loss()
@@ -480,7 +484,6 @@ if __name__ == '__main__':
                                                  beta2=FLAGS['beta2']).minimize(
         unlabeled_loss)
 
-    ## SAVER
     saver = tf.train.Saver()
 
     train_neural_network(FLAGS['num_iterations'])
