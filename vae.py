@@ -384,11 +384,10 @@ def compute_labeled_loss():
     # === Get gradient for labeled data
     # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
     # logpx, logpz, logqz, gv_labeled, gw_labeled
-
+    # _L = log_prior_y + log_lik + log_prior_z - log_post_z
     # Reweight gu_labeled and logqy
     # beta = FLAGS['alpha'] * (1.0 * FLAGS['train_batch_size'] / FLAGS['n_labeled'])
-    # beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
-    beta = FLAGS['alpha']
+    beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
     cross_entropy_loss, y_pred_cls = mlp_classifier()
     weighted_classification_loss = beta * cross_entropy_loss
     loss = tf.reduce_mean(
