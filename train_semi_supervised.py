@@ -54,12 +54,10 @@ def train_neural_network(num_iterations):
             else:
                 improved_str = ''
 
-            print("Optimization Iteration: {}, Batch idx: L{}, U{}, {} Training Loss: {}, "
-                  " Validation Acc:{}, {}".format(epoch + 1, idx_labeled, idx_unlabeled, loss_string, batch_loss,
-                                                  acc_validation, improved_str))
+            print("Optimization Iteration: {}, {} Training Loss: {}, "
+                  " Validation Acc:{}, {}".format(epoch + 1, loss_string, batch_loss, acc_validation, improved_str))
         if epoch - last_improvement > FLAGS['require_improvement']:
             print("No improvement found in a while, stopping optimization.")
-
             # Break out from the for-loop.
             break
     # Ending time.
