@@ -51,7 +51,7 @@ def generate_z1():
 
 # Build Model
 def recognition_network():
-    global z_1
+    global y_logits
     # Variables
     w_encoder_h_3, b_encoder_h_3 = create_h_weights('h3', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
     w_encoder_h_4, b_encoder_h_4 = create_h_weights('h4', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
@@ -68,7 +68,7 @@ def recognition_network():
     encoder_h_4_mu = activated_neuron(encoder_h_3, w_encoder_h_4_mu, b_encoder_h_4_mu)
 
     # Z2 latent layer mu and var
-    y_logits, _ = predict_y()
+    y_logits = predict_y(z_1)
     encoder_logvar_z2 = non_activated_neuron(encoder_h_4, w_var_z2, b_var_z2)
     encoder_mu_z2 = non_activated_neuron(tf.concat((y_logits, encoder_h_4_mu), axis=1), w_mu_z2,
                                          b_mu_z2)
@@ -165,7 +165,6 @@ def decoder_z1():
                                                             [FLAGS['decoder_h_dim'], FLAGS['latent_dim']])
     # Model
     # Decoder hidden layer
-    y_logits, _ = predict_y()
     decoder_h_1 = activated_neuron(tf.concat((y_logits, z_latent_rep), axis=1), w_decoder_h_1, b_decoder_h_1)
     decoder_h_2 = activated_neuron(decoder_h_1, w_decoder_h_2, b_decoder_h_2)
 
@@ -305,20 +304,19 @@ def test_reconstruction():
 
 def mlp_classifier():
     global y_pred_cls
-    logits, y_pred = predict_y()
+    y_pred = tf.nn.softmax(y_logits)
     y_pred_cls = tf.argmax(y_pred, axis=1)
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_true)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=y_logits, labels=y_true)
     return cross_entropy, y_pred_cls
 
 
-def predict_y():
+def predict_y(z_1):
     w_mlp_h1, b_mlp_h1 = create_h_weights('mlp_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['latent_dim']])
     w_mlp_h2, b_mlp_h2 = create_h_weights('mlp_h2', 'classifier', [FLAGS['latent_dim'], num_classes])
 
     h1 = activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
     logits = non_activated_neuron(h1, w_mlp_h2, b_mlp_h2)
-    y_pred = tf.nn.softmax(logits)
-    return logits, y_pred
+    return logits
 
 
 def predict_cls(images, labels, cls_true):
@@ -427,7 +425,7 @@ def compute_unlabeled_loss():
     # Approach where outer expectation (over q(z|x,y)) is taken as explicit sum (instead of sampling)
     # logpx, logpz, logqz, _gv, _gw = model.dL_dw(v, w, {'x':x_minibatch['x'],'y':new_y}, eps)
     # Decoder Model
-    _, pi = predict_y()
+    pi = tf.nn.softmax(y_logits)
     entropy = tf.einsum('ij,ij->i', pi, tf.log(pi))
     vae_loss = recognition_loss + reconstruction_loss()
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
