@@ -105,8 +105,7 @@ def compute_labeled_loss():
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
     cross_entropy_loss, _ = mlp_classifier()
     weighted_classification_loss = beta * cross_entropy_loss
-    loss = tf.reduce_mean(
-        recognition_loss + reconstruction_loss() + weighted_classification_loss)
+    loss = tf.reduce_mean(recognition_loss + reconstruction_loss() + weighted_classification_loss)
     tf.summary.scalar('labeled_loss', loss)
     return loss
 
@@ -145,6 +144,15 @@ def predict_cls(images, labels, cls_true):
     return correct, cls_pred
 
 
+def train_test():
+    train_neural_network(FLAGS['num_iterations'])
+    correct, cls_pred = predict_cls(images=data.test.images,
+                                    labels=data.test.labels,
+                                    cls_true=(convert_labels_to_cls(data.test.labels)))
+    print_test_accuracy(correct, cls_pred, data.test.labels)
+    test_reconstruction()
+
+
 if __name__ == '__main__':
     # Global Dictionary of Flags
     FLAGS = {
@@ -171,43 +179,27 @@ if __name__ == '__main__':
 
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
-
     # ### Placeholder variables
     x = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x')
-
     y_true = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_true')
     y_true_cls = tf.argmax(y_true, axis=1)
-
     # Encoder Model
     z_latent_rep, recognition_loss, y_logits = recognition_network(FLAGS, x)
     # Decoder Model
     x_hat = generator_network(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent_rep)
-    # MLP Classification Network
-
+    # Loss and Optimization
     labeled_loss = compute_labeled_loss()
-
     unlabeled_loss = compute_unlabeled_loss()
 
-    session = tf.Session()
-
-    merged = tf.summary.merge_all()
-    train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train',
-                                         session.graph)
-
     labeled_optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
-                                               beta2=FLAGS['beta2']).minimize(
-        labeled_loss)
+                                               beta2=FLAGS['beta2']).minimize(labeled_loss)
     unlabeled_optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
-                                                 beta2=FLAGS['beta2']).minimize(
-        unlabeled_loss)
-
+                                                 beta2=FLAGS['beta2']).minimize(unlabeled_loss)
+    session = tf.Session()
     saver = tf.train.Saver()
+    merged = tf.summary.merge_all()
+    train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train', session.graph)
 
-    train_neural_network(FLAGS['num_iterations'])
-    correct, cls_pred = predict_cls(images=data.test.images,
-                                    labels=data.test.labels,
-                                    cls_true=(convert_labels_to_cls(data.test.labels)))
-    print_test_accuracy(correct, cls_pred, data.test.labels)
-    test_reconstruction()
+    train_test()
 
     session.close()

@@ -43,6 +43,6 @@ def pz1_given_z2y(FLAGS, y_logits, z_latent_rep):
     h2_mu = activated_neuron(tf.concat((h2_y, h2_z), axis=1), w_h2_mu, b_h2_mu)
 
     # Z1 latent layer mu and var
-    decoder_logvar_z1 = non_activated_neuron(h2_z, w_var_z1, b_var_z1)
-    decoder_mu_z1 = non_activated_neuron(h2_mu, w_mu_z1, b_mu_z1)
-    return draw_z(FLAGS['latent_dim'], decoder_mu_z1, decoder_logvar_z1)
+    logvar_z1 = non_activated_neuron(h2_z, w_var_z1, b_var_z1)
+    mu_z1 = non_activated_neuron(h2_mu, w_mu_z1, b_mu_z1)
+    return draw_z(FLAGS['latent_dim'], mu_z1, logvar_z1)
