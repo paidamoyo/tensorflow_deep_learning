@@ -35,7 +35,7 @@ def recognition_network(FLAGS, x):
 
     # Model
     z_1 = q_z_1_given_x(FLAGS, x)
-    y_logits = qy_given_x(z_1, FLAGS)
+    y_logits, weights = qy_given_x(z_1, FLAGS)
 
     # Hidden layers
     h3_z1 = activated_neuron(z_1, w_h3_z1, b_h3_z1)
@@ -53,15 +53,14 @@ def recognition_network(FLAGS, x):
     # regularization loss
     regularization = calculate_regularization_loss(logvar_z2, mu_z2)
 
-    return z_2, regularization, y_logits
+    return z_2, regularization, y_logits, weights
 
 
 def qy_given_x(z_1, FLAGS):
-    w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['latent_dim']])
-    w_mlp_h2, b_mlp_h2 = create_h_weights('y_h2', 'classifier', [FLAGS['latent_dim'], FLAGS['num_classes']])
+    w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['num_classes']])
 
-    h1 = activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
-    return non_activated_neuron(h1, w_mlp_h2, b_mlp_h2)
+    h1 = non_activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
+    return h1, w_mlp_h1
 
 
 def calculate_regularization_loss(encoder_logvar_z2, encoder_mu_z2):

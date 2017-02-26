@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
-from  VAE.classifier import softmax_classifier
+from  VAE.classifier import svm_classifier
 from VAE.semi_supervised.decoder import generator_network
 from VAE.semi_supervised.encoder import recognition_network
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
@@ -97,7 +97,9 @@ def compute_labeled_loss():
     global y_pred_cls
     # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
-    classifier_loss, y_pred_cls = softmax_classifier(logits=y_logits, y_true=y_true)
+    # classifier_loss, y_pred_cls = mlp_classifier(logits=y_logits, y_true=y_true)
+    classifier_loss, y_pred_cls = svm_classifier(weights=weights, logits=y_logits, svmC=FLAGS['svmC'],
+                                                 y_true=y_true)
     weighted_classification_loss = beta * classifier_loss
     loss = tf.reduce_mean(recognition_loss + reconstruction_loss() + weighted_classification_loss)
     tf.summary.scalar('labeled_loss', loss)
@@ -168,7 +170,8 @@ if __name__ == '__main__':
         'beta1': 0.9,
         'beta2': 0.999,
         'input_dim': 28 * 28,
-        'num_classes': 10
+        'num_classes': 10,
+        'svmC': 1
     }
 
     np.random.seed(FLAGS['seed'])
@@ -178,7 +181,7 @@ if __name__ == '__main__':
     y_true = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_true')
     y_true_cls = tf.argmax(y_true, axis=1)
     # Encoder Model
-    z_latent_rep, recognition_loss, y_logits = recognition_network(FLAGS, x)
+    z_latent_rep, recognition_loss, y_logits, weights = recognition_network(FLAGS, x)
     # Decoder Model
     x_hat = generator_network(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent_rep)
     # Loss and Optimization
