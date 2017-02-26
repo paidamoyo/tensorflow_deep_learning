@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
+from  VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import generator_network
 from VAE.semi_supervised.encoder import recognition_network
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
@@ -92,19 +93,12 @@ def test_reconstruction():
     plot_images(x_test, x_reconstruct)
 
 
-def mlp_classifier():
-    global y_pred_cls
-    y_pred = tf.nn.softmax(y_logits)
-    y_pred_cls = tf.argmax(y_pred, axis=1)
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=y_logits, labels=y_true)
-    return cross_entropy, y_pred_cls
-
-
 def compute_labeled_loss():
+    global y_pred_cls
     # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
-    cross_entropy_loss, _ = mlp_classifier()
-    weighted_classification_loss = beta * cross_entropy_loss
+    classifier_loss, y_pred_cls = softmax_classifier(logits=y_logits, y_true=y_true)
+    weighted_classification_loss = beta * classifier_loss
     loss = tf.reduce_mean(recognition_loss + reconstruction_loss() + weighted_classification_loss)
     tf.summary.scalar('labeled_loss', loss)
     return loss
