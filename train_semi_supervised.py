@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
-from  VAE.classifier import svm_classifier
+from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import generator_network
 from VAE.semi_supervised.encoder import recognition_network
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
@@ -97,9 +97,9 @@ def compute_labeled_loss():
     global y_pred_cls
     # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
-    # classifier_loss, y_pred_cls = mlp_classifier(logits=y_logits, y_true=y_true)
-    classifier_loss, y_pred_cls = svm_classifier(weights=weights, logits=y_logits, svmC=FLAGS['svmC'],
-                                                 y_true=y_true)
+    classifier_loss, y_pred_cls = softmax_classifier(logits=y_logits, y_true=y_true)
+    # classifier_loss, y_pred_cls = svm_classifier(weights=weights, logits=y_logits, svmC=FLAGS['svmC'],
+    #                                              y_true=y_true)
     weighted_classification_loss = beta * classifier_loss
     loss = tf.reduce_mean(recognition_loss + reconstruction_loss() + weighted_classification_loss)
     tf.summary.scalar('labeled_loss', loss)
