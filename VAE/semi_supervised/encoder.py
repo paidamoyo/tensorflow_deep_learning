@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from VAE.utils.distributions import draw_z
+from VAE.utils.distributions import draw_norm
 from VAE.utils.tf_helpers import create_h_weights, create_z_weights, activated_neuron, non_activated_neuron
 
 
@@ -18,7 +18,7 @@ def q_z_1_given_x(FLAGS, x):
     # Z1 latent layer mu and var
     logvar_z1 = non_activated_neuron(h2, w_var_z1, b_var_z1)
     mu_z1 = non_activated_neuron(h2, w_mu_z1, b_mu_z1)
-    return draw_z(FLAGS['latent_dim'], mu_z1, logvar_z1)
+    return draw_norm(FLAGS['latent_dim'], mu_z1, logvar_z1)
 
 
 def recognition_network(FLAGS, x):
@@ -49,7 +49,7 @@ def recognition_network(FLAGS, x):
     # Z2 latent layer mu and var
     logvar_z2 = non_activated_neuron(h4_z1, w_var_z2, b_var_z2)
     mu_z2 = non_activated_neuron(h4_mu, w_mu_z2, b_mu_z2)
-    z_2 = draw_z(FLAGS['latent_dim'], mu_z2, logvar_z2)
+    z_2 = draw_norm(FLAGS['latent_dim'], mu_z2, logvar_z2)
     # regularization loss
     regularization = calculate_regularization_loss(logvar_z2, mu_z2)
 

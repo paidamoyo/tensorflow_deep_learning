@@ -11,7 +11,7 @@ from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import generator_network
 from VAE.semi_supervised.encoder import recognition_network
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
-from VAE.utils.distributions import tf_normal_logpdf
+from VAE.utils.distributions import tf_normal_logpdf, draw_norm
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 
 sys.path.append(os.getcwd())
@@ -83,7 +83,10 @@ def train_batch(idx, x_images, y_labels, loss, optimizer):
 
 
 def reconstruct(x_test):
-    return session.run(x_hat, feed_dict={x: x_test})
+    mean = session.run(x_hat, feed_dict={x: x_test})
+    variance = session.run(x_logvar, feed_dict={x: x_test})
+    x_re = draw_norm(dim=tf.shape(mean), mu=mean, logvar=variance)
+    return x_re
 
 
 def test_reconstruction():

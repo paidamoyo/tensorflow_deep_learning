@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from VAE.utils.distributions import draw_z
+from VAE.utils.distributions import draw_norm
 from VAE.utils.tf_helpers import create_h_weights, create_z_weights, activated_neuron, non_activated_neuron
 
 
@@ -47,4 +47,4 @@ def pz1_given_z2y(FLAGS, y_logits, z_latent_rep):
     # Z1 latent layer mu and var
     logvar_z1 = non_activated_neuron(h2_z, w_var_z1, b_var_z1)
     mu_z1 = non_activated_neuron(h2_mu, w_mu_z1, b_mu_z1)
-    return draw_z(FLAGS['latent_dim'], mu_z1, logvar_z1)
+    return draw_norm(FLAGS['latent_dim'], mu_z1, logvar_z1)
