@@ -9,6 +9,7 @@ def generator_network(FLAGS, y_logits, z_latent_rep):
     w_h3, b_h3 = create_h_weights('h3', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
     w_h4, b_h4 = create_h_weights('h4', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
     w_mu, b_mu = create_h_weights('mu', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['input_dim']])
+    w_var, b_var = create_h_weights('var', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['input_dim']])
     # Model
     # Decoder hidden layer
     h3 = activated_neuron(pz1_given_z2y(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent_rep), w_h3, b_h3)
@@ -16,8 +17,9 @@ def generator_network(FLAGS, y_logits, z_latent_rep):
 
     # Reconstruction layer
     x_mu = non_activated_neuron(h4, w_mu, b_mu)
+    x_logvar = non_activated_neuron(h4, w_var, b_var)
     tf.summary.image('x_mu', tf.reshape(x_mu[0], [1, 28, 28, 1]))
-    return x_mu
+    return x_mu, x_logvar
 
 
 def pz1_given_z2y(FLAGS, y_logits, z_latent_rep):
