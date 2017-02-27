@@ -35,7 +35,7 @@ def recognition_network(FLAGS, x):
 
     # Model
     z_1 = q_z_1_given_x(FLAGS, x)
-    y_logits, weights = qy_given_x(z_1, FLAGS)
+    y_logits, weights, y_regularization = qy_given_x(z_1, FLAGS)
 
     # Hidden layers
     h3_z1 = activated_neuron(z_1, w_h3_z1, b_h3_z1)
@@ -51,18 +51,24 @@ def recognition_network(FLAGS, x):
     mu_z2 = non_activated_neuron(h4_mu, w_mu_z2, b_mu_z2)
     z_2 = draw_z(FLAGS['latent_dim'], mu_z2, logvar_z2)
     # regularization loss
-    regularization = calculate_regularization_loss(logvar_z2, mu_z2)
+    regularization = tf.add(calculate_regularization_loss(logvar_z2, mu_z2), y_regularization)
 
     return z_2, regularization, y_logits, weights
 
 
 def qy_given_x(z_1, FLAGS):
-    w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['num_classes']])
+    num_classes = FLAGS['num_classes']
+    w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], num_classes])
 
-    h1 = non_activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
-    return h1, w_mlp_h1
+    logits = non_activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
+    y_prior = tf.constant(value=1 / num_classes, shape=[FLAGS['train_batch_size'], num_classes])
+    print("logits:{}, y_prior:{}".format(logits.shape, y_prior))
+    regularization = tf.nn.softmax_cross_entropy_with_logits(labels=y_prior, logits=logits)
+    print("regularization:{}".format(regularization))
+    return logits, w_mlp_h1, regularization
 
 
 def calculate_regularization_loss(encoder_logvar_z2, encoder_mu_z2):
-    return -0.5 * tf.reduce_sum(1 + encoder_logvar_z2 - tf.pow(encoder_mu_z2, 2) - tf.exp(encoder_logvar_z2),
-                                axis=1)
+    z_regularization = -0.5 * tf.reduce_sum(
+        1 + encoder_logvar_z2 - tf.pow(encoder_mu_z2, 2) - tf.exp(encoder_logvar_z2), axis=1)
+    return z_regularization
