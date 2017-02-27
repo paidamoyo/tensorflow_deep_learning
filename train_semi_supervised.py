@@ -157,7 +157,7 @@ if __name__ == '__main__':
         'save_path': 'results/train_weights',
         'train_batch_size': 200,
         'test_batch_size': 256,
-        'num_iterations': 10000,
+        'num_iterations': 20000,
         'seed': 12000,
         'n_labeled': 3000,
         'alpha': 0.1,
