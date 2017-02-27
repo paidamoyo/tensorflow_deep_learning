@@ -123,6 +123,7 @@ def reconstruction_loss():
 
 
 def predict_cls(images, labels, cls_true):
+    saver.restore(sess=session, save_path=FLAGS['save_path'])
     num_images = len(images)
     cls_pred = np.zeros(shape=num_images, dtype=np.int)
     i = 0
@@ -155,7 +156,7 @@ if __name__ == '__main__':
         'data_directory': 'data/MNIST/',
         'summaries_dir': 'summaries/',
         'save_path': 'results/train_weights',
-        'train_batch_size': 100,
+        'train_batch_size': 200,
         'test_batch_size': 256,
         'num_iterations': 10000,
         'seed': 12000,
