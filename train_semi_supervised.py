@@ -100,7 +100,8 @@ def compute_labeled_loss():
     # classifier_loss, y_pred_cls = svm_classifier(weights=weights, logits=y_logits, svmC=FLAGS['svmC'],
     #                                              y_true=y_true)
     weighted_classification_loss = beta * classifier_loss
-    loss = tf.reduce_mean(recognition_loss + reconstruction_loss() + weighted_classification_loss)
+    loss = tf.reduce_mean(
+        recognition_loss + reconstruction_loss() + weighted_classification_loss) + y_regularization_loss
     tf.summary.scalar('labeled_loss', loss)
     return loss
 
@@ -112,7 +113,7 @@ def compute_unlabeled_loss():
     vae_loss = recognition_loss + reconstruction_loss()
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
-    loss = tf.reduce_mean(weighted_loss)
+    loss = tf.reduce_mean(weighted_loss) + y_regularization_loss
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
@@ -181,7 +182,7 @@ if __name__ == '__main__':
     y_true = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_true')
     y_true_cls = tf.argmax(y_true, axis=1)
     # Encoder Model
-    z_latent_rep, recognition_loss, y_logits, weights = recognition_network(FLAGS, x)
+    z_latent_rep, recognition_loss, y_regularization_loss, y_logits, weights = recognition_network(FLAGS, x)
     # Decoder Model
     x_hat = generator_network(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent_rep)
     # Loss and Optimization
