@@ -83,16 +83,17 @@ def train_batch(idx, x_images, y_labels, loss, optimizer):
 
 
 def reconstruct(x_test):
-    mean = session.run(x_hat, feed_dict={x: x_test})
-    variance = session.run(x_logvar, feed_dict={x: x_test})
+    mean, variance = session.run([x_hat, x_logvar], feed_dict={x: x_test})
     x_re = draw_norm(dim=tf.shape(mean), mu=mean, logvar=variance)
     return x_re
 
 
 def test_reconstruction():
     x_test = data.test.next_batch(100)[0][0:5, ]
-    print(np.shape(x_test))
-    x_reconstruct = reconstruct(x_test)
+    print("x_test:{}".format(x_test))
+    x_reconstruct = []
+    for test in x_test:
+        x_reconstruct = x_reconstruct.append(reconstruct(test))
     plot_images(x_test, x_reconstruct)
 
 
