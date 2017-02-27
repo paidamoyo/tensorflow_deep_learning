@@ -86,7 +86,6 @@ def reconstruct(x_test):
 
 
 def test_reconstruction():
-    saver.restore(sess=session, save_path=FLAGS['save_path'])
     x_test = data.test.next_batch(100)[0][0:5, ]
     print(np.shape(x_test))
     x_reconstruct = reconstruct(x_test)
@@ -123,7 +122,6 @@ def reconstruction_loss():
 
 
 def predict_cls(images, labels, cls_true):
-    saver.restore(sess=session, save_path=FLAGS['save_path'])
     num_images = len(images)
     cls_pred = np.zeros(shape=num_images, dtype=np.int)
     i = 0
@@ -143,6 +141,7 @@ def predict_cls(images, labels, cls_true):
 
 def train_test():
     train_neural_network(FLAGS['num_iterations'])
+    saver.restore(sess=session, save_path=FLAGS['save_path'])
     correct, cls_pred = predict_cls(images=data.test.images,
                                     labels=data.test.labels,
                                     cls_true=(convert_labels_to_cls(data.test.labels)))
