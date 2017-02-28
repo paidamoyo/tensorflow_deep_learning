@@ -35,18 +35,19 @@ def plot_images(x_test, x_reconstruct, n_images):
     assert len(x_test) == n_images
     print("x_reconstruct:{}, x_test:{}".format(x_reconstruct.shape, x_test.shape))
 
-    plt.figure()
+    plt.figure(figsize=(8, 12))
     for i in range(n_images):
         # Plot image.
         plt.subplot(n_images, 2, 2 * i + 1)
-        plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
-        plt.title("Test input")
-        plt.colorbar()
+        s1 = plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
         plt.subplot(n_images, 2, 2 * i + 2)
-        plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
-        plt.title("Reconstruction")
-        plt.colorbar()
+        s2 = plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        s1.axes.get_xaxis().set_visible(False)
+        s1.axes.get_yaxis().set_visible(False)
+        s2.axes.get_xaxis().set_visible(False)
+        s2.axes.get_yaxis().set_visible(False)
 
+    # plt.title("Left: Test input and Right: Reconstruction")
     plt.tight_layout()
     plt.savefig("reconstructed_digit")
-    plt.axis('off')
+    # plt.axis('off')
