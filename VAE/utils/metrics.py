@@ -34,7 +34,6 @@ def print_test_accuracy(correct, cls_pred, labels):
 def plot_images(x_test, x_reconstruct):
     assert len(x_test) == 5
     print("x_reconstruct:{}, x_test:{}".format(x_reconstruct.shape, x_test.shape))
-    print(x_reconstruct[1])
 
     plt.figure(figsize=(8, 12))
     for i in range(5):
