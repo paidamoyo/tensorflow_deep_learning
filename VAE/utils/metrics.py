@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 
 
@@ -44,9 +43,7 @@ def plot_images(x_test, x_reconstruct):
         plt.title("Test input")
         plt.colorbar()
         plt.subplot(5, 2, 2 * i + 2)
-        reshaped_image = tf.reshape(x_reconstruct[i], shape=[28, 28])
-        print("rehaped:{}".format(reshaped_image))
-        plt.imshow(reshaped_image, vmin=0, vmax=1, cmap="gray")
+        plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
         plt.title("Reconstruction")
         plt.colorbar()
 

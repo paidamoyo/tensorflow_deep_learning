@@ -84,6 +84,7 @@ def train_batch(idx, x_images, y_labels, loss, optimizer):
 
 def reconstruct(x_test):
     mean, variance = session.run([x_hat, x_logvar], feed_dict={x: x_test})
+    print(mean[1], x_test[1])
     print("mean:{}, variance:{}".format(mean.shape, variance.shape))
     x_re = draw_norm(dim=FLAGS['input_dim'], mu=mean, logvar=variance)
     return x_re
