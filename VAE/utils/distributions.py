@@ -6,7 +6,7 @@ c = - 0.5 * np.log(2 * np.pi)
 
 
 def tf_normal_logpdf(x, mu, log_sigma_sq):
-    return - 0.5 * logc - log_sigma_sq / 2. - tf.div(tf.squared_difference(x, mu), 2 * tf.exp(log_sigma_sq))
+    return 0.5 * logc + log_sigma_sq / 2. + tf.div(tf.squared_difference(x, mu), 2 * tf.exp(log_sigma_sq))
 
 
 def tf_stdnormal_logpdf(x):
