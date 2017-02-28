@@ -91,7 +91,7 @@ def reconstruct(x_test):
 
 def test_reconstruction():
     x_test = data.test.next_batch(100)[0][0:5, ]
-    x_reconstruct = reconstruct(x_test)
+    x_reconstruct = reconstruct(x_test).eval()
     print("x_reconstruct 1:{}".format(x_reconstruct[1]))
     plot_images(x_test, x_reconstruct)
 
