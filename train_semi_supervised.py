@@ -88,7 +88,7 @@ def reconstruct(x_test):
     test_size = 5
     x_re = np.empty(shape=(test_size, FLAGS['input_dim']))
     for i in range(test_size):
-        x_re = np.append(x_re, draw_norm(dim=FLAGS['input_dim'], mu=mean[i], logvar=variance[i]))
+        x_re = np.concatenate(x_re, draw_norm(dim=FLAGS['input_dim'], mu=mean[i], logvar=variance[i]))
     return x_re
 
 
