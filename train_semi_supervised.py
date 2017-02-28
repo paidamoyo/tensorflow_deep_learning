@@ -94,7 +94,7 @@ def test_reconstruction():
     x_reconstruct = []
     for test in x_test:
         x_reconstruct = x_reconstruct.append(reconstruct(test))
-    plot_images(x_test, x_reconstruct)
+    plot_images(x_test.eval(), x_reconstruct)
 
 
 def compute_labeled_loss():
@@ -118,7 +118,9 @@ def compute_unlabeled_loss():
     vae_loss = recognition_loss + reconstruction_loss()
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
-    loss = tf.reduce_mean(weighted_loss) + y_regularization_loss
+    pi_mean = tf.reduce_mean(pi, axis=0)
+    weighted_y_reg = tf.reduce_sum(tf.scalar_mul(scalar=y_regularization_loss, x=pi_mean))
+    loss = tf.reduce_mean(weighted_loss) + weighted_y_reg
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
