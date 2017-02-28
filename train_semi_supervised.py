@@ -84,7 +84,6 @@ def train_batch(idx, x_images, y_labels, loss, optimizer):
 
 def reconstruct(x_test):
     mean, variance = session.run([x_hat, x_logvar], feed_dict={x: x_test})
-    print("mean:{}, variance:{}".format(mean.shape, variance.shape))
     return mean
 
 
