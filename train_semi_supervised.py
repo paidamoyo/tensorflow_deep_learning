@@ -92,8 +92,7 @@ def reconstruct(x_test):
 def test_reconstruction():
     x_test = data.test.next_batch(100)[0][0:5, ]
     print("x_test:{}".format(x_test))
-    x_reconstruct = reconstruct(x_test)
-    plot_images(x_test, x_reconstruct)
+    plot_images(x_test, reconstruct(x_test))
 
 
 def compute_labeled_loss():
@@ -164,7 +163,7 @@ if __name__ == '__main__':
         'save_path': 'results/train_weights',
         'train_batch_size': 200,
         'test_batch_size': 256,
-        'num_iterations': 20000,
+        'num_iterations': 2,
         'seed': 12000,
         'n_labeled': 3000,
         'alpha': 0.1,
