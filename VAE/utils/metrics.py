@@ -44,7 +44,9 @@ def plot_images(x_test, x_reconstruct):
         plt.title("Test input")
         plt.colorbar()
         plt.subplot(5, 2, 2 * i + 2)
-        plt.imshow(tf.reshape(x_reconstruct[i], shape=[28, 28]), vmin=0, vmax=1, cmap="gray")
+        reshaped_image = tf.reshape(x_reconstruct[i], shape=[28, 28])
+        print("rehaped:{}".format(reshaped_image))
+        plt.imshow(reshaped_image, vmin=0, vmax=1, cmap="gray")
         plt.title("Reconstruction")
         plt.colorbar()
 
