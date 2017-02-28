@@ -126,7 +126,7 @@ def compute_unlabeled_loss():
 
 
 def reconstruction_loss():
-    return -tf.reduce_sum(tf_normal_logpdf(x, x_hat, x_logvar), axis=1)
+    return tf.abs(tf.reduce_sum(tf_normal_logpdf(x, x_hat, x_logvar), axis=1))
 
 
 def predict_cls(images, labels, cls_true):
