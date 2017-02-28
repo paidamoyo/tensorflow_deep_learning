@@ -85,15 +85,13 @@ def train_batch(idx, x_images, y_labels, loss, optimizer):
 def reconstruct(x_test):
     mean, variance = session.run([x_hat, x_logvar], feed_dict={x: x_test})
     print("mean:{}, variance:{}".format(mean.shape, variance.shape))
-    x_re = draw_norm(dim=FLAGS['input_dim'], mu=mean, logvar=variance)
-    return x_re
+    x_reconstructed = draw_norm(dim=FLAGS['input_dim'], mu=mean, logvar=variance)
+    return x_reconstructed.eval(session=session)
 
 
 def test_reconstruction():
     x_test = data.test.next_batch(100)[0][0:5, ]
-    x_reconstruct = reconstruct(x_test).eval()
-    print("x_reconstruct 1:{}".format(x_reconstruct[1]))
-    plot_images(x_test, x_reconstruct)
+    plot_images(x_test, reconstruct(x_test))
 
 
 def compute_labeled_loss():
@@ -164,7 +162,7 @@ if __name__ == '__main__':
         'save_path': 'results/train_weights',
         'train_batch_size': 200,
         'test_batch_size': 256,
-        'num_iterations': 2,
+        'num_iterations': 20000,
         'seed': 12000,
         'n_labeled': 3000,
         'alpha': 0.1,
