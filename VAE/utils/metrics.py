@@ -31,21 +31,22 @@ def print_test_accuracy(correct, cls_pred, labels):
     plot_confusion_matrix(cls_pred=cls_pred, labels=labels)
 
 
-def plot_images(x_test, x_reconstruct):
-    assert len(x_test) == 10
+def plot_images(x_test, x_reconstruct, n_images):
+    assert len(x_test) == n_images
     print("x_reconstruct:{}, x_test:{}".format(x_reconstruct.shape, x_test.shape))
 
-    plt.figure(figsize=(8, 12))
-    for i in range(10):
+    plt.figure()
+    for i in range(n_images):
         # Plot image.
-        plt.subplot(10, 2, 2 * i + 1)
+        plt.subplot(n_images, 2, 2 * i + 1)
         plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
         plt.title("Test input")
         plt.colorbar()
-        plt.subplot(10, 2, 2 * i + 2)
+        plt.subplot(n_images, 2, 2 * i + 2)
         plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
         plt.title("Reconstruction")
         plt.colorbar()
 
     plt.tight_layout()
     plt.savefig("reconstructed_digit")
+    plt.axis('off')
