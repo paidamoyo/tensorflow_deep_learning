@@ -86,8 +86,9 @@ def reconstruct(x_test):
 
 
 def test_reconstruction():
-    x_test = data.test.next_batch(100)[0][0:20, ]
-    plot_images(x_test, reconstruct(x_test))
+    num_images = 20
+    x_test = data.test.next_batch(100)[0][0:num_images, ]
+    plot_images(x_test, reconstruct(x_test), num_images)
 
 
 def compute_labeled_loss():
