@@ -95,11 +95,9 @@ def compute_labeled_loss():
     # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
     classifier_loss, y_pred_cls = softmax_classifier(logits=y_logits, y_true=y_true)
-    # classifier_loss, y_pred_cls = svm_classifier(weights=weights, logits=y_logits, svmC=FLAGS['svmC'],
-    #                                              y_true=y_true)
     weighted_classification_loss = beta * classifier_loss
     loss = tf.reduce_mean(
-        recognition_loss + reconstruction_loss() + weighted_classification_loss) + y_regularization_loss
+        recognition_loss + reconstruction_loss() + weighted_classification_loss)
     tf.summary.scalar('labeled_loss', loss)
     return loss
 
@@ -111,9 +109,7 @@ def compute_unlabeled_loss():
     vae_loss = recognition_loss + reconstruction_loss()
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
-    pi_mean = tf.reduce_mean(pi, axis=0)
-    weighted_y_reg = tf.reduce_sum(tf.scalar_mul(scalar=y_regularization_loss, x=pi_mean))
-    loss = tf.reduce_mean(weighted_loss) + weighted_y_reg
+    loss = tf.reduce_mean(weighted_loss)
     tf.summary.scalar('unlabeled_loss', loss)
     return loss
 
