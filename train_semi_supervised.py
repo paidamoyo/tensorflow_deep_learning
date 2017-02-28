@@ -91,9 +91,9 @@ def reconstruct(x_test):
 def test_reconstruction():
     x_test = data.test.next_batch(100)[0][0:5, ]
     print("x_test:{}".format(x_test))
-    x_reconstruct = []
+    x_reconstruct = np.empty((len(x_test), FLAGS['input_dim']), int)
     for test in x_test:
-        x_reconstruct = x_reconstruct.append(reconstruct(test))
+        x_reconstruct = np.append(x_reconstruct, reconstruct(test))
     plot_images(x_test.eval(), x_reconstruct)
 
 
@@ -126,7 +126,7 @@ def compute_unlabeled_loss():
 
 
 def reconstruction_loss():
-    return tf.abs(tf.reduce_sum(tf_normal_logpdf(x, x_hat, x_logvar), axis=1))
+    return -tf.reduce_sum(tf_normal_logpdf(x, x_hat, x_logvar), axis=1)
 
 
 def predict_cls(images, labels, cls_true):
