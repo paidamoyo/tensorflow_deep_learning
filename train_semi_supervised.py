@@ -86,7 +86,7 @@ def reconstruct(x_test):
 
 
 def test_reconstruction():
-    x_test = data.test.next_batch(100)[0][0:5, ]
+    x_test = data.test.next_batch(100)[0][0:10, ]
     plot_images(x_test, reconstruct(x_test))
 
 

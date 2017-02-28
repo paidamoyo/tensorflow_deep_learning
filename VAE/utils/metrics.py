@@ -32,17 +32,17 @@ def print_test_accuracy(correct, cls_pred, labels):
 
 
 def plot_images(x_test, x_reconstruct):
-    assert len(x_test) == 5
+    assert len(x_test) == 10
     print("x_reconstruct:{}, x_test:{}".format(x_reconstruct.shape, x_test.shape))
 
     plt.figure(figsize=(8, 12))
-    for i in range(5):
+    for i in range(10):
         # Plot image.
-        plt.subplot(5, 2, 2 * i + 1)
+        plt.subplot(10, 2, 2 * i + 1)
         plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
         plt.title("Test input")
         plt.colorbar()
-        plt.subplot(5, 2, 2 * i + 2)
+        plt.subplot(10, 2, 2 * i + 2)
         plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
         plt.title("Reconstruction")
         plt.colorbar()
