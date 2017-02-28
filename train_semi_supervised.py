@@ -27,7 +27,7 @@ def train_neural_network(num_iterations):
     idx_labeled = 0
     idx_unlabeled = 0
 
-    for epoch in range(num_iterations):
+    for iter in range(num_iterations):
 
         if np.random.rand() < 0.5:
             batch_loss, j = train_batch(idx_labeled, x_l, y_l, labeled_loss, labeled_optimizer)
@@ -39,7 +39,7 @@ def train_neural_network(num_iterations):
             idx_unlabeled = j
             loss_string = "UNLABELED"
 
-        if (epoch % 100 == 0) or (epoch == (num_iterations - 1)):
+        if (iter % 100 == 0) or (iter == (num_iterations - 1)):
             # Calculate the accuracy
             correct, _ = predict_cls(images=data.validation.images,
                                      labels=data.validation.labels,
@@ -50,14 +50,14 @@ def train_neural_network(num_iterations):
                 saver.save(sess=session, save_path=FLAGS['save_path'])
                 # update best validation accuracy
                 best_validation_accuracy = acc_validation
-                last_improvement = epoch
+                last_improvement = iter
                 improved_str = '*'
             else:
                 improved_str = ''
 
             print("Optimization Iteration: {}, {} Training Loss: {}, "
-                  " Validation Acc:{}, {}".format(epoch + 1, loss_string, batch_loss, acc_validation, improved_str))
-        if epoch - last_improvement > FLAGS['require_improvement']:
+                  " Validation Acc:{}, {}".format(iter + 1, loss_string, batch_loss, acc_validation, improved_str))
+        if iter - last_improvement > FLAGS['require_improvement']:
             print("No improvement found in a while, stopping optimization.")
             # Break out from the for-loop.
             break
