@@ -11,7 +11,6 @@ from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import generator_network
 from VAE.semi_supervised.encoder import recognition_network
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
-from VAE.utils.distributions import tf_normal_logpdf
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 
 sys.path.append(os.getcwd())
@@ -120,7 +119,7 @@ def compute_unlabeled_loss():
 
 
 def reconstruction_loss():
-    return tf.reduce_sum(tf_normal_logpdf(x, x_hat, x_logvar), axis=1)
+    return tf.reduce_sum(tf.squared_difference(x, x_hat), axis=1)
 
 
 def predict_cls(images, labels, cls_true):
