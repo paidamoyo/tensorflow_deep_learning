@@ -34,7 +34,7 @@ def train_neural_network(num_iterations):
         x_u_batch, _, idx_unlabeled = get_next_batch(x_u, y_u, idx_unlabeled, num_ulab_batch)
         feed_dict_train = {x_lab: x_l_batch, y_lab: y_l_batch, x_unlab: x_u_batch}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
-        # train_writer.add_summary(summary, batch_loss)
+        train_writer.add_summary(summary, batch_loss)
 
         if (i % 100 == 0) or (i == (num_iterations - 1)):
             # Calculate the accuracy
@@ -204,8 +204,7 @@ if __name__ == '__main__':
         scope.reuse_variables()
         x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y_logits=y_ulab_logits, z_latent=z_ulab)
     # Loss and Optimization
-    cost = (total_lab_loss() + total_unlab_loss() * FLAGS['num_iterations'] + prior_weights()) / (
-        FLAGS['train_batch_size'] * FLAGS['num_iterations'])
+    cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / FLAGS['train_batch_size']
     # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
     #     - self.num_batches * self.batch_size)
 
