@@ -205,7 +205,7 @@ if __name__ == '__main__':
         scope.reuse_variables()
         x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y_logits=y_ulab_logits, z_latent=z_ulab)
     # Loss and Optimization
-    cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / batch_size
+    cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
     # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
     #     - self.num_batches * self.batch_size)
 
