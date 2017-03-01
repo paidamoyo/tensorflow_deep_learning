@@ -65,10 +65,11 @@ def train_neural_network(num_iterations):
 
 
 def get_training_batch():
-    lab_batch = int(0.1 * FLAGS['n_labeled'])
-    ulab_batch = FLAGS['train_batch_size'] - lab_batch
-    print("num_lab_batch:{}, num_ulab_batch:{}".format(lab_batch, ulab_batch))
-    return lab_batch, ulab_batch
+    batch_size = FLAGS['n_train'] // FLAGS['num_batches']
+    lab_batch = int(FLAGS['n_labeled'] / (FLAGS['n_labeled'] // FLAGS['num_batches']))
+    ulab_batch = batch_size - lab_batch
+    print("num_lab_batch:{}, num_ulab_batch:{}, batch_size:{}".format(lab_batch, ulab_batch, batch_size))
+    return lab_batch, ulab_batch, batch_size
 
 
 def get_next_batch(x_images, y_labels, idx, batch_size):
@@ -166,7 +167,7 @@ if __name__ == '__main__':
         'data_directory': 'data/MNIST/',
         'summaries_dir': 'summaries/',
         'save_path': 'results/train_weights',
-        'train_batch_size': 500,
+        'num_batches': 100,
         'test_batch_size': 256,
         'num_iterations': 20000,
         'seed': 12000,
@@ -184,7 +185,7 @@ if __name__ == '__main__':
         'num_classes': 10,
         'svmC': 1
     }
-    num_lab_batch, num_ulab_batch = get_training_batch()
+    num_lab_batch, num_ulab_batch, batch_size = get_training_batch()
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
@@ -204,7 +205,7 @@ if __name__ == '__main__':
         scope.reuse_variables()
         x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y_logits=y_ulab_logits, z_latent=z_ulab)
     # Loss and Optimization
-    cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / FLAGS['train_batch_size']
+    cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / batch_size
     # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
     #     - self.num_batches * self.batch_size)
 
