@@ -9,8 +9,9 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import generator_network
-from VAE.semi_supervised.encoder import recognition_network
+from VAE.semi_supervised.encoder import recognition_network, qz_regularization_loss
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
+from  VAE.utils.distributions import draw_norm
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 
 sys.path.append(os.getcwd())
@@ -23,21 +24,20 @@ def train_neural_network(num_iterations):
 
     start_time = time.time()
     x_l, y_l, x_u, y_u = preprocess_train_data(data=data, n_labeled=FLAGS['n_labeled'], n_train=FLAGS['n_train'])
+    num_lab_batch, num_ulab_batch = get_training_batch()
 
     idx_labeled = 0
     idx_unlabeled = 0
 
     for iter in range(num_iterations):
 
-        if np.random.rand() < 0.5:
-            batch_loss, j = train_batch(idx_labeled, x_l, y_l, labeled_loss, labeled_optimizer)
-            idx_labeled = j
-            loss_string = "LABELED"
+        # Batch Training
+        x_l_batch, y_l_batch, idx_labeled = get_next_batch(x_l, y_l, idx_labeled, num_lab_batch)
+        x_u_batch, _, idx_unlabeled = get_next_batch(x_l, y_l, idx_unlabeled, num_ulab_batch)
 
-        else:
-            batch_loss, j = train_batch(idx_unlabeled, x_u, y_u, unlabeled_loss, unlabeled_optimizer)
-            idx_unlabeled = j
-            loss_string = "UNLABELED"
+        feed_dict_train = {x_labeled: x_l_batch, y_true: y_l_batch, x_unlabeled: x_u_batch}
+        summary, batch_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
+        train_writer.add_summary(summary, batch_loss)
 
         if (iter % 100 == 0) or (iter == (num_iterations - 1)):
             # Calculate the accuracy
@@ -55,8 +55,8 @@ def train_neural_network(num_iterations):
             else:
                 improved_str = ''
 
-            print("Optimization Iteration: {}, {} Training Loss: {}, "
-                  " Validation Acc:{}, {}".format(iter + 1, loss_string, batch_loss, acc_validation, improved_str))
+            print("Optimization Iteration: {}, Training Loss: {}, "
+                  " Validation Acc:{}, {}".format(iter + 1, batch_loss, acc_validation, improved_str))
         if iter - last_improvement > FLAGS['require_improvement']:
             print("No improvement found in a while, stopping optimization.")
             # Break out from the for-loop.
@@ -67,22 +67,24 @@ def train_neural_network(num_iterations):
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
-def train_batch(idx, x_images, y_labels, loss, optimizer):
-    # Batch Training
+def get_training_batch():
+    num_lab_batch = FLAGS['n_labeled'] // FLAGS['train_batch_size']
+    num_ulab_batch = (FLAGS['n_train'] - FLAGS['n_labeled']) // FLAGS['train_batch_size']
+    return num_lab_batch, num_ulab_batch
+
+
+def get_next_batch(x_images, y_labels, idx, batch_size):
     num_images = x_images.shape[0]
     if idx == num_images:
         idx = 0
-    j = min(idx + FLAGS['train_batch_size'], num_images)
+    j = min(idx + batch_size, num_images)
     x_batch = x_images[idx:j, :]
     y_true_batch = y_labels[idx:j, :]
-    feed_dict_train = {x: x_batch, y_true: y_true_batch}
-    summary, batch_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
-    train_writer.add_summary(summary, batch_loss)
-    return batch_loss, j
+    return x_batch, y_true_batch, j
 
 
 def reconstruct(x_test):
-    return session.run(x_hat, feed_dict={x: x_test})
+    return session.run(x_mu_l, feed_dict={x_labeled: x_test})
 
 
 def test_reconstruction():
@@ -95,19 +97,19 @@ def compute_labeled_loss():
     global y_pred_cls
     # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
-    classifier_loss, y_pred_cls = softmax_classifier(logits=y_logits, y_true=y_true)
+    classifier_loss, y_pred_cls = softmax_classifier(logits=y_logits_l, y_true=y_true)
     weighted_classification_loss = beta * classifier_loss
     loss = tf.reduce_mean(
-        recognition_loss + reconstruction_loss() + weighted_classification_loss)
+        qz_regularization_loss(z_mu_l, z2_logvar_l) + reconstruction_loss() + weighted_classification_loss)
     tf.summary.scalar('labeled_loss', loss)
     return loss
 
 
 def compute_unlabeled_loss():
     # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
-    pi = tf.nn.softmax(y_logits)
+    pi = tf.nn.softmax(y_logits_u)
     entropy = tf.einsum('ij,ij->i', pi, tf.log(pi))
-    vae_loss = recognition_loss + reconstruction_loss()
+    vae_loss = qz_regularization_loss(z_mu_u, z2_logvar_u) + reconstruction_loss()
     weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [FLAGS['train_batch_size'], 1]), pi)
     print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
     loss = tf.reduce_mean(weighted_loss)
@@ -116,7 +118,7 @@ def compute_unlabeled_loss():
 
 
 def reconstruction_loss():
-    return tf.reduce_sum(tf.squared_difference(x, x_hat), axis=1)
+    return tf.reduce_sum(tf.squared_difference(x_labeled, x_mu_l), axis=1)
 
 
 def predict_cls(images, labels, cls_true):
@@ -128,7 +130,7 @@ def predict_cls(images, labels, cls_true):
         j = min(i + FLAGS['test_batch_size'], num_images)
         test_images = images[i:j, :]
         labels = labels[i:j, :]
-        feed_dict = {x: test_images,
+        feed_dict = {x_labeled: test_images,
                      y_true: labels[i:j, :]}
         cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
         i = j
@@ -175,21 +177,28 @@ if __name__ == '__main__':
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
-    x = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x')
+    x_labeled = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_labeled')
+    x_unlabeled = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_unlabeled')
     y_true = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_true')
     y_true_cls = tf.argmax(y_true, axis=1)
     # Encoder Model
-    z_latent_rep, recognition_loss, y_regularization_loss, y_logits, weights = recognition_network(FLAGS, x)
-    # Decoder Model
-    x_hat, x_logvar = generator_network(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent_rep)
-    # Loss and Optimization
-    labeled_loss = compute_labeled_loss()
-    unlabeled_loss = compute_unlabeled_loss()
+    with tf.variable_scope("encoder") as scope:
+        z_mu_l, z2_logvar_l, y_logits_l = recognition_network(FLAGS, x_labeled)
+        scope.reuse_variables()
+        z_mu_u, z2_logvar_u, y_logits_u = recognition_network(FLAGS, x_unlabeled)
 
-    labeled_optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
-                                               beta2=FLAGS['beta2']).minimize(labeled_loss)
-    unlabeled_optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
-                                                 beta2=FLAGS['beta2']).minimize(unlabeled_loss)
+    # Decoder Model
+    with tf.variable_scope("decoder") as scope:
+        x_mu_l, x_logvar_l = generator_network(FLAGS=FLAGS, y_logits=y_logits_l,
+                                               z_latent_rep=draw_norm(FLAGS['latent_dim'], z_mu_l, z2_logvar_l))
+        scope.reuse_variables()
+        x_mu_u, x_logvar_u = generator_network(FLAGS=FLAGS, y_logits=y_logits_u,
+                                               z_latent_rep=draw_norm(FLAGS['latent_dim'], z_mu_u, z2_logvar_u))
+    # Loss and Optimization
+    loss = compute_labeled_loss() + compute_unlabeled_loss()
+
+    optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
+                                       beta2=FLAGS['beta2']).minimize(loss)
     session = tf.Session()
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()

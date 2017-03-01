@@ -49,11 +49,7 @@ def recognition_network(FLAGS, x):
     # Z2 latent layer mu and var
     logvar_z2 = non_activated_neuron(h4_z1, w_var_z2, b_var_z2)
     mu_z2 = non_activated_neuron(h4_mu, w_mu_z2, b_mu_z2)
-    z_2 = draw_norm(FLAGS['latent_dim'], mu_z2, logvar_z2)
-    # regularization loss
-    regularization = calculate_regularization_loss(logvar_z2, mu_z2)
-
-    return z_2, regularization, y_regularization, y_logits, weights
+    return mu_z2, logvar_z2, y_logits
 
 
 def qy_given_x(z_1, FLAGS):
@@ -70,7 +66,7 @@ def qy_given_x(z_1, FLAGS):
     return logits, w_mlp_h1, regularization
 
 
-def calculate_regularization_loss(encoder_logvar_z2, encoder_mu_z2):
+def qz_regularization_loss(encoder_logvar_z2, encoder_mu_z2):
     z_regularization = -0.5 * tf.reduce_sum(
         1 + encoder_logvar_z2 - tf.pow(encoder_mu_z2, 2) - tf.exp(encoder_logvar_z2), axis=1)
     return z_regularization
