@@ -49,7 +49,8 @@ def recognition_network(FLAGS, x):
     # Z2 latent layer mu and var
     logvar_z2 = non_activated_neuron(h4_z1, w_var_z2, b_var_z2)
     mu_z2 = non_activated_neuron(h4_mu, w_mu_z2, b_mu_z2)
-    return mu_z2, logvar_z2, y_logits
+    z2 = draw_norm(FLAGS['latent_dim'], mu_z2, logvar_z2)
+    return z2, mu_z2, logvar_z2, y_logits
 
 
 def qy_given_x(z_1, FLAGS):

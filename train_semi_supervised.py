@@ -9,9 +9,9 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import generator_network
-from VAE.semi_supervised.encoder import recognition_network, qz_regularization_loss
+from VAE.semi_supervised.encoder import recognition_network
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
-from VAE.utils.distributions import draw_norm
+from VAE.utils.distributions import compute_ELBO, tf_stdnormal_logpdf
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 
 sys.path.append(os.getcwd())
@@ -32,8 +32,8 @@ def train_neural_network(num_iterations):
         # Batch Training
         x_l_batch, y_l_batch, idx_labeled = get_next_batch(x_l, y_l, idx_labeled, num_lab_batch)
         x_u_batch, _, idx_unlabeled = get_next_batch(x_u, y_u, idx_unlabeled, num_ulab_batch)
-        feed_dict_train = {x_labeled: x_l_batch, y_lab: y_l_batch, x_unlabeled: x_u_batch}
-        summary, batch_loss, _ = session.run([merged, loss, optimizer], feed_dict=feed_dict_train)
+        feed_dict_train = {x_lab: x_l_batch, y_lab: y_l_batch, x_unlab: x_u_batch}
+        summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
         train_writer.add_summary(summary, batch_loss)
 
         if (i % 100 == 0) or (i == (num_iterations - 1)):
@@ -82,7 +82,7 @@ def get_next_batch(x_images, y_labels, idx, batch_size):
 
 
 def reconstruct(x_test):
-    return session.run(x_mu_l, feed_dict={x_labeled: x_test})
+    return session.run(x_recon_lab_mu, feed_dict={x_lab: x_test})
 
 
 def test_reconstruction():
@@ -91,28 +91,30 @@ def test_reconstruction():
     plot_images(x_test, reconstruct(x_test), num_images)
 
 
-def compute_labeled_loss():
+def total_lab_loss():
     global y_pred_cls
     # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
-    classifier_loss, y_pred_cls = softmax_classifier(logits=y_logits_l, y_true=y_lab)
-    weighted_classification_loss = beta * classifier_loss
-    labeled_loss = tf.reduce_mean(
-        qz_regularization_loss(z_mu_l, z2_logvar_l) + reconstruction_loss(x_labeled,
-                                                                          x_mu_l) + weighted_classification_loss)
+    classifier_loss, y_pred_cls = softmax_classifier(logits=y_lab_logits, y_true=y_lab)
+    weighted_classifier_loss = beta * classifier_loss
+    labeled_ELBO = compute_ELBO(x_recon=[x_recon_lab_mu, x_recon_lab_logvar], x=x_lab, y=y_lab,
+                                z=[z_lab, z_lab_mu, z_lab_logvar])
+    labeled_KL = tf.scalar_mul(scalar=-1, x=labeled_ELBO)
+    labeled_loss = tf.reduce_sum(tf.add(labeled_KL, weighted_classifier_loss))
     tf.summary.scalar('labeled_loss', labeled_loss)
     return labeled_loss
 
 
-def compute_unlabeled_loss():
+def total_unlab_loss():
     # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
-    pi = tf.nn.softmax(y_logits_u)
-    entropy = tf.einsum('ij,ij->i', pi, tf.log(pi))
-    vae_loss = qz_regularization_loss(z_mu_u, z2_logvar_u) + reconstruction_loss(x_unlabeled, x_mu_u)
-    print("unlabeled vae_loss:{}, y_logits_u:{}".format(vae_loss, y_logits_u))
-    weighted_loss = tf.einsum('ij,ik->i', tf.reshape(vae_loss, [tf.shape(vae_loss)[0], 1]), pi)
-    print("entropy:{}, pi:{}, weighted_loss:{}".format(entropy, pi, weighted_loss))
-    unlabeled_loss = tf.reduce_mean(weighted_loss)
+    y_ulab = tf.nn.softmax(logits=y_ulab_logits)
+    entropy = tf.einsum('ij,ij->i', y_ulab, tf.log(y_ulab))
+    unlabeled_ELBO = compute_ELBO(x_recon=[x_recon_ulab_mu, x_recon_ulab_logvar], x=x_unlab, y=y_ulab,
+                                  z=[z_ulab, z_ulab_mu, z_ulab_logvar])
+    weighted_ELBO = tf.einsum('ij,ik->i', tf.reshape(unlabeled_ELBO, [tf.shape(unlabeled_ELBO)[0], 1]), y_ulab)
+    print("entropy:{}, y_ulab:{}, weighted_ELBO:{}".format(entropy, y_ulab, weighted_ELBO))
+    unlabeled_KL = tf.scalar_mul(scalar=-1, x=weighted_ELBO)
+    unlabeled_loss = tf.reduce_sum(tf.add(unlabeled_KL, entropy))
     tf.summary.scalar('unlabeled_loss', unlabeled_loss)
     return unlabeled_loss
 
@@ -130,13 +132,22 @@ def predict_cls(images, labels, cls_true):
         j = min(i + FLAGS['test_batch_size'], num_images)
         test_images = images[i:j, :]
         labels = labels[i:j, :]
-        feed_dict = {x_labeled: test_images,
+        feed_dict = {x_lab: test_images,
                      y_lab: labels[i:j, :]}
         cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
         i = j
     # Create a boolean array whether each image is correctly classified.
     correct = (cls_true == cls_pred)
     return correct, cls_pred
+
+
+def prior_weights():
+    L_weights = 0.
+    _weights = tf.trainable_variables()
+    for w in _weights:
+        L_weights += tf.reduce_sum(tf_stdnormal_logpdf(w))
+
+    return L_weights
 
 
 def train_test():
@@ -177,28 +188,29 @@ if __name__ == '__main__':
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
-    x_labeled = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_labeled')
-    x_unlabeled = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_unlabeled')
-    y_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_true')
+    x_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_labeled')
+    x_unlab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_unlabeled')
+    y_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_lab')
     y_true_cls = tf.argmax(y_lab, axis=1)
     # Encoder Model
     with tf.variable_scope("encoder") as scope:
-        z_mu_l, z2_logvar_l, y_logits_l = recognition_network(FLAGS, x_labeled)
+        z_lab, z_lab_mu, z_lab_logvar, y_lab_logits = recognition_network(FLAGS, x_lab)
         scope.reuse_variables()
-        z_mu_u, z2_logvar_u, y_logits_u = recognition_network(FLAGS, x_unlabeled)
+        z_ulab, z_ulab_mu, z_ulab_logvar, y_ulab_logits = recognition_network(FLAGS, x_unlab)
 
     # Decoder Model
     with tf.variable_scope("decoder") as scope:
-        x_mu_l, x_logvar_l = generator_network(FLAGS=FLAGS, y_logits=y_logits_l,
-                                               z_latent_rep=draw_norm(FLAGS['latent_dim'], z_mu_l, z2_logvar_l))
+        x_recon_lab_mu, x_recon_lab_logvar = generator_network(FLAGS=FLAGS, y_logits=y_lab_logits, z_latent=z_lab)
         scope.reuse_variables()
-        x_mu_u, x_logvar_u = generator_network(FLAGS=FLAGS, y_logits=y_logits_u,
-                                               z_latent_rep=draw_norm(FLAGS['latent_dim'], z_mu_u, z2_logvar_u))
+        x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y_logits=y_ulab_logits, z_latent=z_ulab)
     # Loss and Optimization
-    loss = compute_labeled_loss() + compute_unlabeled_loss()
+    cost = (total_lab_loss() + total_unlab_loss() * FLAGS['num_iterations'] + prior_weights()) / (
+        FLAGS['train_batch_size'] * FLAGS['num_iterations'])
+    # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
+    #     - self.num_batches * self.batch_size)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
-                                       beta2=FLAGS['beta2']).minimize(loss)
+                                       beta2=FLAGS['beta2']).minimize(cost)
     session = tf.Session()
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()

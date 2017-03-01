@@ -4,7 +4,7 @@ from VAE.utils.distributions import draw_norm
 from VAE.utils.tf_helpers import create_h_weights, create_z_weights, activated_neuron, non_activated_neuron
 
 
-def generator_network(FLAGS, y_logits, z_latent_rep):
+def generator_network(FLAGS, y_logits, z_latent):
     # Variables
     w_h3, b_h3 = create_h_weights('h3', 'decoder', [FLAGS['latent_dim'], FLAGS['decoder_h_dim']])
     w_h4, b_h4 = create_h_weights('h4', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['decoder_h_dim']])
@@ -12,7 +12,7 @@ def generator_network(FLAGS, y_logits, z_latent_rep):
     w_var, b_var = create_h_weights('var', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['input_dim']])
     # Model
     # Decoder hidden layer
-    h3 = activated_neuron(pz1_given_z2y(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent_rep), w_h3, b_h3)
+    h3 = activated_neuron(pz1_given_z2y(FLAGS=FLAGS, y_logits=y_logits, z_latent_rep=z_latent), w_h3, b_h3)
     h4 = activated_neuron(h3, w_h4, b_h4)
 
     # Reconstruction layer
