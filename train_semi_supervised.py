@@ -147,7 +147,7 @@ def prior_weights():
     for w in _weights:
         L_weights += tf.reduce_sum(tf_stdnormal_logpdf(w))
 
-    return L_weights
+    return tf.scalar_mul(scalar=-1, x=L_weights)
 
 
 def train_test():
