@@ -166,7 +166,7 @@ if __name__ == '__main__':
         'data_directory': 'data/MNIST/',
         'summaries_dir': 'summaries/',
         'save_path': 'results/train_weights',
-        'train_batch_size': 100,
+        'train_batch_size': 500,
         'test_batch_size': 256,
         'num_iterations': 20000,
         'seed': 12000,
