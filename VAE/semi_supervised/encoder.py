@@ -4,59 +4,48 @@ from VAE.utils.distributions import draw_norm
 from VAE.utils.tf_helpers import create_h_weights, create_z_weights, activated_neuron, non_activated_neuron
 
 
-def q_z_1_given_x(FLAGS, x):
-    # Variables
-    w_h1, b_h1 = create_h_weights('h1', 'encoder', [FLAGS['input_dim'], FLAGS['encoder_h_dim']])
-    w_h2, b_h2 = create_h_weights('h2', 'encoder',
-                                  [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
-    w_mu_z1, w_var_z1, b_mu_z1, b_var_z1 = create_z_weights('z_1', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
+def q_z_1_given_x(FLAGS, x, reuse=False):
+    with tf.variable_scope("encoder_z1", reuse=reuse):
+        # Variables
+        w_h1, b_h1 = create_h_weights('h1', 'encoder', [FLAGS['input_dim'], FLAGS['encoder_h_dim']])
 
-    # Hidden layers
-    h1 = activated_neuron(x, w_h1, b_h1)
-    h2 = activated_neuron(h1, w_h2, b_h2)
+        w_mu_z1, w_var_z1, b_mu_z1, b_var_z1 = create_z_weights('z_1', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
 
-    # Z1 latent layer mu and var
-    logvar_z1 = non_activated_neuron(h2, w_var_z1, b_var_z1)
-    mu_z1 = non_activated_neuron(h2, w_mu_z1, b_mu_z1)
-    return draw_norm(FLAGS['latent_dim'], mu_z1, logvar_z1)
+        # Hidden layers
+        h1 = activated_neuron(x, w_h1, b_h1)
+
+        # Z1 latent layer mu and var
+        logvar_z1 = non_activated_neuron(h1, w_var_z1, b_var_z1)
+        mu_z1 = non_activated_neuron(h1, w_mu_z1, b_mu_z1)
+        return draw_norm(FLAGS['latent_dim'], mu_z1, logvar_z1)
 
 
-def recognition_network(FLAGS, x):
-    # Variables
-    w_h3_z1, b_h3_z1 = create_h_weights('h3_z1', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
-    w_h4_z1, b_h4_z1 = create_h_weights('h4_z1', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+def recognition_network(FLAGS, z1, y, reuse=False):
+    with tf.variable_scope("encoder_z2", reuse=reuse):
+        # Variables
+        w_h1, b_h1 = create_h_weights('h1', 'encoder',
+                                      [FLAGS['latent_dim'] + FLAGS['num_classes'], FLAGS['encoder_h_dim']])
 
-    w_h3_y, b_h3_y = create_h_weights('h3_y', 'encoder', [FLAGS['num_classes'], FLAGS['encoder_h_dim']])
-    w_h4_y, b_h4_y = create_h_weights('h4_y', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+        w_mu_z2, w_var_z2, b_mu_z2, b_var_z2 = create_z_weights('z_2', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
 
-    w_h4_mu, b_h4_mu = create_h_weights('h4_mu', 'encoder', [2 * FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+        # Model
+        y_logits = qy_given_x(z1, FLAGS)
 
-    w_mu_z2, w_var_z2, b_mu_z2, b_var_z2 = create_z_weights('z_2', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
-
-    # Model
-    z_1 = q_z_1_given_x(FLAGS, x)
-    y_logits = qy_given_x(z_1, FLAGS)
-
-    # Hidden layers
-    h3_z1 = activated_neuron(z_1, w_h3_z1, b_h3_z1)
-    h4_z1 = activated_neuron(h3_z1, w_h4_z1, b_h4_z1)
-
-    h3_y = activated_neuron(y_logits, w_h3_y, b_h3_y)
-    h4_y = activated_neuron(h3_y, w_h4_y, b_h4_y)
-
-    h4_mu = activated_neuron(tf.concat((h4_y, h4_z1), axis=1), w_h4_mu, b_h4_mu)
-
-    # Z2 latent layer mu and var
-    logvar_z2 = non_activated_neuron(h4_z1, w_var_z2, b_var_z2)
-    mu_z2 = non_activated_neuron(h4_mu, w_mu_z2, b_mu_z2)
-    z2 = draw_norm(FLAGS['latent_dim'], mu_z2, logvar_z2)
-    return z2, mu_z2, logvar_z2, y_logits
+        # Hidden layers
+        h1 = activated_neuron(tf.concat((z1, y), axis=1), w_h1, b_h1)
+        # Z2 latent layer mu and var
+        logvar_z2 = non_activated_neuron(h1, w_var_z2, b_var_z2)
+        mu_z2 = non_activated_neuron(h1, w_mu_z2, b_mu_z2)
+        z2 = draw_norm(FLAGS['latent_dim'], mu_z2, logvar_z2)
+        return z2, mu_z2, logvar_z2, y_logits
 
 
 def qy_given_x(z_1, FLAGS):
     num_classes = FLAGS['num_classes']
-    w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], num_classes])
-    logits = non_activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
+    w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
+    w_mlp_h2, b_mlp_h2 = create_h_weights('y_h2', 'classifier', [FLAGS['encoder_h_dim'], num_classes])
+    h1 = activated_neuron(z_1, w_mlp_h1, b_mlp_h1)
+    logits = non_activated_neuron(h1, w_mlp_h2, b_mlp_h2)
     return logits
 
 

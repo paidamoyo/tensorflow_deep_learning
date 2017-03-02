@@ -26,9 +26,9 @@ def tf_binary_xentropy(x, y, const=1e-10):
 
 
 def draw_norm(dim, mu, logvar):
-    epsilon_encoder = tf.random_normal(tf.shape(dim), name='epsilon')
-    std_encoder_z1 = tf.exp(0.5 * logvar)
-    return mu + tf.multiply(std_encoder_z1, epsilon_encoder)
+    epsilon = tf.random_normal(tf.shape(dim), name='epsilon')
+    std = tf.exp(0.5 * logvar)
+    return tf.add(mu, tf.multiply(std, epsilon))
 
 
 # https://github.com/saemundsson/semisupervised_vae/blob/master/vae.py

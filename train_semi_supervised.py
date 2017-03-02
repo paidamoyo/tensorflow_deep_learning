@@ -9,7 +9,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import generator_network
-from VAE.semi_supervised.encoder import recognition_network
+from VAE.semi_supervised.encoder import recognition_network, q_z_1_given_x
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
 from VAE.utils.distributions import compute_ELBO, tf_stdnormal_logpdf
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
@@ -98,8 +98,6 @@ def total_lab_loss():
     beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
     classifier_loss, y_pred_cls = softmax_classifier(logits=y_lab_logits, y_true=y_lab)
     weighted_classifier_loss = beta * classifier_loss
-    labeled_ELBO = compute_ELBO(x_recon=[x_recon_lab_mu, x_recon_lab_logvar], x=x_lab, y=y_lab,
-                                z=[z_lab, z_lab_mu, z_lab_logvar])
     labeled_KL = tf.scalar_mul(scalar=-1, x=labeled_ELBO)
     labeled_loss = tf.reduce_sum(tf.add(labeled_KL, weighted_classifier_loss))
     tf.summary.scalar('labeled_loss', labeled_loss)
@@ -109,13 +107,10 @@ def total_lab_loss():
 def total_unlab_loss():
     # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
     y_ulab = tf.nn.softmax(logits=y_ulab_logits)
-    entropy = tf.einsum('ij,ij->i', y_ulab, tf.log(y_ulab))
-    unlabeled_ELBO = compute_ELBO(x_recon=[x_recon_ulab_mu, x_recon_ulab_logvar], x=x_unlab, y=y_ulab,
-                                  z=[z_ulab, z_ulab_mu, z_ulab_logvar])
-    weighted_ELBO = tf.einsum('ij,ik->i', tf.reshape(unlabeled_ELBO, [tf.shape(unlabeled_ELBO)[0], 1]), y_ulab)
-    print("entropy:{}, y_ulab:{}, weighted_ELBO:{}".format(entropy, y_ulab, weighted_ELBO))
+    weighted_ELBO = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(unlabeled_ELBO, tf.log(y_ulab))), 1)
+    print("unlabeled_ELBO:{}, weighted_ELBO:{}".format(unlabeled_ELBO, weighted_ELBO))
     unlabeled_KL = tf.scalar_mul(scalar=-1, x=weighted_ELBO)
-    unlabeled_loss = tf.reduce_sum(tf.add(unlabeled_KL, entropy))
+    unlabeled_loss = tf.reduce_sum(unlabeled_KL)
     tf.summary.scalar('unlabeled_loss', unlabeled_loss)
     return unlabeled_loss
 
@@ -161,6 +156,48 @@ def train_test():
     test_reconstruction()
 
 
+def one_label_tensor(label):
+    indices = []
+    values = []
+    for i in range(num_ulab_batch):
+        indices += [[i, label]]
+        values += [1.]
+
+    _y_ulab = tf.sparse_tensor_to_dense(
+        tf.SparseTensor(indices=indices, values=values, dense_shape=[num_ulab_batch, FLAGS['num_classes']]), 0.0)
+    return _y_ulab
+
+
+def unlabeled_model():
+    # Ulabeled
+    z1_ulab = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
+    for label in range(FLAGS['num_classes']):
+        _y_ulab = one_label_tensor(label)
+        z_ulab, z_ulab_mu, z_ulab_logvar, y_ulab_logits = recognition_network(FLAGS, z1_ulab, _y_ulab, reuse=True)
+        x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y=_y_ulab,
+                                                                 z=z_ulab, reuse=True)
+        _ELBO = tf.expand_dims(
+            compute_ELBO(x_recon=[x_recon_ulab_mu, x_recon_ulab_logvar], x=x_unlab, y=_y_ulab,
+                         z=[z_ulab, z_ulab_mu, z_ulab_logvar])
+            , 1)
+        if label == 0:
+            unlabeled_ELBO = tf.identity(_ELBO)
+        else:
+            unlabeled_ELBO = tf.concat((unlabeled_ELBO, _ELBO), axis=1)  # Decoder Model
+    return unlabeled_ELBO, y_ulab_logits
+
+
+def labeled_model():
+    z1_lab = q_z_1_given_x(FLAGS, x_lab, reuse=True)
+    z_lab, z_lab_mu, z_lab_logvar, y_lab_logits = recognition_network(FLAGS, z1_lab, y_lab, reuse=True)
+    x_recon_lab_mu, x_recon_lab_logvar = generator_network(FLAGS=FLAGS, y=y_lab, z=z_lab,
+                                                           reuse=True)
+    labeled_ELBO = compute_ELBO(x_recon=[x_recon_lab_mu, x_recon_lab_logvar], x=x_lab,
+                                y=y_lab,
+                                z=[z_lab, z_lab_mu, z_lab_logvar])
+    return labeled_ELBO, y_lab_logits, x_recon_lab_mu
+
+
 if __name__ == '__main__':
     # Global Dictionary of Flags
     FLAGS = {
@@ -193,17 +230,10 @@ if __name__ == '__main__':
     x_unlab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_unlabeled')
     y_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_lab')
     y_true_cls = tf.argmax(y_lab, axis=1)
-    # Encoder Model
-    with tf.variable_scope("encoder") as scope:
-        z_lab, z_lab_mu, z_lab_logvar, y_lab_logits = recognition_network(FLAGS, x_lab)
-        scope.reuse_variables()
-        z_ulab, z_ulab_mu, z_ulab_logvar, y_ulab_logits = recognition_network(FLAGS, x_unlab)
 
-    # Decoder Model
-    with tf.variable_scope("decoder") as scope:
-        x_recon_lab_mu, x_recon_lab_logvar = generator_network(FLAGS=FLAGS, y_logits=y_lab_logits, z_latent=z_lab)
-        scope.reuse_variables()
-        x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y_logits=y_ulab_logits, z_latent=z_ulab)
+    # Labeled
+    labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
+    unlabeled_ELBO, y_ulab_logits = unlabeled_model()
     # Loss and Optimization
     cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
     # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
