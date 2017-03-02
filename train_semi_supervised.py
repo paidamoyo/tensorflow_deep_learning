@@ -9,7 +9,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import generator_network
-from VAE.semi_supervised.encoder import recognition_network, q_z_1_given_x, qy_given_x
+from VAE.semi_supervised.encoder import recognition_network, q_z_1_given_x
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
 from VAE.utils.distributions import compute_ELBO, tf_stdnormal_logpdf
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
@@ -32,14 +32,7 @@ def train_neural_network(num_iterations):
         # Batch Training
         x_l_batch, y_l_batch, idx_labeled = get_next_batch(x_l, y_l, idx_labeled, num_lab_batch)
         x_u_batch, _, idx_unlabeled = get_next_batch(x_u, y_u, idx_unlabeled, num_ulab_batch)
-
-        z1_u_batch = session.run(test_ulab, feed_dict={x_unlab: x_u_batch})
-        z1_l_batch = session.run(test_lab, feed_dict={x_lab: x_l_batch})
-
-        print("z1_u_batch:{},z1_l_batch:{}".format(z1_u_batch.shape, z1_l_batch.shape))
-
-        feed_dict_train = {z1_lab: z1_l_batch, y_lab: y_l_batch, z1_ulab: z1_u_batch, x_lab: x_l_batch,
-                           x_unlab: x_u_batch}
+        feed_dict_train = {x_lab: x_l_batch, y_lab: y_l_batch, x_unlab: x_u_batch}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
         train_writer.add_summary(summary, batch_loss)
 
@@ -130,13 +123,12 @@ def predict_cls(images, labels, cls_true):
     num_images = len(images)
     cls_pred = np.zeros(shape=num_images, dtype=np.int)
     i = 0
-    z_latent = session.run(test_lab, feed_dict={x_lab: images})
     while i < num_images:
         # The ending index for the next batch is denoted j.
         j = min(i + FLAGS['test_batch_size'], num_images)
-        test_images = z_latent[i:j, :]
+        test_images = images[i:j, :]
         labels = labels[i:j, :]
-        feed_dict = {z1_lab: test_images,
+        feed_dict = {x_lab: test_images,
                      y_lab: labels[i:j, :]}
         cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
         i = j
@@ -178,6 +170,7 @@ def one_label_tensor(label):
 
 def unlabeled_model():
     # Ulabeled
+    z1_ulab, y_ulab_logits = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
         _y_ulab = one_label_tensor(label)
         print('_y_ulabel:{}, label:{}'.format(_y_ulab, label))
@@ -194,17 +187,18 @@ def unlabeled_model():
             unlabeled_ELBO = tf.identity(_ELBO)
         else:
             unlabeled_ELBO = tf.concat((unlabeled_ELBO, _ELBO), axis=1)  # Decoder Model
-    return unlabeled_ELBO
+    return unlabeled_ELBO, y_ulab_logits
 
 
 def labeled_model():
+    z1_lab, y_lab_logits = q_z_1_given_x(FLAGS, x_lab, reuse=True)
     z2_lab, z2_lab_mu, z2_lab_logvar = recognition_network(FLAGS, z1_lab, y_lab, reuse=True)
     x_recon_lab_mu, x_recon_lab_logvar = generator_network(FLAGS=FLAGS, y=y_lab, z=z2_lab,
                                                            reuse=True)
     labeled_ELBO = compute_ELBO(x_recon=[x_recon_lab_mu, x_recon_lab_logvar], x=x_lab,
                                 y=y_lab,
                                 z=[z2_lab, z2_lab_mu, z2_lab_logvar])
-    return labeled_ELBO, x_recon_lab_mu
+    return labeled_ELBO, y_lab_logits, x_recon_lab_mu
 
 
 if __name__ == '__main__':
@@ -237,19 +231,12 @@ if __name__ == '__main__':
     # ### Placeholder variables
     x_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_labeled')
     x_unlab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_unlabeled')
-    z1_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['latent_dim']], name='z_labeled')
-    z1_ulab = tf.placeholder(tf.float32, shape=[None, FLAGS['latent_dim']], name='z_unlabeled')
     y_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_lab')
     y_true_cls = tf.argmax(y_lab, axis=1)
 
-    test_ulab = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
-    test_lab = q_z_1_given_x(FLAGS, x_lab, reuse=True)
-
     # Labeled
-    y_lab_logits = qy_given_x(z1_lab, FLAGS, reuse=True)
-    labeled_ELBO, x_recon_lab_mu = labeled_model()
-    y_ulab_logits = qy_given_x(z1_ulab, FLAGS, reuse=True)
-    unlabeled_ELBO = unlabeled_model()
+    labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
+    unlabeled_ELBO, y_ulab_logits = unlabeled_model()
     # Loss and Optimization
     # cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
     cost = (total_lab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
