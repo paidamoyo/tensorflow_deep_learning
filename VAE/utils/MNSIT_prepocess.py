@@ -1,9 +1,15 @@
 import numpy as np
+from tensorflow.examples.tutorials.mnist import input_data
 
 
 def split_by_class(data, n_train):
     train_x = data.train.images[0:n_train]
     train_y = data.train.labels[0:n_train]
+    num = train_x.shape[0]
+    idx = np.arange(num)
+    np.random.shuffle(idx)
+    train_x = train_x[idx]
+    train_y = train_y[idx]
     n_classes = train_y.shape[1]
     y_cls = np.argmax(train_y, axis=1)
     result_x = [0] * n_classes
@@ -59,3 +65,13 @@ def preprocess_train_data(data, n_labeled, n_train):
     x_u = x_u[randomize_u]
     y_u = y_u[randomize_u]
     return x_l, y_l, x_u, y_u
+
+
+if __name__ == '__main__':
+    data = input_data.read_data_sets("../../data/MNIST/", one_hot=True)
+    x_l, y_l, x_u, y_u = preprocess_train_data(data=data, n_labeled=100, n_train=50000)
+    l_classes = np.argmax(y_l, axis=1)
+    print("labeled digits:{}".format(l_classes))
+    for i in range(10):
+        digists = l_classes[np.where(l_classes == i)]
+        print("digit{}, count:{}".format(i, digists))
