@@ -64,12 +64,21 @@ def train_neural_network(num_iterations):
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
-def get_training_batch():
-    batch_size = 200
-    lab_batch = 100
-    ulab_batch = 100
-    print("num_lab_batch:{}, num_ulab_batch:{}, batch_size:{}".format(lab_batch, ulab_batch, batch_size))
-    return lab_batch, ulab_batch, batch_size
+def calculates_batch_size():
+    num_examples = FLAGS['n_train']
+    num_batches = FLAGS['num_batches']
+    num_lab = FLAGS['n_labeled']
+    num_ulab = num_examples - num_lab
+
+    assert num_lab % num_batches == 0, '#Labelled % #Batches != 0'
+    assert num_ulab % num_batches == 0, '#Unlabelled % #Batches != 0'
+    assert num_examples % num_batches == 0, '#Examples % #Batches != 0'
+
+    batch_size = num_examples // num_batches
+    num_lab_batch = num_lab // num_batches
+    num_ulab_batch = num_ulab // num_batches
+    print("num_lab_batch:{}, num_ulab_batch:{}, batch_size:{}".format(num_lab_batch, num_ulab_batch, batch_size))
+    return num_lab_batch, num_ulab_batch, batch_size
 
 
 def get_next_batch(x_images, y_labels, idx, batch_size):
@@ -82,14 +91,16 @@ def get_next_batch(x_images, y_labels, idx, batch_size):
     return x_batch, y_true_batch, j
 
 
-def reconstruct(x_test):
-    return session.run(x_recon_lab_mu, feed_dict={x_lab: x_test})
+def reconstruct(x_test, y_test):
+    return session.run(x_recon_lab_mu, feed_dict={x_lab: x_test, y_lab: y_test})
 
 
 def test_reconstruction():
     num_images = 20
-    x_test = data.test.next_batch(100)[0][0:num_images, ]
-    plot_images(x_test, reconstruct(x_test), num_images)
+    batch = data.test.next_batch(100)
+    x_test = batch[0][0:num_images, ]
+    y_test = batch[1][0:num_images, ]
+    plot_images(x_test, reconstruct(x_test, y_test), num_images)
 
 
 def total_lab_loss():
@@ -138,12 +149,11 @@ def predict_cls(images, labels, cls_true):
 
 
 def prior_weights():
-    L_weights = 0.
-    _weights = tf.trainable_variables()
-    for w in _weights:
-        L_weights += tf.reduce_sum(tf_stdnormal_logpdf(w))
-
-    return tf.scalar_mul(scalar=-1, x=L_weights)
+    loss = 0.
+    weights = tf.trainable_variables()
+    for w in weights:
+        loss += tf.reduce_sum(tf_stdnormal_logpdf(w))
+    return tf.scalar_mul(scalar=-1, x=loss)
 
 
 def train_test():
@@ -156,10 +166,10 @@ def train_test():
     test_reconstruction()
 
 
-def one_label_tensor(label, u_batch_size):
+def one_label_tensor(label):
     indices = []
     values = []
-    for i in range(u_batch_size):
+    for i in range(num_ulab_batch):
         indices += [[i, label]]
         values += [1.]
 
@@ -172,7 +182,7 @@ def unlabeled_model():
     # Ulabeled
     z1_ulab, y_ulab_logits = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
-        _y_ulab = one_label_tensor(label, num_ulab_batch)
+        _y_ulab = one_label_tensor(label)
         print('_y_ulabel:{}, label:{}'.format(_y_ulab, label))
         z2_ulab, z2_ulab_mu, z2_ulab_logvar = recognition_network(FLAGS, z1_ulab, _y_ulab, reuse=True)
         x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y=_y_ulab,
@@ -210,6 +220,7 @@ if __name__ == '__main__':
         'save_path': 'results/train_weights',
         'test_batch_size': 256,
         'num_iterations': 20000,
+        'num_batches': 100,
         'seed': 12000,
         'n_labeled': 100,
         'alpha': 0.1,
@@ -225,7 +236,7 @@ if __name__ == '__main__':
         'num_classes': 10,
         'svmC': 1
     }
-    num_lab_batch, num_ulab_batch, batch_size = get_training_batch()
+    num_lab_batch, num_ulab_batch, batch_size = calculates_batch_size()
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
@@ -237,9 +248,7 @@ if __name__ == '__main__':
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
     unlabeled_ELBO, y_ulab_logits = unlabeled_model()
-    # Loss and Optimization
-    # cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
-    cost = (total_lab_loss() + prior_weights()) / (batch_size * 250)
+    cost = (total_lab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
     # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
     #     - self.num_batches * self.batch_size)
 

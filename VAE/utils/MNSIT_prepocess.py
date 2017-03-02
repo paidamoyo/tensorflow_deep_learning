@@ -4,7 +4,6 @@ import numpy as np
 def split_by_class(data, n_train):
     train_x = data.train.images[0:n_train]
     train_y = data.train.labels[0:n_train]
-    print("train_x:{}, train_y:{}".format(train_x.shape, train_y.shape))
     n_classes = train_y.shape[1]
     y_cls = np.argmax(train_y, axis=1)
     result_x = [0] * n_classes
@@ -18,7 +17,6 @@ def split_by_class(data, n_train):
 
 def split_data(data, n_labeled, n_train):
     train_x, train_y = split_by_class(data, n_train)
-    print("train_x:{}, train_y:{}".format(train_x[0].shape, train_y[0].shape))
     n_classes = train_y[0].shape[1]
     print("n_classes:{}".format(n_classes))
 
