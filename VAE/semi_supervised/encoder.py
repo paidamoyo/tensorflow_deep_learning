@@ -17,7 +17,7 @@ def q_z1_given_x(FLAGS, x, reuse=False):
         h2 = mlp_neuron(h1, w_h2, b_h2)
 
         # Z1 latent layer mu and var
-        logvar_z1 = mlp_neuron(h2, w_var_z1, b_var_z1)
+        logvar_z1 = mlp_neuron(h2, w_var_z1, b_var_z1, activation=False)
         mu_z1 = mlp_neuron(h2, w_mu_z1, b_mu_z1, activation=False)
         # Model
         z1 = draw_norm(FLAGS['latent_dim'], mu_z1, logvar_z1)
@@ -36,7 +36,7 @@ def q_z2_given_yx(FLAGS, z1, y, reuse=False):
         # Hidden layers
         h1 = mlp_neuron(tf.concat([z1, y], axis=1), w_h1, b_h1)
         # Z2 latent layer mu and var
-        logvar_z2 = mlp_neuron(h1, w_var_z2, b_var_z2)
+        logvar_z2 = mlp_neuron(h1, w_var_z2, b_var_z2, activation=False)
         mu_z2 = mlp_neuron(h1, w_mu_z2, b_mu_z2, activation=False)
         z2 = draw_norm(FLAGS['latent_dim'], mu_z2, logvar_z2)
         return z2, mu_z2, logvar_z2
