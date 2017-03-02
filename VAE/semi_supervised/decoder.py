@@ -40,3 +40,7 @@ def pz1_given_z2y(FLAGS, y, z2, reuse=False):
         logvar_z1 = non_activated_neuron(h1, w_var_z1, b_var_z1)
         mu_z1 = non_activated_neuron(h1, w_mu_z1, b_mu_z1)
         return draw_norm(FLAGS['latent_dim'], mu_z1, logvar_z1)
+
+
+def reconstruction_loss(x_input, x_hat):
+    return tf.reduce_sum(tf.squared_difference(x_input, x_hat), axis=1)

@@ -67,23 +67,6 @@ def preprocess_train_data(data, n_labeled, n_train):
     return x_l, y_l, x_u, y_u
 
 
-def get_batch_size(FLAGS):
-    num_examples = FLAGS['n_train']
-    num_batches = FLAGS['num_batches']
-    num_lab = FLAGS['n_labeled']
-    num_ulab = num_examples - num_lab
-
-    assert num_lab % num_batches == 0, '#Labelled % #Batches != 0'
-    assert num_ulab % num_batches == 0, '#Unlabelled % #Batches != 0'
-    assert num_examples % num_batches == 0, '#Examples % #Batches != 0'
-
-    batch_size = num_examples // num_batches
-    num_lab_batch = num_lab // num_batches
-    num_ulab_batch = num_ulab // num_batches
-    print("num_lab_batch:{}, num_ulab_batch:{}, batch_size:{}".format(num_lab_batch, num_ulab_batch, batch_size))
-    return num_lab_batch, num_ulab_batch, batch_size
-
-
 if __name__ == '__main__':
     data = input_data.read_data_sets("../../data/MNIST/", one_hot=True)
     x_l, y_l, x_u, y_u = preprocess_train_data(data=data, n_labeled=100, n_train=50000)

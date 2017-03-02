@@ -10,7 +10,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import px_given_z1
 from VAE.semi_supervised.encoder import q_z2_given_yx, q_z1_given_x
-from VAE.utils.MNSIT_prepocess import preprocess_train_data, get_batch_size
+from VAE.utils.MNSIT_prepocess import preprocess_train_data
+from VAE.utils.batch_processing import get_batch_size, get_next_batch
 from VAE.utils.distributions import compute_ELBO
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from VAE.utils.tf_helpers import one_label_tensor
@@ -65,16 +66,6 @@ def train_neural_network(num_iterations):
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
-def get_next_batch(x_images, y_labels, idx, batch_size):
-    num_images = x_images.shape[0]
-    if idx == num_images:
-        idx = 0
-    j = min(idx + batch_size, num_images)
-    x_batch = x_images[idx:j, :]
-    y_true_batch = y_labels[idx:j, :]
-    return x_batch, y_true_batch, j
-
-
 def reconstruct(x_test, y_test):
     return session.run(x_recon_lab_mu, feed_dict={x_lab: x_test, y_lab: y_test})
 
@@ -110,10 +101,6 @@ def total_unlab_loss():
     return unlabeled_loss
 
 
-def reconstruction_loss(x_input, x_hat):
-    return tf.reduce_sum(tf.squared_difference(x_input, x_hat), axis=1)
-
-
 def predict_cls(images, labels, cls_true):
     num_images = len(images)
     cls_pred = np.zeros(shape=num_images, dtype=np.int)
@@ -144,35 +131,27 @@ def train_test():
 
 def unlabeled_model():
     # Ulabeled
-    z1_ulab, y_ulab_logits = q_z1_given_x(FLAGS, x_unlab, reuse=True)
+    z1, logits = q_z1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
         _y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
-        print('_y_ulabel:{}, label:{}'.format(_y_ulab, label))
-        z2_ulab, z2_ulab_mu, z2_ulab_logvar = q_z2_given_yx(FLAGS, z1_ulab, _y_ulab, reuse=True)
-        x_recon_ulab_mu, x_recon_ulab_logvar = px_given_z1(FLAGS=FLAGS, y=_y_ulab,
-                                                           z=z2_ulab, reuse=True)
-        print("x_recon_ulab_mu:{}, x_recon_ulab_logvar:{}, z2_ulab:{}".format(x_recon_ulab_mu, x_recon_ulab_logvar,
-                                                                              z2_ulab))
-        _ELBO = tf.expand_dims(
-            compute_ELBO(x_recon=[x_recon_ulab_mu, x_recon_ulab_logvar], x=x_unlab, y=_y_ulab,
-                         z=[z2_ulab, z2_ulab_mu, z2_ulab_logvar])
-            , 1)
+        z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, _y_ulab, reuse=True)
+        x_mu, x_logvar = px_given_z1(FLAGS=FLAGS, y=_y_ulab, z=z2, reuse=True)
+        _ELBO = tf.expand_dims(compute_ELBO(x_recon=[x_mu, x_logvar], x=x_unlab, y=_y_ulab,
+
+                                            z=[z2, z2_mu, z2_logvar]), 1)
         if label == 0:
             unlabeled_ELBO = tf.identity(_ELBO)
         else:
             unlabeled_ELBO = tf.concat((unlabeled_ELBO, _ELBO), axis=1)  # Decoder Model
-    return unlabeled_ELBO, y_ulab_logits
+    return unlabeled_ELBO, logits
 
 
 def labeled_model():
-    z1_lab, y_lab_logits = q_z1_given_x(FLAGS, x_lab, reuse=True)
-    z2_lab, z2_lab_mu, z2_lab_logvar = q_z2_given_yx(FLAGS, z1_lab, y_lab, reuse=True)
-    x_recon_lab_mu, x_recon_lab_logvar = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2_lab,
-                                                     reuse=True)
-    labeled_ELBO = compute_ELBO(x_recon=[x_recon_lab_mu, x_recon_lab_logvar], x=x_lab,
-                                y=y_lab,
-                                z=[z2_lab, z2_lab_mu, z2_lab_logvar])
-    return labeled_ELBO, y_lab_logits, x_recon_lab_mu
+    z1, logits = q_z1_given_x(FLAGS, x_lab, reuse=True)
+    z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_lab, reuse=True)
+    x_mu, x_logvar = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2, reuse=True)
+    ELBO = compute_ELBO(x_recon=[x_mu, x_logvar], x=x_lab, y=y_lab, z=[z2, z2_mu, z2_logvar])
+    return ELBO, logits, x_mu
 
 
 if __name__ == '__main__':
@@ -200,7 +179,7 @@ if __name__ == '__main__':
         'num_classes': 10,
         'svmC': 1
     }
-    num_lab_batch, num_ulab_batch, batch_size = get_batch_size()
+    num_lab_batch, num_ulab_batch, batch_size = get_batch_size(FLAGS)
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
