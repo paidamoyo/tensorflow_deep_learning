@@ -173,12 +173,12 @@ def unlabeled_model():
     z1_ulab, y_ulab_logits = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
         _y_ulab = one_label_tensor(label)
-        z_ulab, z_ulab_mu, z_ulab_logvar = recognition_network(FLAGS, z1_ulab, _y_ulab, reuse=True)
+        z2_ulab, z2_ulab_mu, z2_ulab_logvar = recognition_network(FLAGS, z1_ulab, _y_ulab, reuse=True)
         x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y=_y_ulab,
-                                                                 z=z_ulab, reuse=True)
+                                                                 z=z2_ulab, reuse=True)
         _ELBO = tf.expand_dims(
             compute_ELBO(x_recon=[x_recon_ulab_mu, x_recon_ulab_logvar], x=x_unlab, y=_y_ulab,
-                         z=[z_ulab, z_ulab_mu, z_ulab_logvar])
+                         z=[z2_ulab, z2_ulab_mu, z2_ulab_logvar])
             , 1)
         print("_EBO:{}".format(_ELBO))
         if label == 0:
@@ -190,12 +190,12 @@ def unlabeled_model():
 
 def labeled_model():
     z1_lab, y_lab_logits = q_z_1_given_x(FLAGS, x_lab, reuse=True)
-    z_lab, z_lab_mu, z_lab_logvar = recognition_network(FLAGS, z1_lab, y_lab, reuse=True)
-    x_recon_lab_mu, x_recon_lab_logvar = generator_network(FLAGS=FLAGS, y=y_lab, z=z_lab,
+    z2_lab, z2_lab_mu, z2_lab_logvar = recognition_network(FLAGS, z1_lab, y_lab, reuse=True)
+    x_recon_lab_mu, x_recon_lab_logvar = generator_network(FLAGS=FLAGS, y=y_lab, z=z2_lab,
                                                            reuse=True)
     labeled_ELBO = compute_ELBO(x_recon=[x_recon_lab_mu, x_recon_lab_logvar], x=x_lab,
                                 y=y_lab,
-                                z=[z_lab, z_lab_mu, z_lab_logvar])
+                                z=[z2_lab, z2_lab_mu, z2_lab_logvar])
     return labeled_ELBO, y_lab_logits, x_recon_lab_mu
 
 
@@ -236,7 +236,8 @@ if __name__ == '__main__':
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
     unlabeled_ELBO, y_ulab_logits = unlabeled_model()
     # Loss and Optimization
-    cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
+    # cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
+    cost = (total_lab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
     # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
     #     - self.num_batches * self.batch_size)
 
