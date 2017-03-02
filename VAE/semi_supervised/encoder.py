@@ -28,15 +28,20 @@ def recognition_network(FLAGS, z1, y, reuse=False):
         # Variables
         w_h1_z, b_h1_z = create_h_weights('h1_z', 'encoder', [FLAGS['latent_dim'], FLAGS['encoder_h_dim']])
         w_h1_y, b_h1_y = create_h_weights('h1_y', 'encoder', [FLAGS['num_classes'], FLAGS['encoder_h_dim']])
-        w_h2, b_h2 = create_h_weights('h2', 'encoder', [2 * FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+        w_h2_z, b_h2_z = create_h_weights('h2_z', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+        w_h2_y, b_h2_y = create_h_weights('h2_y', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
+        w_h2, b_h2 = create_h_weights('h2', 'encoder', [FLAGS['encoder_h_dim'], FLAGS['encoder_h_dim']])
 
         w_mu_z2, w_var_z2, b_mu_z2, b_var_z2 = create_z_weights('z_2', [FLAGS['encoder_h_dim'], FLAGS['latent_dim']])
 
         # Hidden layers
 
         h1_z = activated_neuron(z1, w_h1_z, b_h1_z)
+        h2_z = activated_neuron(h1_z, w_h2_z, b_h2_z)
         h1_y = activated_neuron(y, w_h1_y, b_h1_y)
-        h2 = activated_neuron(tf.concat((h1_y, h1_z), axis=0), w_h2, b_h2)
+        h2_y = activated_neuron(h1_y, w_h2_y, b_h2_y)
+        print("h2_y shape:{}, h2_z shape:{}".format(h2_y.shape, h2_z.shape))
+        h2 = activated_neuron(tf.concat([h2_y, h2_z], axis=0), w_h2, b_h2)
         # Z2 latent layer mu and var
         logvar_z2 = non_activated_neuron(h2, w_var_z2, b_var_z2)
         mu_z2 = non_activated_neuron(h2, w_mu_z2, b_mu_z2)

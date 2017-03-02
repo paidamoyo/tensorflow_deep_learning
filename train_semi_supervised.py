@@ -180,7 +180,6 @@ def unlabeled_model():
             compute_ELBO(x_recon=[x_recon_ulab_mu, x_recon_ulab_logvar], x=x_unlab, y=_y_ulab,
                          z=[z2_ulab, z2_ulab_mu, z2_ulab_logvar])
             , 1)
-        print("_EBO:{}".format(_ELBO))
         if label == 0:
             unlabeled_ELBO = tf.identity(_ELBO)
         else:
