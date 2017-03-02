@@ -32,11 +32,14 @@ def train_neural_network(num_iterations):
         # Batch Training
         x_l_batch, y_l_batch, idx_labeled = get_next_batch(x_l, y_l, idx_labeled, num_lab_batch)
         x_u_batch, _, idx_unlabeled = get_next_batch(x_u, y_u, idx_unlabeled, num_ulab_batch)
+
         z1_u_batch = session.run(test_ulab, feed_dict={x_unlab: x_u_batch})
         z1_l_batch = session.run(test_lab, feed_dict={x_lab: x_l_batch})
-        print("z1_u_batch:{},z1_l_batch:{}".format(z1_u_batch, z1_l_batch))
 
-        feed_dict_train = {z1_lab: z1_l_batch, y_lab: y_l_batch, z1_ulab: z1_u_batch}
+        print("z1_u_batch:{},z1_l_batch:{}".format(z1_u_batch.shape, z1_l_batch.shape))
+
+        feed_dict_train = {z1_lab: z1_l_batch, y_lab: y_l_batch, z1_ulab: z1_u_batch, x_lab: x_l_batch,
+                           x_unlab: x_u_batch}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
         train_writer.add_summary(summary, batch_loss)
 
@@ -190,7 +193,7 @@ def unlabeled_model():
             unlabeled_ELBO = tf.identity(_ELBO)
         else:
             unlabeled_ELBO = tf.concat((unlabeled_ELBO, _ELBO), axis=1)  # Decoder Model
-    return unlabeled_ELBO, y_ulab_logits
+    return unlabeled_ELBO
 
 
 def labeled_model():
@@ -200,7 +203,7 @@ def labeled_model():
     labeled_ELBO = compute_ELBO(x_recon=[x_recon_lab_mu, x_recon_lab_logvar], x=x_lab,
                                 y=y_lab,
                                 z=[z2_lab, z2_lab_mu, z2_lab_logvar])
-    return labeled_ELBO, y_lab_logits, x_recon_lab_mu
+    return labeled_ELBO, x_recon_lab_mu
 
 
 if __name__ == '__main__':
@@ -243,9 +246,9 @@ if __name__ == '__main__':
 
     # Labeled
     y_lab_logits = qy_given_x(z1_lab, FLAGS, reuse=True)
-    labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
+    labeled_ELBO, x_recon_lab_mu = labeled_model()
     y_ulab_logits = qy_given_x(z1_ulab, FLAGS, reuse=True)
-    unlabeled_ELBO, y_ulab_logits = unlabeled_model()
+    unlabeled_ELBO = unlabeled_model()
     # Loss and Optimization
     # cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
     cost = (total_lab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
