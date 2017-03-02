@@ -92,10 +92,10 @@ def total_lab_loss():
 def total_unlab_loss():
     # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
     y_ulab = tf.nn.softmax(logits=y_ulab_logits)
-    weighted_ELBO = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(unlabeled_ELBO, tf.log(y_ulab))), 1)
-    print("unlabeled_ELBO:{}, weighted_ELBO:{}".format(unlabeled_ELBO, weighted_ELBO))
-    tf.summary.scalar('unlabeled_loss', weighted_ELBO)
-    return weighted_ELBO
+    unlabeled_loss = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(unlabeled_ELBO, tf.log(y_ulab))), 1)
+    print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(unlabeled_ELBO, unlabeled_loss))
+    tf.summary.scalar('unlabeled_loss', unlabeled_loss)
+    return unlabeled_loss
 
 
 def predict_cls(images, labels, cls_true):
