@@ -36,7 +36,7 @@ def recognition_network(FLAGS, z1, y, reuse=False):
 
         h1_z = activated_neuron(z1, w_h1_z, b_h1_z)
         h1_y = activated_neuron(y, w_h1_y, b_h1_y)
-        h2 = activated_neuron(tf.concat((h1_y, h1_z), axis=1), w_h2, b_h2)
+        h2 = activated_neuron(tf.concat((h1_y, h1_z), axis=0), w_h2, b_h2)
         # Z2 latent layer mu and var
         logvar_z2 = non_activated_neuron(h2, w_var_z2, b_var_z2)
         mu_z2 = non_activated_neuron(h2, w_mu_z2, b_mu_z2)
