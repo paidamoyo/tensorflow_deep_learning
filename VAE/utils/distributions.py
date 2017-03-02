@@ -54,5 +54,6 @@ def compute_ELBO(x_recon, x, y, z):
 
     # elif self.distributions['q_z'] == 'gaussian':
     log_post_z = tf.reduce_sum(tf_normal_logpdf(z[0], z[1], z[2]), 1)
-
+    print("log_prior_y:{}, log_lik:{}, log_prior_z:{}, log_post_z:{}".format(log_prior_y.shape, log_lik.shape,
+                                                                             log_prior_z.shape, log_post_z.shape))
     return log_prior_y + log_lik + log_prior_z - log_post_z

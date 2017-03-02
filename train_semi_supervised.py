@@ -173,9 +173,12 @@ def unlabeled_model():
     z1_ulab, y_ulab_logits = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
         _y_ulab = one_label_tensor(label)
+        print('_y_ulabel:{}, label:{}'.format(_y_ulab, label))
         z2_ulab, z2_ulab_mu, z2_ulab_logvar = recognition_network(FLAGS, z1_ulab, _y_ulab, reuse=True)
         x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y=_y_ulab,
                                                                  z=z2_ulab, reuse=True)
+        print("x_recon_ulab_mu:{}, x_recon_ulab_logvar:{}, z2_ulab:{}".format(x_recon_ulab_mu, x_recon_ulab_logvar,
+                                                                              z2_ulab))
         _ELBO = tf.expand_dims(
             compute_ELBO(x_recon=[x_recon_ulab_mu, x_recon_ulab_logvar], x=x_unlab, y=_y_ulab,
                          z=[z2_ulab, z2_ulab_mu, z2_ulab_logvar])
