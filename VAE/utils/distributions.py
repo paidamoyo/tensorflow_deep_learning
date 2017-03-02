@@ -31,6 +31,16 @@ def draw_norm(dim, mu, logvar):
     return tf.add(mu, tf.multiply(std, epsilon))
 
 
+def prior_weights():
+    loss = 0.
+    weights = tf.trainable_variables()
+    for w in weights:
+        loss += tf.reduce_sum(tf_stdnormal_logpdf(w))
+    prior_weights_loss = tf.scalar_mul(scalar=-1, x=loss)
+    tf.summary.scalar('prior_weights_loss', prior_weights_loss)
+    return prior_weights_loss
+
+
 # https://github.com/saemundsson/semisupervised_vae/blob/master/vae.py
 
 def compute_ELBO(x_recon, x, y, z):

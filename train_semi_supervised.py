@@ -10,9 +10,10 @@ from tensorflow.examples.tutorials.mnist import input_data
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import px_given_z1
 from VAE.semi_supervised.encoder import q_z2_given_yx, q_z1_given_x
-from VAE.utils.MNSIT_prepocess import preprocess_train_data
-from VAE.utils.distributions import compute_ELBO, tf_stdnormal_logpdf
+from VAE.utils.MNSIT_prepocess import preprocess_train_data, get_batch_size
+from VAE.utils.distributions import compute_ELBO
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
+from VAE.utils.tf_helpers import one_label_tensor
 
 sys.path.append(os.getcwd())
 
@@ -62,23 +63,6 @@ def train_neural_network(num_iterations):
     end_time = time.time()
     time_dif = end_time - start_time
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
-
-
-def calculates_batch_size():
-    num_examples = FLAGS['n_train']
-    num_batches = FLAGS['num_batches']
-    num_lab = FLAGS['n_labeled']
-    num_ulab = num_examples - num_lab
-
-    assert num_lab % num_batches == 0, '#Labelled % #Batches != 0'
-    assert num_ulab % num_batches == 0, '#Unlabelled % #Batches != 0'
-    assert num_examples % num_batches == 0, '#Examples % #Batches != 0'
-
-    batch_size = num_examples // num_batches
-    num_lab_batch = num_lab // num_batches
-    num_ulab_batch = num_ulab // num_batches
-    print("num_lab_batch:{}, num_ulab_batch:{}, batch_size:{}".format(num_lab_batch, num_ulab_batch, batch_size))
-    return num_lab_batch, num_ulab_batch, batch_size
 
 
 def get_next_batch(x_images, y_labels, idx, batch_size):
@@ -148,14 +132,6 @@ def predict_cls(images, labels, cls_true):
     return correct, cls_pred
 
 
-def prior_weights():
-    loss = 0.
-    weights = tf.trainable_variables()
-    for w in weights:
-        loss += tf.reduce_sum(tf_stdnormal_logpdf(w))
-    return tf.scalar_mul(scalar=-1, x=loss)
-
-
 def train_test():
     train_neural_network(FLAGS['num_iterations'])
     saver.restore(sess=session, save_path=FLAGS['save_path'])
@@ -166,23 +142,11 @@ def train_test():
     test_reconstruction()
 
 
-def one_label_tensor(label):
-    indices = []
-    values = []
-    for i in range(num_ulab_batch):
-        indices += [[i, label]]
-        values += [1.]
-
-    _y_ulab = tf.sparse_tensor_to_dense(
-        tf.SparseTensor(indices=indices, values=values, dense_shape=[num_ulab_batch, FLAGS['num_classes']]), 0.0)
-    return _y_ulab
-
-
 def unlabeled_model():
     # Ulabeled
     z1_ulab, y_ulab_logits = q_z1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
-        _y_ulab = one_label_tensor(label)
+        _y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
         print('_y_ulabel:{}, label:{}'.format(_y_ulab, label))
         z2_ulab, z2_ulab_mu, z2_ulab_logvar = q_z2_given_yx(FLAGS, z1_ulab, _y_ulab, reuse=True)
         x_recon_ulab_mu, x_recon_ulab_logvar = px_given_z1(FLAGS=FLAGS, y=_y_ulab,
@@ -236,7 +200,7 @@ if __name__ == '__main__':
         'num_classes': 10,
         'svmC': 1
     }
-    num_lab_batch, num_ulab_batch, batch_size = calculates_batch_size()
+    num_lab_batch, num_ulab_batch, batch_size = get_batch_size()
     np.random.seed(FLAGS['seed'])
     data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
@@ -248,11 +212,8 @@ if __name__ == '__main__':
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
     unlabeled_ELBO, y_ulab_logits = unlabeled_model()
-    cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches'] + prior_weights()) / (
+    cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches']) / (
         batch_size * FLAGS['num_batches'])
-    # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
-    #     - self.num_batches * self.batch_size)
-
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
                                        beta2=FLAGS['beta2']).minimize(cost)
     saver = tf.train.Saver()

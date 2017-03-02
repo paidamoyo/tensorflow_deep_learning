@@ -65,3 +65,21 @@ def variable_summaries(var, summary_name):
         tf.summary.scalar('max', tf.reduce_max(var))
         tf.summary.scalar('min', tf.reduce_min(var))
         tf.summary.histogram('histogram', var)
+
+
+def one_label_tensor(label, num_ulab_batch, num_classes):
+    indices = []
+    values = []
+    for i in range(num_ulab_batch):
+        indices += [[i, label]]
+        values += [1.]
+    y_ulab = tf.sparse_tensor_to_dense(
+        tf.SparseTensor(indices=indices, values=values, dense_shape=[num_ulab_batch, num_classes]), 0.0)
+    return y_ulab
+
+
+if __name__ == '__main__':
+    y_ulab = one_label_tensor(0, 400, 10)
+    with tf.Session() as session:
+        y = session.run(y_ulab)
+        print("y:{}, shape:{}".format(y, y.shape))
