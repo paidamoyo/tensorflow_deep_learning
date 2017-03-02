@@ -130,12 +130,13 @@ def predict_cls(images, labels, cls_true):
     num_images = len(images)
     cls_pred = np.zeros(shape=num_images, dtype=np.int)
     i = 0
+    z_latent = session.run(test_lab, feed_dict={x_lab: images})
     while i < num_images:
         # The ending index for the next batch is denoted j.
         j = min(i + FLAGS['test_batch_size'], num_images)
-        test_images = images[i:j, :]
+        test_images = z_latent[i:j, :]
         labels = labels[i:j, :]
-        feed_dict = {x_lab: test_images,
+        feed_dict = {z1_lab: test_images,
                      y_lab: labels[i:j, :]}
         cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
         i = j
