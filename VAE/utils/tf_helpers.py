@@ -1,12 +1,11 @@
 import tensorflow as tf
 
 
-def non_activated_neuron(layer_input, weights, biases):
-    return tf.add(tf.matmul(layer_input, weights), biases)
-
-
-def activated_neuron(layer_nput, weights, biases):
-    return tf.nn.relu(tf.add(tf.matmul(layer_nput, weights), biases))
+def mlp_neuron(layer_input, weights, biases, activation=True):
+    if activation:
+        return tf.nn.relu(tf.add(tf.matmul(layer_input, weights), biases))
+    else:
+        tf.add(tf.matmul(layer_input, weights), biases)
 
 
 def create_h_weights(layer, network, shape):
