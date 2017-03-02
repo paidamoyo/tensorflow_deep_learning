@@ -65,9 +65,9 @@ def train_neural_network(num_iterations):
 
 
 def get_training_batch():
-    batch_size = FLAGS['n_train'] // FLAGS['num_batches']
-    lab_batch = int(FLAGS['n_labeled'] / (FLAGS['n_labeled'] // FLAGS['num_batches']))
-    ulab_batch = batch_size - lab_batch
+    batch_size = 200
+    lab_batch = 100
+    ulab_batch = 100
     print("num_lab_batch:{}, num_ulab_batch:{}, batch_size:{}".format(lab_batch, ulab_batch, batch_size))
     return lab_batch, ulab_batch, batch_size
 
@@ -156,10 +156,10 @@ def train_test():
     test_reconstruction()
 
 
-def one_label_tensor(label):
+def one_label_tensor(label, u_batch_size):
     indices = []
     values = []
-    for i in range(num_ulab_batch):
+    for i in range(u_batch_size):
         indices += [[i, label]]
         values += [1.]
 
@@ -172,7 +172,7 @@ def unlabeled_model():
     # Ulabeled
     z1_ulab, y_ulab_logits = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
-        _y_ulab = one_label_tensor(label)
+        _y_ulab = one_label_tensor(label, num_ulab_batch)
         print('_y_ulabel:{}, label:{}'.format(_y_ulab, label))
         z2_ulab, z2_ulab_mu, z2_ulab_logvar = recognition_network(FLAGS, z1_ulab, _y_ulab, reuse=True)
         x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y=_y_ulab,
@@ -202,12 +202,12 @@ def labeled_model():
 
 
 if __name__ == '__main__':
+    session = tf.Session()
     # Global Dictionary of Flags
     FLAGS = {
         'data_directory': 'data/MNIST/',
         'summaries_dir': 'summaries/',
         'save_path': 'results/train_weights',
-        'num_batches': 100,
         'test_batch_size': 256,
         'num_iterations': 20000,
         'seed': 12000,
@@ -239,13 +239,12 @@ if __name__ == '__main__':
     unlabeled_ELBO, y_ulab_logits = unlabeled_model()
     # Loss and Optimization
     # cost = (total_lab_loss() + total_unlab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
-    cost = (total_lab_loss() + prior_weights()) / (batch_size * FLAGS['num_batches'])
+    cost = (total_lab_loss() + prior_weights()) / (batch_size * 250)
     # self.cost = ((L_lab_tot + U_tot) * self.num_batches + L_weights) / (
     #     - self.num_batches * self.batch_size)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
                                        beta2=FLAGS['beta2']).minimize(cost)
-    session = tf.Session()
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train', session.graph)
