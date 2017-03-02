@@ -12,7 +12,7 @@ from VAE.semi_supervised.decoder import px_given_z1
 from VAE.semi_supervised.encoder import q_z2_given_yx, q_z1_given_x
 from VAE.utils.MNSIT_prepocess import preprocess_train_data
 from VAE.utils.batch_processing import get_batch_size, get_next_batch
-from VAE.utils.distributions import compute_ELBO
+from VAE.utils.distributions import compute_ELBO, prior_weights
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from VAE.utils.tf_helpers import one_label_tensor
 
@@ -84,8 +84,7 @@ def total_lab_loss():
     beta = FLAGS['alpha'] * (float(batch_size) / num_lab_batch)
     classifier_loss, y_pred_cls = softmax_classifier(logits=y_lab_logits, y_true=y_lab)
     weighted_classifier_loss = beta * classifier_loss
-    labeled_KL = tf.scalar_mul(scalar=-1, x=labeled_ELBO)
-    labeled_loss = tf.reduce_sum(tf.add(labeled_KL, weighted_classifier_loss))
+    labeled_loss = tf.reduce_sum(tf.subtract(labeled_ELBO, weighted_classifier_loss))
     tf.summary.scalar('labeled_loss', labeled_loss)
     return labeled_loss
 
@@ -95,10 +94,8 @@ def total_unlab_loss():
     y_ulab = tf.nn.softmax(logits=y_ulab_logits)
     weighted_ELBO = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(unlabeled_ELBO, tf.log(y_ulab))), 1)
     print("unlabeled_ELBO:{}, weighted_ELBO:{}".format(unlabeled_ELBO, weighted_ELBO))
-    unlabeled_KL = tf.scalar_mul(scalar=-1, x=weighted_ELBO)
-    unlabeled_loss = tf.reduce_sum(unlabeled_KL)
-    tf.summary.scalar('unlabeled_loss', unlabeled_loss)
-    return unlabeled_loss
+    tf.summary.scalar('unlabeled_loss', weighted_ELBO)
+    return weighted_ELBO
 
 
 def predict_cls(images, labels, cls_true):
@@ -133,12 +130,10 @@ def unlabeled_model():
     # Ulabeled
     z1, logits = q_z1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
-        _y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
-        z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, _y_ulab, reuse=True)
-        x_mu, x_logvar = px_given_z1(FLAGS=FLAGS, y=_y_ulab, z=z2, reuse=True)
-        _ELBO = tf.expand_dims(compute_ELBO(x_recon=[x_mu, x_logvar], x=x_unlab, y=_y_ulab,
-
-                                            z=[z2, z2_mu, z2_logvar]), 1)
+        y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
+        z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_ulab, reuse=True)
+        x_mu, x_logvar = px_given_z1(FLAGS=FLAGS, y=y_ulab, z=z2, reuse=True)
+        _ELBO = tf.expand_dims(compute_ELBO(x_recon=[x_mu, x_logvar], x=x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]), 1)
         if label == 0:
             unlabeled_ELBO = tf.identity(_ELBO)
         else:
@@ -191,8 +186,8 @@ if __name__ == '__main__':
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
     unlabeled_ELBO, y_ulab_logits = unlabeled_model()
-    cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches']) / (
-        batch_size * FLAGS['num_batches'])
+    cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches'] + prior_weights()) / (
+        -batch_size * FLAGS['num_batches'])
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
                                        beta2=FLAGS['beta2']).minimize(cost)
     saver = tf.train.Saver()

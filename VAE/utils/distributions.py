@@ -32,11 +32,10 @@ def draw_norm(dim, mu, logvar):
 
 
 def prior_weights():
-    loss = 0.
+    prior_weights_loss = 0.
     weights = tf.trainable_variables()
     for w in weights:
-        loss += tf.reduce_sum(tf_stdnormal_logpdf(w))
-    prior_weights_loss = tf.scalar_mul(scalar=-1, x=loss)
+        prior_weights_loss += tf.reduce_sum(tf_stdnormal_logpdf(w))
     tf.summary.scalar('prior_weights_loss', prior_weights_loss)
     return prior_weights_loss
 
