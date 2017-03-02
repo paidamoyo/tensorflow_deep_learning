@@ -32,10 +32,11 @@ def train_neural_network(num_iterations):
         # Batch Training
         x_l_batch, y_l_batch, idx_labeled = get_next_batch(x_l, y_l, idx_labeled, num_lab_batch)
         x_u_batch, _, idx_unlabeled = get_next_batch(x_u, y_u, idx_unlabeled, num_ulab_batch)
-        z1_u_batch = session.run(q_z_1_given_x(FLAGS, x_unlab, reuse=True), feed_dict={x_unlab: x_u_batch})
-        z1_l_batch = session.run(q_z_1_given_x(FLAGS, x_lab, reuse=True), feed_dict={x_lab: x_l_batch})
+        z1_u_batch = session.run(test_ulab, feed_dict={x_unlab: x_u_batch})
+        z1_l_batch = session.run(test_lab, feed_dict={x_lab: x_l_batch})
+        print("z1_u_batch:{},z1_l_batch:{}".format(z1_u_batch, z1_l_batch))
 
-        feed_dict_train = {z1_lab: z1_lab, y_lab: y_l_batch, z1_l_batch: z1_u_batch}
+        feed_dict_train = {z1_lab: z1_l_batch, y_lab: y_l_batch, z1_ulab: z1_u_batch}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
         train_writer.add_summary(summary, batch_loss)
 
@@ -236,6 +237,9 @@ if __name__ == '__main__':
     z1_ulab = tf.placeholder(tf.float32, shape=[None, FLAGS['latent_dim']], name='z_unlabeled')
     y_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_lab')
     y_true_cls = tf.argmax(y_lab, axis=1)
+
+    test_ulab = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
+    test_lab = q_z_1_given_x(FLAGS, x_lab, reuse=True)
 
     # Labeled
     y_lab_logits = qy_given_x(z1_lab, FLAGS, reuse=True)
