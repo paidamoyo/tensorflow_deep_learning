@@ -170,16 +170,17 @@ def one_label_tensor(label):
 
 def unlabeled_model():
     # Ulabeled
-    z1_ulab = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
+    z1_ulab, y_ulab_logits = q_z_1_given_x(FLAGS, x_unlab, reuse=True)
     for label in range(FLAGS['num_classes']):
         _y_ulab = one_label_tensor(label)
-        z_ulab, z_ulab_mu, z_ulab_logvar, y_ulab_logits = recognition_network(FLAGS, z1_ulab, _y_ulab, reuse=True)
+        z_ulab, z_ulab_mu, z_ulab_logvar = recognition_network(FLAGS, z1_ulab, _y_ulab, reuse=True)
         x_recon_ulab_mu, x_recon_ulab_logvar = generator_network(FLAGS=FLAGS, y=_y_ulab,
                                                                  z=z_ulab, reuse=True)
         _ELBO = tf.expand_dims(
             compute_ELBO(x_recon=[x_recon_ulab_mu, x_recon_ulab_logvar], x=x_unlab, y=_y_ulab,
                          z=[z_ulab, z_ulab_mu, z_ulab_logvar])
             , 1)
+        print("_EBO:{}".format(_ELBO))
         if label == 0:
             unlabeled_ELBO = tf.identity(_ELBO)
         else:
@@ -188,8 +189,8 @@ def unlabeled_model():
 
 
 def labeled_model():
-    z1_lab = q_z_1_given_x(FLAGS, x_lab, reuse=True)
-    z_lab, z_lab_mu, z_lab_logvar, y_lab_logits = recognition_network(FLAGS, z1_lab, y_lab, reuse=True)
+    z1_lab, y_lab_logits = q_z_1_given_x(FLAGS, x_lab, reuse=True)
+    z_lab, z_lab_mu, z_lab_logvar = recognition_network(FLAGS, z1_lab, y_lab, reuse=True)
     x_recon_lab_mu, x_recon_lab_logvar = generator_network(FLAGS=FLAGS, y=y_lab, z=z_lab,
                                                            reuse=True)
     labeled_ELBO = compute_ELBO(x_recon=[x_recon_lab_mu, x_recon_lab_logvar], x=x_lab,

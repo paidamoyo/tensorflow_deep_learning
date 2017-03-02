@@ -8,6 +8,7 @@ def generator_network(FLAGS, y, z, reuse=False):
         # Variables
         w_h3, b_h3 = create_h_weights('h3', 'decoder',
                                       [FLAGS['latent_dim'] + FLAGS['num_classes'], FLAGS['decoder_h_dim']])
+
         w_mu, b_mu = create_h_weights('mu', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['input_dim']])
         w_var, b_var = create_h_weights('var', 'decoder', [FLAGS['decoder_h_dim'], FLAGS['input_dim']])
 
