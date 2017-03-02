@@ -106,7 +106,7 @@ def test_reconstruction():
 def total_lab_loss():
     global y_pred_cls
     # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
-    beta = FLAGS['alpha'] * (1.0 * FLAGS['n_labeled'])
+    beta = FLAGS['alpha'] * (float(batch_size) / num_lab_batch)
     classifier_loss, y_pred_cls = softmax_classifier(logits=y_lab_logits, y_true=y_lab)
     weighted_classifier_loss = beta * classifier_loss
     labeled_KL = tf.scalar_mul(scalar=-1, x=labeled_ELBO)
