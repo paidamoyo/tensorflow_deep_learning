@@ -49,9 +49,3 @@ def qy_given_x(z_1, FLAGS, reuse=False):
         w_mlp_h2, b_mlp_h2 = create_h_weights('y_h2', 'classifier', [FLAGS['m2_h_dim'], num_classes])
         h1 = mlp_neuron(z_1, w_mlp_h1, b_mlp_h1)
     return mlp_neuron(h1, w_mlp_h2, b_mlp_h2, activation=False)
-
-
-def qz_regularization_loss(encoder_logvar_z2, encoder_mu_z2):
-    z_regularization = -0.5 * tf.reduce_sum(
-        1 + encoder_logvar_z2 - tf.pow(encoder_mu_z2, 2) - tf.exp(encoder_logvar_z2), axis=1)
-    return z_regularization
