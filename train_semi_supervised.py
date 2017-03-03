@@ -179,7 +179,7 @@ if __name__ == '__main__':
         'latent_dim': 50,
         'require_improvement': 30000,
         'n_train': 50000,
-        'learning_rate': 3e-4,
+        'learning_rate': 1e-10,
         'beta1': 0.9,
         'beta2': 0.999,
         'input_dim': 28 * 28,
