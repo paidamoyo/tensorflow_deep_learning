@@ -59,7 +59,7 @@ def compute_ELBO(x_recon, x, y, z):
     log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
     log_prior_y = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
     # log_lik = tf.reduce_sum(tf_normal_logpdf(x, x_recon[0], x_recon[1]), axis=1)
-    log_lik = tf.reduce_sum(tf_binary_xentropy(x_true=x, x_approx=x_recon))
+    log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x, x_approx=x_recon))
     log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z[0], mu=z[1], log_sigma_sq=z[2]), axis=1)
 
     # log_prior_y - tf.add(reconstruction_loss(x, x_recon[0]), regularization_loss(z[1], z[2]))
