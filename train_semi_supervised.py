@@ -89,9 +89,8 @@ def total_lab_loss():
 def total_unlab_loss():
     # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
     const = 1e-10
-    clipped_y_lab = tf.clip_by_value(y_lab, const, 1.0)
     y_ulab = tf.nn.softmax(logits=y_ulab_logits)
-    weighted_EBO = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(unlabeled_ELBO, tf.log(clipped_y_lab))), 1)
+    weighted_EBO = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(unlabeled_ELBO, tf.log(y_lab + const))), 1)
     unlabeled_loss = tf.reduce_sum(weighted_EBO)
     print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(unlabeled_ELBO, unlabeled_loss))
     tf.summary.scalar('unlabeled_loss', unlabeled_loss)
