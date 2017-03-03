@@ -5,12 +5,11 @@ from datetime import timedelta
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
 
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import px_given_z1
 from VAE.semi_supervised.encoder import q_z2_given_yx, q_z1_given_x
-from VAE.utils.MNSIT_prepocess import preprocess_train_data
+from VAE.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from VAE.utils.batch_processing import get_batch_size, get_next_batch
 from VAE.utils.distributions import compute_ELBO, prior_weights
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
@@ -25,24 +24,23 @@ def train_neural_network(num_iterations):
     last_improvement = 0
 
     start_time = time.time()
-    x_l, y_l, x_u, y_u = preprocess_train_data(data=data, n_labeled=FLAGS['n_labeled'], n_train=FLAGS['n_train'])
     idx_labeled = 0
     idx_unlabeled = 0
 
     for i in range(num_iterations):
 
         # Batch Training
-        x_l_batch, y_l_batch, idx_labeled = get_next_batch(x_l, y_l, idx_labeled, num_lab_batch)
-        x_u_batch, _, idx_unlabeled = get_next_batch(x_u, y_u, idx_unlabeled, num_ulab_batch)
+        x_l_batch, y_l_batch, idx_labeled = get_next_batch(train_x_l, train_l_y, idx_labeled, num_lab_batch)
+        x_u_batch, _, idx_unlabeled = get_next_batch(train_u_x, train_u_y, idx_unlabeled, num_ulab_batch)
         feed_dict_train = {x_lab: x_l_batch, y_lab: y_l_batch, x_unlab: x_u_batch}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
         train_writer.add_summary(summary, batch_loss)
 
         if (i % 100 == 0) or (i == (num_iterations - 1)):
             # Calculate the accuracy
-            correct, _ = predict_cls(images=data.validation.images,
-                                     labels=data.validation.labels,
-                                     cls_true=convert_labels_to_cls(data.validation.labels))
+            correct, _ = predict_cls(images=valid_x,
+                                     labels=valid_y,
+                                     cls_true=convert_labels_to_cls(valid_y))
             acc_validation, _ = cls_accuracy(correct)
             if acc_validation > best_validation_accuracy:
                 # Save  Best Perfoming all variables of the TensorFlow graph to file.
@@ -72,9 +70,8 @@ def reconstruct(x_test, y_test):
 
 def test_reconstruction():
     num_images = 20
-    batch = data.test.next_batch(100)
-    x_test = batch[0][0:num_images, ]
-    y_test = batch[1][0:num_images, ]
+    x_test = test_x[0:num_images, ]
+    y_test = test_y[0:num_images, ]
     plot_images(x_test, reconstruct(x_test, y_test), num_images)
 
 
@@ -120,10 +117,10 @@ def predict_cls(images, labels, cls_true):
 def train_test():
     train_neural_network(FLAGS['num_iterations'])
     saver.restore(sess=session, save_path=FLAGS['save_path'])
-    correct, cls_pred = predict_cls(images=data.test.images,
-                                    labels=data.test.labels,
-                                    cls_true=(convert_labels_to_cls(data.test.labels)))
-    print_test_accuracy(correct, cls_pred, data.test.labels)
+    correct, cls_pred = predict_cls(images=test_x,
+                                    labels=test_y,
+                                    cls_true=(convert_labels_to_cls(test_y)))
+    print_test_accuracy(correct, cls_pred, test_y)
     test_reconstruction()
 
 
@@ -148,6 +145,18 @@ def labeled_model():
     x_mu, x_logvar = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2, reuse=True)
     ELBO = compute_ELBO(x_recon=[x_mu, x_logvar], x=x_lab, y=y_lab, z=[z2, z2_mu, z2_logvar])
     return ELBO, logits, x_mu
+
+
+def extract_data():
+    train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
+    x_l, y_l, x_u, y_u = create_semisupervised(train_x, train_y, FLAGS['n_labeled'])
+    t_x_l, t_y_l = x_l.T, y_l.T
+    t_x_u, t_y_u = x_u.T, y_u.T
+    x_valid, y_valid = valid_x.T, valid_y.T
+    x_test, y_test = test_x.T, test_y.T
+
+    print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
+    return t_x_l, t_y_l, t_x_u, t_x_u, x_valid, y_valid, x_test, y_test
 
 
 if __name__ == '__main__':
@@ -177,12 +186,15 @@ if __name__ == '__main__':
     }
     num_lab_batch, num_ulab_batch, batch_size = get_batch_size(FLAGS)
     np.random.seed(FLAGS['seed'])
-    data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
+    # data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
     x_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_labeled')
     x_unlab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_unlabeled')
     y_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_lab')
     y_true_cls = tf.argmax(y_lab, axis=1)
+
+    # Uses anglpy module from original paper (linked at top) to split the dataset for semi-supervised training
+    train_x_l, train_l_y, train_u_x, train_u_y, valid_x, valid_y, test_x, test_y = extract_data()
 
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()

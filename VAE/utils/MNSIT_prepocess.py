@@ -70,6 +70,7 @@ def preprocess_train_data(data, n_labeled, n_train):
 if __name__ == '__main__':
     data = input_data.read_data_sets("../../data/MNIST/", one_hot=True)
     x_l, y_l, x_u, y_u = preprocess_train_data(data=data, n_labeled=100, n_train=50000)
+    print(x_l[1])
     l_classes = np.argmax(y_l, axis=1)
     print("labeled digits:{}".format(l_classes))
     for i in range(10):
