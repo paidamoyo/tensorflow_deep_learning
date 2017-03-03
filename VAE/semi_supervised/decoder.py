@@ -11,7 +11,6 @@ def px_given_z1(FLAGS, y, z, reuse=False):
         w_h2, b_h2 = create_h_weights('h2_x', 'decoder', [FLAGS['m1_h_dim'], FLAGS['m1_h_dim']])
 
         w_mu, b_mu = create_h_weights('mu', 'decoder', [FLAGS['m1_h_dim'], FLAGS['input_dim']])
-        w_var, b_var = create_h_weights('var', 'decoder', [FLAGS['m1_h_dim'], FLAGS['input_dim']])
         # Model
         # Decoder hidden layer
         z1 = pz1_given_z2y(FLAGS=FLAGS, y=y, z2=z, reuse=True)
@@ -20,9 +19,8 @@ def px_given_z1(FLAGS, y, z, reuse=False):
         # Reconstruction layer
         # x_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)
         x_mu = tf.nn.sigmoid(tf.add(tf.matmul(h2, w_mu), b_mu))
-        x_logvar = mlp_neuron(h2, w_var, b_var, activation=False)
         tf.summary.image('x_mu', tf.reshape(x_mu[0], [1, 28, 28, 1]))
-        return x_mu, x_logvar
+        return x_mu
 
 
 def pz1_given_z2y(FLAGS, y, z2, reuse=False):

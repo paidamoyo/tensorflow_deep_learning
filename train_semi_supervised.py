@@ -131,8 +131,8 @@ def unlabeled_model():
     for label in range(FLAGS['num_classes']):
         y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
         z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_ulab, reuse=True)
-        x_mu, x_logvar = px_given_z1(FLAGS=FLAGS, y=y_ulab, z=z2, reuse=True)
-        _ELBO = tf.expand_dims(compute_ELBO(x_recon=[x_mu, x_logvar], x=x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]), 1)
+        x_mu = px_given_z1(FLAGS=FLAGS, y=y_ulab, z=z2, reuse=True)
+        _ELBO = tf.expand_dims(compute_ELBO(x_recon=x_mu, x=x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]), 1)
         if label == 0:
             unlabeled_ELBO = tf.identity(_ELBO)
         else:
@@ -143,8 +143,8 @@ def unlabeled_model():
 def labeled_model():
     z1, logits = q_z1_given_x(FLAGS, x_lab, reuse=True)
     z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_lab, reuse=True)
-    x_mu, x_logvar = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2, reuse=True)
-    ELBO = compute_ELBO(x_recon=[x_mu, x_logvar], x=x_lab, y=y_lab, z=[z2, z2_mu, z2_logvar])
+    x_mu = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2, reuse=True)
+    ELBO = compute_ELBO(x_recon=x_mu, x=x_lab, y=y_lab, z=[z2, z2_mu, z2_logvar])
     return ELBO, logits, x_mu
 
 
