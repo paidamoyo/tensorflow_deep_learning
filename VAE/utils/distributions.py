@@ -21,8 +21,10 @@ def tf_gaussian_marg(mu, log_sigma_sq):
     return - 0.5 * (logc + (tf.square(mu) + tf.exp(log_sigma_sq)))
 
 
-def tf_binary_xentropy(x, y, const=1e-10):
-    return - (x * tf.log(tf.clip_by_value(y, const, 1.0)) + (1.0 - x) * tf.log(tf.clip_by_value(1.0 - y, const, 1.0)))
+def tf_binary_xentropy(x_true, x_approx, const=1e-10):
+    print("x_approx:{}, x_true:{}".format(x_approx, x_true))
+    return - (x_true * tf.log(tf.clip_by_value(x_approx, const, 1.0)) + tf.subtract(1.0, x_true) * tf.log(
+        tf.clip_by_value(tf.subtract(1.0, x_approx), const, 1.0)))
 
 
 def draw_norm(dim, mu, logvar):
@@ -56,8 +58,9 @@ def compute_ELBO(x_recon, x, y, z):
     z_prior = tf.ones_like(z[0])  # or z[0]?
     log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
     log_prior_y = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
-    log_lik = tf.reduce_sum(tf_normal_logpdf(x, x_recon[0], x_recon[1]), axis=1)
+    # log_lik = tf.reduce_sum(tf_normal_logpdf(x, x_recon[0], x_recon[1]), axis=1)
+    log_lik = tf.reduce_sum(tf_binary_xentropy(x_true=x, x_approx=x_recon))
     log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z[0], mu=z[1], log_sigma_sq=z[2]), axis=1)
-    # log_prior_y + log_lik + log_prior_z - log_post_z
 
-    return log_prior_y - tf.add(reconstruction_loss(x, x_recon[0]), regularization_loss(z[1], z[2]))
+    # log_prior_y - tf.add(reconstruction_loss(x, x_recon[0]), regularization_loss(z[1], z[2]))
+    return log_prior_y + log_lik + log_prior_z - log_post_z

@@ -35,6 +35,7 @@ def load_numpy(path, binarize_y=False):
 # Loads data where data is split into class labels
 def load_numpy_split(binarize_y=False, n_train=50000):
     path = 'VAE/mnist/mnist_28.pkl.gz'
+    # path = '../mnist/mnist_28.pkl.gz'
     path = os.getcwd() + '/' + path
     train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy(path, False)
 
@@ -101,7 +102,7 @@ if __name__ == '__main__':
     num_lab = 100
     train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
     x_l, y_l, x_u, y_u = create_semisupervised(train_x, train_y, num_lab)
-    print(x_l[0])
+    print(x_l.T[0])
 
     x_lab, y_lab = x_l.T, y_l.T
     x_ulab, y_ulab = x_u.T, y_u.T
