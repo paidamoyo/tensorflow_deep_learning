@@ -36,7 +36,7 @@ def train_neural_network(num_iterations):
         x_u_batch, _, idx_unlabeled = get_next_batch(x_u, y_u, idx_unlabeled, num_ulab_batch)
         feed_dict_train = {x_lab: x_l_batch, y_lab: y_l_batch, x_unlab: x_u_batch}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
-        # train_writer.add_summary(summary, batch_loss)
+        train_writer.add_summary(summary, batch_loss)
 
         if (i % 100 == 0) or (i == (num_iterations - 1)):
             # Calculate the accuracy
