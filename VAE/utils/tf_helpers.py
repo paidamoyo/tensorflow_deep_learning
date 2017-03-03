@@ -27,16 +27,16 @@ def create_z_weights(layer, shape):
     network = 'encoder'
 
     # Mean
-    w_z_mu = 'W_' + network + '_h_mu_' + layer
-    b_z_mu = 'b_' + network + '_h_mu_' + layer
+    w_z_mu = 'W_' + network + 'mu_' + layer
+    b_z_mu = 'b_' + network + 'mu_' + layer
     z_vars[w_z_mu] = create_weights(shape)
     z_vars[b_z_mu] = create_biases([shape[1]])
     variable_summaries(z_vars[w_z_mu], w_z_mu)
     variable_summaries(z_vars[b_z_mu], b_z_mu)
 
     # Variance
-    w_z_var = 'W_' + network + '_h_var_' + layer
-    b_z_var = 'b_' + network + '_h_var_' + layer
+    w_z_var = 'W_' + network + 'var_' + layer
+    b_z_var = 'b_' + network + 'var_' + layer
     z_vars[w_z_var] = create_weights(shape)
     z_vars[b_z_var] = create_biases([shape[1]])
     variable_summaries(z_vars[w_z_var], w_z_var)

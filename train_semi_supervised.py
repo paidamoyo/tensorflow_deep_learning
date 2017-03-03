@@ -11,7 +11,7 @@ from VAE.semi_supervised.decoder import px_given_z1
 from VAE.semi_supervised.encoder import q_z2_given_yx, q_z1_given_x
 from VAE.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from VAE.utils.batch_processing import get_batch_size, get_next_batch
-from VAE.utils.distributions import compute_ELBO, prior_weights
+from VAE.utils.distributions import compute_ELBO
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from VAE.utils.tf_helpers import one_label_tensor
 
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
     unlabeled_ELBO, y_ulab_logits = unlabeled_model()
-    cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches'] + prior_weights()) / (
+    cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches']) / (
         -batch_size * FLAGS['num_batches'])
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
                                        beta2=FLAGS['beta2']).minimize(cost)
