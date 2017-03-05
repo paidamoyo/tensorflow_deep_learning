@@ -35,6 +35,7 @@ def train_neural_network(num_iterations):
         x_u_batch, _, idx_unlabeled = get_next_batch(train_u_x, train_u_y, idx_unlabeled, num_ulab_batch)
         feed_dict_train = {x_lab: x_l_batch, y_lab: y_l_batch, x_unlab: x_u_batch}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
+        print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
         train_writer.add_summary(summary, batch_loss)
 
         if (i % 100 == 0) or (i == (num_iterations - 1)):
@@ -179,7 +180,7 @@ if __name__ == '__main__':
         'latent_dim': 50,
         'require_improvement': 30000,
         'n_train': 50000,
-        'learning_rate': 1e-10,
+        'learning_rate': 3e-5,
         'beta1': 0.9,
         'beta2': 0.999,
         'input_dim': 28 * 28,
