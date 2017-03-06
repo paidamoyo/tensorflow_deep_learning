@@ -176,12 +176,12 @@ if __name__ == '__main__':
         'save_path': 'results/train_weights',
         'test_batch_size': 256,
         'num_iterations': 40000,
-        'num_batches': 100,
+        'num_batches': 200,
         'seed': 12000,
-        'n_labeled': 100,
+        'n_labeled': 50000,
         'alpha': 0.1,
-        'm1_h_dim': 300,
-        'm2_h_dim': 300,
+        'm1_h_dim': 500,
+        'm2_h_dim': 500,
         'latent_dim': 50,
         'require_improvement': 30000,
         'n_train': 50000,
@@ -206,9 +206,14 @@ if __name__ == '__main__':
 
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
-    unlabeled_ELBO, y_ulab_logits = unlabeled_model()
-    cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches'] + prior_weights()) / (
-        -batch_size * FLAGS['num_batches'])
+    if FLAGS['n_labeled'] == FLAGS['n_train']:
+        cost = (total_lab_loss() * FLAGS['num_batches'] + prior_weights()) / (
+            -batch_size * FLAGS['num_batches'])
+    else:
+        unlabeled_ELBO, y_ulab_logits = unlabeled_model()
+        cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches'] + prior_weights()) / (
+            -batch_size * FLAGS['num_batches'])
+
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
                                        beta2=FLAGS['beta2']).minimize(cost)
     saver = tf.train.Saver()
