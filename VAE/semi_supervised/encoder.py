@@ -30,17 +30,14 @@ def q_z2_given_yx(FLAGS, z1, y, reuse=False):
         # Variables
         w_h1, b_h1 = create_h_weights('h1_z2', 'encoder',
                                       [FLAGS['latent_dim'] + FLAGS['num_classes'], FLAGS['m2_h_dim']])
-        w_h2, b_h2 = create_h_weights('h2_z2', 'encoder',
-                                      [FLAGS['m2_h_dim'], FLAGS['m2_h_dim']])
 
         w_mu_z2, w_var_z2, b_mu_z2, b_var_z2 = create_z_weights('z_2', [FLAGS['m2_h_dim'], FLAGS['latent_dim']])
 
         # Hidden layers
         h1 = mlp_neuron(tf.concat([z1, y], axis=1), w_h1, b_h1)
-        h2 = mlp_neuron(h1, w_h2, b_h2)
         # Z2 latent layer mu and var
-        logvar_z2 = mlp_neuron(h2, w_var_z2, b_var_z2, activation=False)
-        mu_z2 = mlp_neuron(h2, w_mu_z2, b_mu_z2, activation=False)
+        logvar_z2 = mlp_neuron(h1, w_var_z2, b_var_z2, activation=False)
+        mu_z2 = mlp_neuron(h1, w_mu_z2, b_mu_z2, activation=False)
         z2 = draw_norm(FLAGS['latent_dim'], mu_z2, logvar_z2)
         return z2, mu_z2, logvar_z2
 
