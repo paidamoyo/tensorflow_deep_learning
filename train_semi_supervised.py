@@ -208,7 +208,7 @@ if __name__ == '__main__':
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
     if FLAGS['n_labeled'] == FLAGS['n_train']:
-        cost = (total_lab_loss() * FLAGS['num_batches']) / (
+        cost = ((total_lab_loss() * FLAGS['num_batches']) + prior_weights()) / (
             -batch_size * FLAGS['num_batches'])
     else:
         unlabeled_ELBO, y_ulab_logits = unlabeled_model()
