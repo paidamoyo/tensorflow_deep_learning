@@ -135,12 +135,12 @@ def unlabeled_model():
         y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
         z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_ulab, reuse=True)
         x_mu = px_given_z1(FLAGS=FLAGS, y=y_ulab, z=z2, reuse=True)
-        _ELBO = tf.expand_dims(compute_ELBO(x_recon=x_mu, x=x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]), 1)
-        if label == 0:
-            unlabeled_ELBO = tf.identity(_ELBO)
-        else:
-            unlabeled_ELBO = tf.concat((unlabeled_ELBO, _ELBO), axis=1)  # Decoder Model
-    return unlabeled_ELBO, logits
+        _elbo = tf.expand_dims(compute_ELBO(x_recon=x_mu, x=x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]), 1)
+        class_elbo = tf.identity(_elbo)
+        if label > 0:
+            class_elbo = tf.concat((class_elbo, _elbo), axis=1)  # Decoder Model
+        print("unlabeled class_elbo:{}".format(class_elbo))
+        return class_elbo, logits
 
 
 def labeled_model():

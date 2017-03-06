@@ -78,7 +78,7 @@ def one_label_tensor(label, num_ulab_batch, num_classes):
 
 
 if __name__ == '__main__':
-    y_ulab = one_label_tensor(0, 400, 10)
+    y_ulab = one_label_tensor(2, 400, 10)
     with tf.Session() as session:
         y = session.run(y_ulab)
         print("y:{}, shape:{}".format(y, y.shape))
