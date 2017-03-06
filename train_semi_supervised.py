@@ -206,7 +206,8 @@ if __name__ == '__main__':
         -batch_size * FLAGS['num_batches'])
     # optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
     #                                    beta2=FLAGS['beta2']).minimize(cost)
-    optimizer = tf.train.GradientDescentOptimizer(0.5).minimize(cost)
+    # optimizer = tf.train.GradientDescentOptimizer(0.5).minimize(cost)
+    optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train', session.graph)
