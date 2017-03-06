@@ -25,17 +25,21 @@ def px_given_z1(FLAGS, y, z, reuse=False):
 
 def pz1_given_z2y(FLAGS, y, z2, reuse=False):
     with tf.variable_scope("decoder", reuse=reuse):
-        w_h1, b_h1 = create_h_weights('h1_z', 'decoder',
+        w_h1, b_h1 = create_h_weights('h1_z1', 'decoder',
                                       [FLAGS['latent_dim'] + FLAGS['num_classes'], FLAGS['m2_h_dim']])
+
+        w_h2, b_h2 = create_h_weights('h2_z1', 'decoder',
+                                      [FLAGS['m2_h_dim'], FLAGS['m2_h_dim']])
 
         w_mu_z1, w_var_z1, b_mu_z1, b_var_z1 = create_z_weights('z_1_decoder',
                                                                 [FLAGS['m2_h_dim'], FLAGS['latent_dim']])
         # Model
         # Decoder hidden layer
         h1 = mlp_neuron(tf.concat([y, z2], axis=1), w_h1, b_h1)
+        h2 = mlp_neuron(h1, w_h2, b_h2)
         print("h1 decoder:{}, ".format(h1))
 
         # Z1 latent layer mu and var
-        logvar_z1 = mlp_neuron(h1, w_var_z1, b_var_z1, activation=False)
-        mu_z1 = mlp_neuron(h1, w_mu_z1, b_mu_z1, activation=False)
+        logvar_z1 = mlp_neuron(h2, w_var_z1, b_var_z1, activation=False)
+        mu_z1 = mlp_neuron(h2, w_mu_z1, b_mu_z1, activation=False)
         return draw_norm(FLAGS['latent_dim'], mu_z1, logvar_z1)
