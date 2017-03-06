@@ -92,7 +92,7 @@ def total_unlab_loss():
     # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
     const = 1e-10
     y_ulab = tf.nn.softmax(logits=y_ulab_logits)
-    weighted_EBO = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(unlabeled_ELBO, tf.log(y_lab + const))), 1)
+    weighted_EBO = tf.reduce_sum(tf.multiply(y_ulab + const, tf.subtract(unlabeled_ELBO, tf.log(y_lab + const))), 1)
     unlabeled_loss = tf.reduce_sum(weighted_EBO)
     print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(unlabeled_ELBO, unlabeled_loss))
     tf.summary.scalar('unlabeled_loss', unlabeled_loss)
@@ -189,8 +189,7 @@ if __name__ == '__main__':
         'beta1': 0.9,
         'beta2': 0.999,
         'input_dim': 28 * 28,
-        'num_classes': 10,
-        'svmC': 1
+        'num_classes': 10
     }
     num_lab_batch, num_ulab_batch, batch_size = get_batch_size(FLAGS)
     np.random.seed(FLAGS['seed'])
@@ -207,7 +206,7 @@ if __name__ == '__main__':
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
     if FLAGS['n_labeled'] == FLAGS['n_train']:
-        cost = (total_lab_loss() * FLAGS['num_batches'] + prior_weights()) / (
+        cost = (total_lab_loss() * FLAGS['num_batches']) / (
             -batch_size * FLAGS['num_batches'])
     else:
         unlabeled_ELBO, y_ulab_logits = unlabeled_model()
