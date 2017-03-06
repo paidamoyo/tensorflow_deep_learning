@@ -165,6 +165,11 @@ def extract_data():
 if __name__ == '__main__':
     session = tf.Session()
     # Global Dictionary of Flags
+    # learn_yz_x_ss.main(3000, n_labels=100, dataset='mnist_2layer', n_z=50, n_hidden=(300,), seed=seed, alpha=0.1,
+    #                    n_minibatches=100, comment='')
+    # learn_yz_x_ss.main(3000, n_labels>100, dataset='mnist_2layer', n_z=50, n_hidden=(500,), seed=seed, alpha=0.1,
+    #                    n_minibatches=200, comment='')
+
     FLAGS = {
         'data_directory': 'data/MNIST/',
         'summaries_dir': 'summaries/',
@@ -175,12 +180,12 @@ if __name__ == '__main__':
         'seed': 12000,
         'n_labeled': 100,
         'alpha': 0.1,
-        'm1_h_dim': 600,
-        'm2_h_dim': 500,
+        'm1_h_dim': 300,
+        'm2_h_dim': 300,
         'latent_dim': 50,
         'require_improvement': 30000,
         'n_train': 50000,
-        'learning_rate': 3e-5,
+        'learning_rate': 3e-4,
         'beta1': 0.9,
         'beta2': 0.999,
         'input_dim': 28 * 28,
@@ -204,10 +209,8 @@ if __name__ == '__main__':
     unlabeled_ELBO, y_ulab_logits = unlabeled_model()
     cost = ((total_lab_loss() + total_unlab_loss()) * FLAGS['num_batches'] + prior_weights()) / (
         -batch_size * FLAGS['num_batches'])
-    # optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
-    #                                    beta2=FLAGS['beta2']).minimize(cost)
-    # optimizer = tf.train.GradientDescentOptimizer(0.5).minimize(cost)
-    optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
+    optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
+                                       beta2=FLAGS['beta2']).minimize(cost)
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train', session.graph)
