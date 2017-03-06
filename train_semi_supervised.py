@@ -179,7 +179,7 @@ if __name__ == '__main__':
         'num_batches': 200,
         'seed': 12000,
         'n_labeled': 50000,
-        'alpha': 0.1,
+        'alpha': 1,
         'm1_h_dim': 500,
         'm2_h_dim': 500,
         'latent_dim': 50,
