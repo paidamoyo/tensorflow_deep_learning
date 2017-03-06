@@ -14,7 +14,7 @@ from VAE.utils.batch_processing import get_batch_size, get_next_batch
 from VAE.utils.distributions import compute_ELBO
 from VAE.utils.distributions import prior_weights
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
-from VAE.utils.tf_helpers import one_label_tensor
+from VAE.utils.tf_helpers import one_label_tensor, variable_summaries
 
 sys.path.append(os.getcwd())
 
@@ -36,7 +36,7 @@ def train_neural_network(num_iterations):
         feed_dict_train = {x_lab: x_l_batch, y_lab: y_l_batch, x_unlab: x_u_batch}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
         # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
-        train_writer.add_summary(summary, batch_loss)
+        train_writer.add_summary(summary, i)
 
         if (i % 100 == 0) or (i == (num_iterations - 1)):
             # Calculate the accuracy
@@ -92,6 +92,7 @@ def total_unlab_loss():
     # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
     const = 1e-10
     y_ulab = tf.nn.softmax(logits=y_ulab_logits)
+    variable_summaries(y_lab, 'y_lab')
     weighted_EBO = tf.reduce_sum(tf.multiply(y_ulab + const, tf.subtract(unlabeled_ELBO, tf.log(y_lab + const))), 1)
     unlabeled_loss = tf.reduce_sum(weighted_EBO)
     print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(unlabeled_ELBO, unlabeled_loss))
@@ -175,11 +176,11 @@ if __name__ == '__main__':
         'summaries_dir': 'summaries/',
         'save_path': 'results/train_weights',
         'test_batch_size': 256,
-        'num_iterations': 40000,
-        'num_batches': 200,
+        'num_iterations': 100000,
+        'num_batches': 100,
         'seed': 12000,
-        'n_labeled': 50000,
-        'alpha': 1,
+        'n_labeled': 100,
+        'alpha': 0.1,
         'm1_h_dim': 500,
         'm2_h_dim': 500,
         'latent_dim': 50,
