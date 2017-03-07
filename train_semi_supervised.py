@@ -102,7 +102,6 @@ def total_unlab_loss():
 
 def predict_cls(images, labels, cls_true):
     num_images = len(images)
-    print("testing: images shape:{}, labels shape:{} ".format(images.shape, labels.shape))
     cls_pred = np.zeros(shape=num_images, dtype=np.int)
     i = 0
     while i < num_images:
@@ -182,7 +181,7 @@ if __name__ == '__main__':
         'num_iterations': 100000,
         'num_batches': 100,
         'seed': 12000,
-        'n_labeled': 50000,
+        'n_labeled': 100,
         'alpha': 0.1,
         'm1_h_dim': 500,
         'm2_h_dim': 500,
