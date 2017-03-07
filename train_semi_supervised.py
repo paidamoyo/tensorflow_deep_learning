@@ -8,7 +8,7 @@ import tensorflow as tf
 
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.decoder import px_given_z1
-from VAE.semi_supervised.encoder import q_z2_given_yx, q_z1_given_x
+from VAE.semi_supervised.encoder import q_z2_given_yx, q_z1_given_x, qy_given_x, qy_given_z2
 from VAE.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from VAE.utils.batch_processing import get_batch_size, get_next_batch
 from VAE.utils.distributions import compute_ELBO
@@ -102,15 +102,16 @@ def total_unlab_loss():
 
 def predict_cls(images, labels, cls_true):
     num_images = len(images)
+    print("testing: images shape:{}, labels shape:{} ".format(images.shape, labels.shape))
     cls_pred = np.zeros(shape=num_images, dtype=np.int)
     i = 0
     while i < num_images:
         # The ending index for the next batch is denoted j.
         j = min(i + FLAGS['test_batch_size'], num_images)
-        test_images = images[i:j, :]
-        labels = labels[i:j, :]
-        feed_dict = {x_lab: test_images,
-                     y_lab: labels[i:j, :]}
+        batch_images = images[i:j, :]
+        batch_labels = labels[i:j, :]
+        feed_dict = {x_lab: batch_images,
+                     y_lab: batch_labels}
         cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
         i = j
     # Create a boolean array whether each image is correctly classified.
@@ -130,7 +131,8 @@ def train_test():
 
 def unlabeled_model():
     # Ulabeled
-    z1, logits = q_z1_given_x(FLAGS, x_unlab, reuse=True)
+    z1 = q_z1_given_x(FLAGS, x_unlab, reuse=True)
+    logits = qy_given_x(z1, FLAGS)
     for label in range(FLAGS['num_classes']):
         y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
         z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_ulab, reuse=True)
@@ -144,9 +146,10 @@ def unlabeled_model():
 
 
 def labeled_model():
-    z1, logits = q_z1_given_x(FLAGS, x_lab, reuse=True)
-    z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_lab, reuse=True)
-    x_mu = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2, reuse=True)
+    z1 = q_z1_given_x(FLAGS, x_lab)
+    z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_lab)
+    logits = qy_given_z2(z2, FLAGS)
+    x_mu = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2)
     ELBO = compute_ELBO(x_recon=x_mu, x=x_lab, y=y_lab, z=[z2, z2_mu, z2_logvar])
     return ELBO, logits, x_mu
 
@@ -175,11 +178,11 @@ if __name__ == '__main__':
         'data_directory': 'data/MNIST/',
         'summaries_dir': 'summaries/',
         'save_path': 'results/train_weights',
-        'test_batch_size': 256,
+        'test_batch_size': 200,
         'num_iterations': 100000,
         'num_batches': 100,
         'seed': 12000,
-        'n_labeled': 100,
+        'n_labeled': 50000,
         'alpha': 0.1,
         'm1_h_dim': 500,
         'm2_h_dim': 500,

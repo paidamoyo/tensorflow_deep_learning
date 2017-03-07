@@ -21,8 +21,7 @@ def q_z1_given_x(FLAGS, x, reuse=False):
         mu_z1 = mlp_neuron(h2, w_mu_z1, b_mu_z1, activation=False)
         # Model
         z1 = draw_norm(FLAGS['latent_dim'], mu_z1, logvar_z1)
-        y_logits = qy_given_x(z1, FLAGS, reuse=reuse)
-        return z1, y_logits
+        return z1
 
 
 def q_z2_given_yx(FLAGS, z1, y, reuse=False):
@@ -45,7 +44,15 @@ def q_z2_given_yx(FLAGS, z1, y, reuse=False):
 def qy_given_x(z_1, FLAGS, reuse=False):
     with tf.variable_scope("y_classifier", reuse=reuse):
         num_classes = FLAGS['num_classes']
-        w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['m2_h_dim']])
-        w_mlp_h2, b_mlp_h2 = create_h_weights('y_h2', 'classifier', [FLAGS['m2_h_dim'], num_classes])
+        w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'infer', [FLAGS['latent_dim'], FLAGS['m2_h_dim']])
+        w_mlp_h2, b_mlp_h2 = create_h_weights('y_h2', 'infer', [FLAGS['m2_h_dim'], num_classes])
         h1 = mlp_neuron(z_1, w_mlp_h1, b_mlp_h1)
+    return mlp_neuron(h1, w_mlp_h2, b_mlp_h2, activation=False)
+
+
+def qy_given_z2(z2, FLAGS):
+    num_classes = FLAGS['num_classes']
+    w_mlp_h1, b_mlp_h1 = create_h_weights('y_h1', 'classifier', [FLAGS['latent_dim'], FLAGS['m2_h_dim']])
+    w_mlp_h2, b_mlp_h2 = create_h_weights('y_h2', 'classifier', [FLAGS['m2_h_dim'], num_classes])
+    h1 = mlp_neuron(z2, w_mlp_h1, b_mlp_h1)
     return mlp_neuron(h1, w_mlp_h2, b_mlp_h2, activation=False)
