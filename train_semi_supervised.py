@@ -93,8 +93,7 @@ def total_unlab_loss():
     const = 1e-10
     y_ulab = tf.nn.softmax(logits=y_ulab_logits)
     variable_summaries(y_lab, 'y_lab')
-    # weighted_elbo = tf.reduce_sum(tf.multiply(y_ulab + const, tf.subtract(unlabeled_ELBO, tf.log(y_lab + const))), 1)
-    weighted_elbo = tf.reduce_sum(tf.multiply(y_ulab + const, unlabeled_ELBO), 1)
+    weighted_elbo = tf.reduce_sum(tf.multiply(y_ulab + const, tf.subtract(unlabeled_ELBO, tf.log(y_lab + const))), 1)
     unlabeled_loss = tf.reduce_sum(weighted_elbo)
     print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(unlabeled_ELBO, unlabeled_loss))
     tf.summary.scalar('unlabeled_loss', unlabeled_loss)
