@@ -210,7 +210,7 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()
     current_dir = os.getcwd()
-    save_path = current_dir + "/semi_supervised" + FLAGS['summaries_dir'] + '/semi_supervised'
+    save_path = current_dir + "VAE/semi_supervised" + FLAGS['summaries_dir'] + '/semi_supervised'
     train_writer = tf.summary.FileWriter(save_path, session.graph)
 
     train_test()

@@ -2,7 +2,6 @@
 data/
 *summaries/
 results/
-__init__.py
 VAE/__pycache__/
 VAE/semi_supervised/__pycache__/
 VAE/semi_supervised/models/__pycache__/
