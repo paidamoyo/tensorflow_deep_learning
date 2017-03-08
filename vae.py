@@ -110,6 +110,8 @@ if __name__ == '__main__':
     current_dir = os.getcwd()
 
     batch_size = int(50000 / 200)
+    FLAGS['test_batch_size'] = batch_size
+
     np.random.seed(FLAGS['seed'])
     tf.set_random_seed(FLAGS['seed'])
 
