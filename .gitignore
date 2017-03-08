@@ -1,11 +1,11 @@
 
-checkpoints/
 data/
-tensorflow_tutorial/MNIST_data/
-summaries/
-
+*summaries/
+results/
+__init__.py
 VAE/__pycache__/
 VAE/semi_supervised/__pycache__/
+VAE/semi_supervised/models/__pycache__/
 VAE/utils/__pycache__/
-__pycache__/
-results/
+VAE/vanilla/__pycache__/
+VAE/vanilla/models/__pycache__/

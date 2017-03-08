@@ -126,7 +126,7 @@ if __name__ == '__main__':
                                        beta2=FLAGS['beta2']).minimize(cost)
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()
-    save_path = current_dir + "/" + FLAGS['summaries_dir'] + '/M1_train'
+    save_path = current_dir + "/vanilla" + FLAGS['summaries_dir'] + '/VAE'
     train_writer = tf.summary.FileWriter(save_path, session.graph)
     train_test()
 
