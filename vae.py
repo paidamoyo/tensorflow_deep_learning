@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from VAE.utils.MNIST_pickled_preprocess import extract_data
 from VAE.utils.batch_processing import get_batch_size, get_next_batch
-from VAE.utils.distributions import cost_M1
+from VAE.utils.distributions import elbo_M1, prior_weights
 from VAE.utils.metrics import plot_images
 from VAE.utils.settings import initialize
 from VAE.vanilla.models.decoder import px_given_z1
@@ -75,8 +75,8 @@ def calculate_loss(images):
 def build_model():
     z1, z1_mu, z1_logvar = q_z1_given_x(x)
     x_mu = px_given_z1(z1)
-    loss = cost_M1(x_recon=x_mu, x_true=x, z=z1, z_lsgms=z1_logvar, z_mu=z1_mu)
-    return loss, x_mu, z1, z1_mu, z1_logvar
+    loss = elbo_M1(x_recon=x_mu, x_true=x, z=z1, z_lsgms=z1_logvar, z_mu=z1_mu)
+    return tf.reduce_sum(loss), x_mu, z1, z1_mu, z1_logvar
 
 
 def train_test():
@@ -118,7 +118,9 @@ if __name__ == '__main__':
     train_x = np.concatenate((train_x_l, train_u_x), axis=0)
     train_y = np.concatenate((train_l_y, train_u_y), axis=0)
 
-    cost, x_recon_mu, z_sample, z_mu, z_logvar = build_model()
+    elbo, x_recon_mu, z_sample, z_mu, z_logvar = build_model()
+    cost = (elbo * FLAGS['num_batches'] + prior_weights()) / (-batch_size * FLAGS['num_batches'])
+
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
                                        beta2=FLAGS['beta2']).minimize(cost)
     saver = tf.train.Saver()

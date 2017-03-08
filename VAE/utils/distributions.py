@@ -67,11 +67,9 @@ def elbo_M2(x_recon, x, y, z):
     return log_prior_y + log_lik + log_prior_z - log_post_z
 
 
-def cost_M1(x_recon, x_true, z, z_mu, z_lsgms):
-    l2 = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+def elbo_M1(x_recon, x_true, z, z_mu, z_lsgms):
     log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_true, x_approx=x_recon))
-    post_z = tf.reduce_sum(tf_normal_logpdf(x=z, mu=z_mu, log_sigma_sq=z_lsgms), axis=1)
+    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z, mu=z_mu, log_sigma_sq=z_lsgms), axis=1)
     z_prior = tf.ones_like(z)
-    prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
-    cost = tf.reduce_mean(post_z - prior_z - log_lik) + l2
-    return cost
+    log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
+    return log_lik + log_prior_z - log_post_z
