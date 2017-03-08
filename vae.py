@@ -76,7 +76,7 @@ def build_model():
     z1, z1_mu, z1_logvar = q_z1_given_x(x)
     x_mu = px_given_z1(z1)
     loss = cost_M1(x_recon=x_mu, x_true=x, z_lsgms=z1_logvar, z_mu=z1_mu)
-    return loss, x_mu, z1_mu, z1_logvar
+    return loss, x_mu, z1, z1_mu, z1_logvar
 
 
 def train_test():
@@ -95,9 +95,16 @@ def test_reconstruction():
     plot_images(x_test, reconstruct(x_test), num_images, current_dir)
 
 
+def encode(x_input, sample=False):
+    if sample:
+        return session.run([z_sample, z_mu, z_logvar], feed_dict={x: x_input})
+    else:
+        return session.run([z_mu, z_logvar], feed_dict={x: x_input})
+
+
 if __name__ == '__main__':
     FLAGS = initialize()
-    FLAGS['require_improvement'] = 4000
+    FLAGS['require_improvement'] = 20000
     session = tf.Session()
     current_dir = os.getcwd()
 
@@ -109,11 +116,9 @@ if __name__ == '__main__':
 
     train_x_l, train_l_y, train_u_x, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(FLAGS['n_labeled'])
     train_x = np.concatenate((train_x_l, train_u_x), axis=0)
-    print(train_x.shape)
-    print("l_shape:{}, ul_shape:{}".format(train_l_y.shape, train_u_y.shape))
     train_y = np.concatenate((train_l_y, train_u_y), axis=0)
-    print(train_y.shape)
-    cost, x_recon_mu, z_mu, z_logvar = build_model()
+
+    cost, x_recon_mu, z_sample, z_mu, z_logvar = build_model()
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
                                        beta2=FLAGS['beta2']).minimize(cost)
     saver = tf.train.Saver()
