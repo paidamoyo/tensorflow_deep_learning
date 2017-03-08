@@ -5,7 +5,7 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 
-from VAE.utils.MNIST_pickled_preprocess import load_numpy_split
+from VAE.utils.MNIST_pickled_preprocess import extract_data
 from VAE.utils.batch_processing import get_batch_size, get_next_batch
 from VAE.utils.distributions import cost_M1
 from VAE.utils.metrics import plot_images
@@ -107,7 +107,12 @@ if __name__ == '__main__':
 
     x = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_labeled')
 
-    train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
+    train_x_l, train_l_y, train_u_x, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(FLAGS['n_labeled'])
+    train_x = np.concatenate((train_x_l, train_u_x), axis=0)
+    print(train_x.shape)
+    print("l_shape:{}, ul_shape:{}".format(train_l_y.shape, train_u_y.shape))
+    train_y = np.concatenate((train_l_y, train_u_y), axis=0)
+    print(train_y.shape)
     cost, x_recon_mu, z_mu, z_logvar = build_model()
     optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
                                        beta2=FLAGS['beta2']).minimize(cost)

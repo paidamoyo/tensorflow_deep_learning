@@ -105,7 +105,7 @@ def extract_data(n_labeled):
     x_test, y_test = test_x.T, test_y.T
 
     print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
-    return t_x_l, t_y_l, t_x_u, t_x_u, x_valid, y_valid, x_test, y_test
+    return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test
 
 
 if __name__ == '__main__':
