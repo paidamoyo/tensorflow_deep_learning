@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from VAE.utils.MNIST_pickled_preprocess import extract_data
-from VAE.utils.batch_processing import get_batch_size, get_next_batch
+from VAE.utils.batch_processing import get_next_batch
 from VAE.utils.distributions import elbo_M1, prior_weights
 from VAE.utils.metrics import plot_images
 from VAE.utils.settings import initialize
@@ -25,7 +25,7 @@ def train_neural_network(num_iterations):
     for i in range(num_iterations):
 
         # Batch Training
-        x_batch, _, idx = get_next_batch(train_x, train_y, idx, num_lab_batch)
+        x_batch, _, idx = get_next_batch(train_x, train_y, idx, batch_size)
         feed_dict_train = {x: x_batch, }
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
         # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
@@ -105,10 +105,11 @@ def encode(x_input, sample=False):
 if __name__ == '__main__':
     FLAGS = initialize()
     FLAGS['require_improvement'] = 20000
+    FLAGS['num_batches'] = 200
     session = tf.Session()
     current_dir = os.getcwd()
 
-    num_lab_batch, num_ulab_batch, batch_size = get_batch_size(FLAGS)
+    batch_size = int(50000 / 200)
     np.random.seed(FLAGS['seed'])
     tf.set_random_seed(FLAGS['seed'])
 
