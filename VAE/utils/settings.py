@@ -4,7 +4,7 @@ def initialize():
         'summaries_dir': 'summaries/',
         'save_path': 'results/train_weights',
         'test_batch_size': 200,
-        'num_iterations': 100000,
+        'num_iterations': 40000,
         'num_batches': 100,
         'seed': 12000,
         'n_labeled': 100,
