@@ -7,11 +7,11 @@ import numpy as np
 import tensorflow as tf
 
 from VAE.classifier import softmax_classifier
-from VAE.semi_supervised.decoder import px_given_z1
-from VAE.semi_supervised.encoder import q_z2_given_yx, q_z1_given_x, qy_given_x, qy_given_z2
-from VAE.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
+from VAE.semi_supervised.models.decoder import px_given_z1
+from VAE.semi_supervised.models.encoder import q_z2_given_yx, q_z1_given_x, qy_given_x
+from VAE.utils.MNIST_pickled_preprocess import extract_data
 from VAE.utils.batch_processing import get_batch_size, get_next_batch
-from VAE.utils.distributions import compute_ELBO
+from VAE.utils.distributions import elbo_M2
 from VAE.utils.distributions import prior_weights
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from VAE.utils.tf_helpers import one_label_tensor, variable_summaries
@@ -131,12 +131,12 @@ def train_test():
 def unlabeled_model():
     # Ulabeled
     z1 = q_z1_given_x(FLAGS, x_unlab, reuse=True)
-    logits = qy_given_x(z1, FLAGS)
+    logits = qy_given_x(z1, FLAGS, reuse=True)
     for label in range(FLAGS['num_classes']):
         y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
         z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_ulab, reuse=True)
         x_mu = px_given_z1(FLAGS=FLAGS, y=y_ulab, z=z2, reuse=True)
-        _elbo = tf.expand_dims(compute_ELBO(x_recon=x_mu, x=x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]), 1)
+        _elbo = tf.expand_dims(elbo_M2(x_recon=x_mu, x=x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]), 1)
         class_elbo = tf.identity(_elbo)
         if label > 0:
             class_elbo = tf.concat((class_elbo, _elbo), axis=1)  # Decoder Model
@@ -147,22 +147,10 @@ def unlabeled_model():
 def labeled_model():
     z1 = q_z1_given_x(FLAGS, x_lab)
     z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_lab)
-    logits = qy_given_z2(z2, FLAGS)
+    logits = qy_given_x(z1, FLAGS)
     x_mu = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2)
-    ELBO = compute_ELBO(x_recon=x_mu, x=x_lab, y=y_lab, z=[z2, z2_mu, z2_logvar])
+    ELBO = elbo_M2(x_recon=x_mu, x=x_lab, y=y_lab, z=[z2, z2_mu, z2_logvar])
     return ELBO, logits, x_mu
-
-
-def extract_data():
-    train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
-    x_l, y_l, x_u, y_u = create_semisupervised(train_x, train_y, FLAGS['n_labeled'])
-    t_x_l, t_y_l = x_l.T, y_l.T
-    t_x_u, t_y_u = x_u.T, y_u.T
-    x_valid, y_valid = valid_x.T, valid_y.T
-    x_test, y_test = test_x.T, test_y.T
-
-    print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
-    return t_x_l, t_y_l, t_x_u, t_x_u, x_valid, y_valid, x_test, y_test
 
 
 if __name__ == '__main__':
@@ -196,6 +184,7 @@ if __name__ == '__main__':
     }
     num_lab_batch, num_ulab_batch, batch_size = get_batch_size(FLAGS)
     np.random.seed(FLAGS['seed'])
+    tf.set_random_seed(FLAGS['seed'])
     # data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
     x_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_labeled')
@@ -204,7 +193,7 @@ if __name__ == '__main__':
     y_true_cls = tf.argmax(y_lab, axis=1)
 
     # Uses anglpy module from original paper (linked at top) to split the dataset for semi-supervised training
-    train_x_l, train_l_y, train_u_x, train_u_y, valid_x, valid_y, test_x, test_y = extract_data()
+    train_x_l, train_l_y, train_u_x, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(FLAGS['n_labeled'])
 
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
@@ -220,7 +209,9 @@ if __name__ == '__main__':
                                        beta2=FLAGS['beta2']).minimize(cost)
     saver = tf.train.Saver()
     merged = tf.summary.merge_all()
-    train_writer = tf.summary.FileWriter(FLAGS['summaries_dir'] + '/train', session.graph)
+    current_dir = os.getcwd()
+    save_path = current_dir + "/" + FLAGS['summaries_dir'] + '/M1_train'
+    train_writer = tf.summary.FileWriter(save_path, session.graph)
 
     train_test()
 

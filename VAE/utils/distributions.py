@@ -52,7 +52,7 @@ def regularization_loss(z2_mu, z2_logvar):
     return z_regularization
 
 
-def compute_ELBO(x_recon, x, y, z):
+def elbo_M2(x_recon, x, y, z):
     num_classes = 10
     y_prior = (1. / num_classes) * tf.ones_like(y)
     z_prior = tf.ones_like(z[0])  # or z[0]?
@@ -65,3 +65,13 @@ def compute_ELBO(x_recon, x, y, z):
     tf.summary.scalar('negative_log_lik', negative_log_lik)
     # log_prior_y - tf.add(reconstruction_loss(x, x_recon[0]), regularization_loss(z[1], z[2]))
     return log_prior_y + log_lik + log_prior_z - log_post_z
+
+
+def cost_M1(x_recon, x_true, z_mu, z_lsgms):
+    l2 = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+    log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_true, x_approx=x_recon))
+    post_z = tf.reduce_sum(tf_gaussian_ent(z_lsgms), axis=1)
+    prior_z = tf.reduce_sum(tf_gaussian_marg(z_mu, z_lsgms), axis=1)
+
+    cost = tf.reduce_mean(post_z - prior_z - log_lik) + l2
+    return cost

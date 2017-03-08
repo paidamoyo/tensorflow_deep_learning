@@ -14,7 +14,6 @@ import numpy as np
 
 def load_numpy(path, binarize_y=False):
     # MNIST dataset
-    if os.getcwd() not in path: path = os.getcwd() + '/' + path
     f = gzip.open(path, 'rb')
     u = pickle._Unpickler(f)
     u.encoding = 'latin1'
@@ -34,9 +33,8 @@ def load_numpy(path, binarize_y=False):
 
 # Loads data where data is split into class labels
 def load_numpy_split(binarize_y=False, n_train=50000):
-    path = 'VAE/mnist/mnist_28.pkl.gz'
-    # path = '../mnist/mnist_28.pkl.gz'
-    path = os.getcwd() + '/' + path
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.abspath(os.path.join(dir_path, '..', 'mnist/mnist_28.pkl.gz'))
     train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy(path, False)
 
     train_x = train_x[0:n_train]
@@ -96,6 +94,18 @@ def create_semisupervised(x, y, n_labeled):
         x_unlabeled[i] = x[i][:, idx_unlabeled]
         y_unlabeled[i] = y[i][:, idx_unlabeled]
     return np.hstack(x_labeled), np.hstack(y_labeled), np.hstack(x_unlabeled), np.hstack(y_unlabeled)
+
+
+def extract_data(n_labeled):
+    train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
+    x_l, y_l, x_u, y_u = create_semisupervised(train_x, train_y, n_labeled)
+    t_x_l, t_y_l = x_l.T, y_l.T
+    t_x_u, t_y_u = x_u.T, y_u.T
+    x_valid, y_valid = valid_x.T, valid_y.T
+    x_test, y_test = test_x.T, test_y.T
+
+    print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
+    return t_x_l, t_y_l, t_x_u, t_x_u, x_valid, y_valid, x_test, y_test
 
 
 if __name__ == '__main__':
