@@ -75,7 +75,7 @@ def calculate_loss(images):
 def build_model():
     z1, z1_mu, z1_logvar = q_z1_given_x(x)
     x_mu = px_given_z1(z1)
-    loss = cost_M1(x_recon=x_mu, x_true=x, z_lsgms=z1_logvar, z_mu=z1_mu)
+    loss = cost_M1(x_recon=x_mu, x_true=x, z=z1, z_lsgms=z1_logvar, z_mu=z1_mu)
     return loss, x_mu, z1, z1_mu, z1_logvar
 
 

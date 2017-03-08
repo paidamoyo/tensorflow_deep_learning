@@ -8,9 +8,10 @@ import tensorflow as tf
 
 from VAE.classifier import softmax_classifier
 from VAE.semi_supervised.models.decoder import px_given_z1
-from VAE.semi_supervised.models.encoder import q_z2_given_yx, q_z1_given_x, qy_given_x
+from VAE.semi_supervised.models.encoder import q_z2_given_yx, qy_given_x
 from VAE.utils.MNIST_pickled_preprocess import extract_data
 from VAE.utils.batch_processing import get_batch_size, get_next_batch
+from VAE.utils.distributions import draw_norm
 from VAE.utils.distributions import elbo_M2
 from VAE.utils.distributions import prior_weights
 from VAE.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
@@ -31,9 +32,13 @@ def train_neural_network(num_iterations):
     for i in range(num_iterations):
 
         # Batch Training
-        x_l_batch, y_l_batch, idx_labeled = get_next_batch(train_x_l, train_l_y, idx_labeled, num_lab_batch)
-        x_u_batch, _, idx_unlabeled = get_next_batch(train_u_x, train_u_y, idx_unlabeled, num_ulab_batch)
-        feed_dict_train = {x_lab: x_l_batch, y_lab: y_l_batch, x_unlab: x_u_batch}
+        x_l_mu, x_l_logvar, y_l_batch, idx_labeled = get_next_batch(train_x_l_mu, train_x_l_logvar, train_l_y,
+                                                                    idx_labeled,
+                                                                    num_lab_batch)
+        x_u_mu, x_u_logvar, _, idx_unlabeled = get_next_batch(train_x_u_mu, train_x_u_logvar, train_u_y, idx_unlabeled,
+                                                              num_ulab_batch)
+        feed_dict_train = {x_lab_mu: x_l_mu, y_lab: y_l_batch, x_unlab_mu: x_u_mu, x_lab_logvar: x_l_logvar,
+                           x_unlab_logvar: x_u_logvar}
         summary, batch_loss, _ = session.run([merged, cost, optimizer], feed_dict=feed_dict_train)
         # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
         train_writer.add_summary(summary, i)
@@ -66,8 +71,8 @@ def train_neural_network(num_iterations):
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
 
-def reconstruct(x_test, y_test):
-    return session.run(x_recon_lab_mu, feed_dict={x_lab: x_test, y_lab: y_test})
+def reconstruct(x_test_mu, x_test_logvar, y_test):
+    return session.run(x_recon_lab_mu, feed_dict={x_lab_mu: x_test_mu, x_lab_logvar: x_test_logvar, y_lab: y_test})
 
 
 def test_reconstruction():
@@ -100,16 +105,18 @@ def total_unlab_loss():
     return unlabeled_loss
 
 
-def predict_cls(images, labels, cls_true):
-    num_images = len(images)
+def predict_cls(mu, logvar, labels, cls_true):
+    num_images = len(mu)
     cls_pred = np.zeros(shape=num_images, dtype=np.int)
     i = 0
     while i < num_images:
         # The ending index for the next batch is denoted j.
         j = min(i + FLAGS['test_batch_size'], num_images)
-        batch_images = images[i:j, :]
+        batch_mu = mu[i:j, :]
+        batch_logavar = logvar[i:j, :]
         batch_labels = labels[i:j, :]
-        feed_dict = {x_lab: batch_images,
+        feed_dict = {x_lab_mu: batch_mu,
+                     x_lab_logvar: batch_logavar,
                      y_lab: batch_labels}
         cls_pred[i:j] = session.run(y_pred_cls, feed_dict=feed_dict)
         i = j
@@ -130,11 +137,11 @@ def train_test():
 
 def unlabeled_model():
     # Ulabeled
-    z1 = q_z1_given_x(FLAGS, x_unlab, reuse=True)
-    logits = qy_given_x(z1, FLAGS, reuse=True)
+    x_unlab = draw_norm(dim=FLAGS['latent_dim'], mu=x_unlab_mu, logvar=x_unlab_logvar)
+    logits = qy_given_x(x_unlab, FLAGS, reuse=True)
     for label in range(FLAGS['num_classes']):
         y_ulab = one_label_tensor(label, num_ulab_batch, FLAGS['num_classes'])
-        z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_ulab, reuse=True)
+        z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, x_unlab, y_ulab, reuse=True)
         x_mu = px_given_z1(FLAGS=FLAGS, y=y_ulab, z=z2, reuse=True)
         _elbo = tf.expand_dims(elbo_M2(x_recon=x_mu, x=x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]), 1)
         class_elbo = tf.identity(_elbo)
@@ -145,9 +152,9 @@ def unlabeled_model():
 
 
 def labeled_model():
-    z1 = q_z1_given_x(FLAGS, x_lab)
-    z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, z1, y_lab)
-    logits = qy_given_x(z1, FLAGS)
+    x_lab = draw_norm(dim=FLAGS['latent_dim'], mu=x_lab_mu, logvar=x_lab_logvar)
+    z2, z2_mu, z2_logvar = q_z2_given_yx(FLAGS, x_lab, y_lab)
+    logits = qy_given_x(x_lab, FLAGS)
     x_mu = px_given_z1(FLAGS=FLAGS, y=y_lab, z=z2)
     ELBO = elbo_M2(x_recon=x_mu, x=x_lab, y=y_lab, z=[z2, z2_mu, z2_logvar])
     return ELBO, logits, x_mu
@@ -187,13 +194,16 @@ if __name__ == '__main__':
     tf.set_random_seed(FLAGS['seed'])
     # data = input_data.read_data_sets(FLAGS['data_directory'], one_hot=True)
     # ### Placeholder variables
-    x_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_labeled')
-    x_unlab = tf.placeholder(tf.float32, shape=[None, FLAGS['input_dim']], name='x_unlabeled')
+    x_lab_mu = tf.placeholder(tf.float32, shape=[None, FLAGS['latent_dim']], name='x_lab_mu')
+    x_unlab_mu = tf.placeholder(tf.float32, shape=[None, FLAGS['latent_dim']], name='x_unlab_mu')
+    x_lab_logvar = tf.placeholder(tf.float32, shape=[None, FLAGS['latent_dim']], name='x_ulab_logvar')
+    x_unlab_logvar = tf.placeholder(tf.float32, shape=[None, FLAGS['latent_dim']], name='x_unlab_logvar')
     y_lab = tf.placeholder(tf.float32, shape=[None, FLAGS['num_classes']], name='y_lab')
     y_true_cls = tf.argmax(y_lab, axis=1)
 
     # Uses anglpy module from original paper (linked at top) to split the dataset for semi-supervised training
     train_x_l, train_l_y, train_u_x, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(FLAGS['n_labeled'])
+    with VAE.session
 
     # Labeled
     labeled_ELBO, y_lab_logits, x_recon_lab_mu = labeled_model()
