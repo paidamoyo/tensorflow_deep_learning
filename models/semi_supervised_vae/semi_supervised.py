@@ -205,7 +205,6 @@ class GenerativeClassifier(object):
                                              labels=self.test_y,
                                              cls_true=(convert_labels_to_cls(self.test_y)))
         print_test_accuracy(correct, cls_pred, self.test_y)
-        self.test_reconstruction()
 
     def unlabeled_model(self):
         # Ulabeled
