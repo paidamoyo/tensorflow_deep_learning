@@ -1,18 +1,15 @@
 import tensorflow as tf
 
-from VAE.utils.settings import initialize
-from VAE.utils.tf_helpers import create_h_weights, mlp_neuron
-
-FLAGS = initialize()
+from models.utils.tf_helpers import create_h_weights, mlp_neuron
 
 
-def px_given_z1(z1, reuse=False):
+def px_given_z1(z1, hidden_dim, input_dim, latent_dim, reuse=False):
     with tf.variable_scope("decoder", reuse=reuse):
         # Variables
-        w_h1, b_h1 = create_h_weights('h1_x', 'decoder', [FLAGS['latent_dim'], FLAGS['m1_h_dim']])
-        w_h2, b_h2 = create_h_weights('h2_x', 'decoder', [FLAGS['m1_h_dim'], FLAGS['m1_h_dim']])
+        w_h1, b_h1 = create_h_weights('h1_x', 'decoder', [latent_dim, hidden_dim])
+        w_h2, b_h2 = create_h_weights('h2_x', 'decoder', [hidden_dim, hidden_dim])
 
-        w_mu, b_mu = create_h_weights('mu', 'decoder', [FLAGS['m1_h_dim'], FLAGS['input_dim']])
+        w_mu, b_mu = create_h_weights('mu', 'decoder', [hidden_dim, input_dim])
         # Model
         # Decoder hidden layer
         h1 = mlp_neuron(z1, w_h1, b_h1)

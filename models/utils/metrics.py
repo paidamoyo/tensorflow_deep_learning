@@ -31,7 +31,7 @@ def print_test_accuracy(correct, cls_pred, labels):
     plot_confusion_matrix(cls_pred=cls_pred, labels=labels)
 
 
-def plot_images(x_test, x_reconstruct, n_images, path):
+def plot_images(x_test, x_reconstruct, n_images, name):
     assert len(x_test) == n_images
     print("x_reconstruct:{}, x_test:{}".format(x_reconstruct.shape, x_test.shape))
 
@@ -49,6 +49,6 @@ def plot_images(x_test, x_reconstruct, n_images, path):
 
     # plt.title("Left: Test input and Right: Reconstruction")
     plt.tight_layout()
-    save_path = path + "/reconstructed_digit"
+    save_path = name + "/reconstructed_digit"
     plt.savefig(save_path)
     # plt.axis('off')

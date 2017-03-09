@@ -2,9 +2,12 @@
 data/
 *summaries/
 results/
+
 VAE/__pycache__/
 VAE/semi_supervised/__pycache__/
 VAE/semi_supervised/models/__pycache__/
 VAE/utils/__pycache__/
 VAE/vanilla/__pycache__/
 VAE/vanilla/models/__pycache__/
+__pycache__/
+

@@ -1,6 +1,28 @@
 from models.utils.MNIST_pickled_preprocess import extract_data
-from semi_supervised import GenerativeClassifier
-from train_vae import encode_dataset
+from vae import VariationalAutoencoder
+
+
+def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, train=True):
+    vae = VariationalAutoencoder(batch_size=200, learning_rate=FLAGS['learning_rate'],
+                                 beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],
+                                 require_improvement=5000, seed=FLAGS['seed'],
+                                 num_iterations=40000,
+                                 input_dim=FLAGS['input_dim'],
+                                 latent_dim=FLAGS['latent_dim'])  # Should be consistent with model being loaded
+
+    with vae.session:
+        if train:
+            vae.train_test()
+        vae.saver.restore(vae.session, vae.save_path)
+
+        enc_x_lab_mean, enc_x_lab_var = vae.encode(train_lab)
+        enc_x_ulab_mean, enc_x_ulab_var = vae.encode(train_unlab)
+        enc_x_valid_mean, enc_x_valid_var = vae.encode(valid)
+        enc_x_test_mean, enc_x_test_var = vae.encode(test)
+
+    return enc_x_lab_mean, enc_x_lab_var, enc_x_ulab_mean, enc_x_ulab_var, enc_x_valid_mean, \
+           enc_x_valid_var, enc_x_test_mean, enc_x_test_var
+
 
 if __name__ == '__main__':
     # Global Dictionary of Flags
@@ -37,18 +59,3 @@ if __name__ == '__main__':
     valid_x_logvar, test_x_mu, test_x_logvar = encode_dataset(FLAGS=FLAGS, train_lab=train_x_lab,
                                                               train_unlab=train_x_unlab, valid=valid_x,
                                                               test=test_x)
-    train_lab = [train_x_l_mu, train_x_l_logvar, train_l_y]
-    train_unlab = [train_x_u_mu, train_x_u_logvar, train_u_y]
-    valid = [valid_x_mu, valid_x_logvar, valid_y]
-    test = [test_x_mu, test_x_logvar, test_y]
-
-    genclass = GenerativeClassifier(num_batches=FLAGS['num_batches'], learning_rate=FLAGS['learning_rate'],
-                                    beta1=FLAGS['beta1'], beta2=FLAGS['beta2'], alpha=FLAGS['alpha'],
-                                    require_improvement=5000, seed=FLAGS['seed'], n_labeled=FLAGS['n_labeled'],
-                                    num_iterations=40000,
-                                    input_dim=FLAGS['input_dim'],
-                                    latent_dim=FLAGS['latent_dim'],
-                                    train_lab=train_lab, train_unlab=train_unlab, valid=valid,
-                                    test=test, hidden_dim=500)  # Should be consistent with model being
-    with genclass.session:
-        genclass.train_test()
