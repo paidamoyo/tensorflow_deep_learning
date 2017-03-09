@@ -10,9 +10,12 @@ def px_given_zy(y, z, latent_dim, num_classes, hidden_dim, reuse=False):
         w_h2, b_h2 = create_h_weights('h2_x', 'decoder', [hidden_dim, hidden_dim])
 
         w_mu, b_mu = create_h_weights('mu', 'decoder', [hidden_dim, latent_dim])
+        w_logvar, b_logvar = create_h_weights('var', 'decoder', [hidden_dim, latent_dim])
 
         h1 = mlp_neuron(tf.concat([y, z], axis=1), w_h1, b_h1)
         h2 = mlp_neuron(h1, w_h2, b_h2)
 
-        x_mu = tf.nn.sigmoid(tf.add(tf.matmul(h2, w_mu), b_mu))
-        return x_mu
+        x_logvar = mlp_neuron(h2, w_logvar, b_logvar, activation=False)
+        x_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)
+
+        return x_mu, x_logvar

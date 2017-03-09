@@ -10,13 +10,13 @@ if __name__ == '__main__':
     #                    n_minibatches=200, comment='')
 
     FLAGS = {
-        'num_iterations': 40000,
+        'num_iterations': 300,
         'num_batches': 100,
         'seed': 12000,
         'n_labeled': 100,
         'alpha': 0.1,
         'latent_dim': 50,
-        'require_improvement': 30000,
+        'require_improvement': 5000,
         'n_train': 50000,
         'learning_rate': 3e-4,
         'beta1': 0.9,
@@ -43,11 +43,12 @@ if __name__ == '__main__':
 
     genclass = GenerativeClassifier(num_batches=FLAGS['num_batches'], learning_rate=FLAGS['learning_rate'],
                                     beta1=FLAGS['beta1'], beta2=FLAGS['beta2'], alpha=FLAGS['alpha'],
-                                    require_improvement=5000, seed=FLAGS['seed'], n_labeled=FLAGS['n_labeled'],
-                                    num_iterations=40000,
+                                    require_improvement=FLAGS['require_improvement'], seed=FLAGS['seed'],
+                                    n_labeled=FLAGS['n_labeled'],
+                                    num_iterations=FLAGS['num_iterations'],
                                     input_dim=FLAGS['input_dim'],
                                     latent_dim=FLAGS['latent_dim'],
                                     train_lab=train_lab, train_unlab=train_unlab, valid=valid,
-                                    test=test, hidden_dim=500)  # Should be consistent with model being
+                                    test=test)  # Should be consistent with model being
     with genclass.session:
         genclass.train_test()
