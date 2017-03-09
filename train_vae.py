@@ -31,8 +31,8 @@ if __name__ == '__main__':
     # learn_yz_x_ss.main(3000, n_labels>100, dataset='mnist_2layer', n_z=50, n_hidden=(500,), seed=seed, alpha=0.1,
     #                    n_minibatches=200, comment='')
 
-    FLAGS = {
-        'num_iterations': 200,
+    FLAGS_ = {
+        'num_iterations': 40000,
         'num_batches': 100,
         'seed': 12000,
         'n_labeled': 100,
@@ -48,8 +48,8 @@ if __name__ == '__main__':
     }
 
     train_x_lab, train_l_y, train_x_unlab, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(
-        FLAGS['n_labeled'])
+        FLAGS_['n_labeled'])
     train_x_l_mu, train_x_l_logvar, train_x_u_mu, train_x_u_logvar, valid_x_mu, \
-    valid_x_logvar, test_x_mu, test_x_logvar = encode_dataset(FLAGS=FLAGS, train_lab=train_x_lab,
+    valid_x_logvar, test_x_mu, test_x_logvar = encode_dataset(FLAGS=FLAGS_, train_lab=train_x_lab,
                                                               train_unlab=train_x_unlab, valid=valid_x,
                                                               test=test_x)
