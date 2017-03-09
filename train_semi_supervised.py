@@ -10,7 +10,7 @@ if __name__ == '__main__':
     #                    n_minibatches=200, comment='')
 
     FLAGS = {
-        'num_iterations': 300,
+        'num_iterations': 40000,
         'num_batches': 100,
         'seed': 12000,
         'n_labeled': 100,
