@@ -1,12 +1,12 @@
 from models.utils.MNIST_pickled_preprocess import extract_data
-from vae import VariationalAutoencoder
+from models.vanilla_vae.vae import VariationalAutoencoder
 
 
 def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, train=True):
     vae = VariationalAutoencoder(batch_size=200, learning_rate=FLAGS['learning_rate'],
                                  beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],
                                  require_improvement=5000, seed=FLAGS['seed'],
-                                 num_iterations=40000,
+                                 num_iterations=200,
                                  input_dim=FLAGS['input_dim'],
                                  latent_dim=FLAGS['latent_dim'])  # Should be consistent with model being loaded
 
@@ -32,17 +32,11 @@ if __name__ == '__main__':
     #                    n_minibatches=200, comment='')
 
     FLAGS = {
-        'data_directory': 'data/MNIST/',
-        'summaries_dir': 'summaries/',
-        'save_path': 'results/train_weights',
-        'test_batch_size': 200,
-        'num_iterations': 100000,
+        'num_iterations': 200,
         'num_batches': 100,
         'seed': 12000,
         'n_labeled': 100,
         'alpha': 0.1,
-        'm1_h_dim': 500,
-        'm2_h_dim': 500,
         'latent_dim': 50,
         'require_improvement': 30000,
         'n_train': 50000,

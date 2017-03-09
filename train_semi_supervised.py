@@ -1,5 +1,5 @@
+from models.semi_supervised_vae.semi_supervised import GenerativeClassifier
 from models.utils.MNIST_pickled_preprocess import extract_data
-from semi_supervised import GenerativeClassifier
 from train_vae import encode_dataset
 
 if __name__ == '__main__':
@@ -10,17 +10,11 @@ if __name__ == '__main__':
     #                    n_minibatches=200, comment='')
 
     FLAGS = {
-        'data_directory': 'data/MNIST/',
-        'summaries_dir': 'summaries/',
-        'save_path': 'results/train_weights',
-        'test_batch_size': 200,
-        'num_iterations': 100000,
+        'num_iterations': 200,
         'num_batches': 100,
         'seed': 12000,
         'n_labeled': 100,
         'alpha': 0.1,
-        'm1_h_dim': 500,
-        'm2_h_dim': 500,
         'latent_dim': 50,
         'require_improvement': 30000,
         'n_train': 50000,
@@ -41,6 +35,11 @@ if __name__ == '__main__':
     train_unlab = [train_x_u_mu, train_x_u_logvar, train_u_y]
     valid = [valid_x_mu, valid_x_logvar, valid_y]
     test = [test_x_mu, test_x_logvar, test_y]
+
+    print("train lab: mu {}, var:{}, y:{}".format(train_x_l_mu.shape, train_x_l_logvar.shape, train_l_y.shape))
+    print("train unlab: mu {}, var:{}, y:{}".format(train_x_u_mu.shape, train_x_u_logvar.shape, train_u_y.shape))
+    print("valid: mu {}, var:{}, y:{}".format(valid_x_mu.shape, valid_x_logvar.shape, valid_y.shape))
+    print("test: mu {}, var:{}, y:{}".format(test_x_mu.shape, test_x_logvar.shape, test_y.shape))
 
     genclass = GenerativeClassifier(num_batches=FLAGS['num_batches'], learning_rate=FLAGS['learning_rate'],
                                     beta1=FLAGS['beta1'], beta2=FLAGS['beta2'], alpha=FLAGS['alpha'],

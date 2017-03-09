@@ -9,8 +9,8 @@ from models.utils.MNIST_pickled_preprocess import extract_data
 from models.utils.batch_processing import get_next_batch
 from models.utils.distributions import elbo_M1, prior_weights
 from models.utils.metrics import plot_images
-from models.vanilla_vae.decoder import px_given_z1
-from models.vanilla_vae.encoder import q_z1_given_x
+from models.vanilla_vae.decoder import px_given_z
+from models.vanilla_vae.encoder import q_z_given_x
 
 
 class VariationalAutoencoder(object):
@@ -43,7 +43,7 @@ class VariationalAutoencoder(object):
             self.saver = tf.train.Saver()
             self.session = tf.Session()
             self.current_dir = os.getcwd()
-            self.save_path = self.current_dir + "/summaries/model"
+            self.save_path = self.current_dir + "/summaries/vae_model"
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
             self.merged = tf.summary.merge_all()
 
@@ -116,12 +116,12 @@ class VariationalAutoencoder(object):
         return total_loss
 
     def build_model(self):
-        z1, z1_mu, z1_logvar = q_z1_given_x(self.x, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                                            latent_dim=self.latent_dim)
-        x_mu = px_given_z1(z1=z1, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                           latent_dim=self.latent_dim)
-        loss = elbo_M1(x_recon=x_mu, x_true=self.x, z=z1, z_lsgms=z1_logvar, z_mu=z1_mu)
-        return tf.reduce_sum(loss), x_mu, z1, z1_mu, z1_logvar
+        z, z_mu, z_logvar = q_z_given_x(self.x, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                        latent_dim=self.latent_dim)
+        x_mu = px_given_z(z1=z, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                          latent_dim=self.latent_dim)
+        loss = elbo_M1(x_recon=x_mu, x_true=self.x, z=z, z_lsgms=z_logvar, z_mu=z_mu)
+        return tf.reduce_sum(loss), x_mu, z, z_mu, z_logvar
 
     def train_test(self):
         self.train()

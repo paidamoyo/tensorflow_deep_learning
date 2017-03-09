@@ -59,13 +59,13 @@ class GenerativeClassifier(object):
             self.x_unlab_mu = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_unlab_mu')
             self.x_lab_logvar = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_ulab_logvar')
             self.x_unlab_logvar = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_unlab_logvar')
-            self.y_lab = tf.placeholder(tf.float32, shape=[None, latent_dim], name='y_lab')
+            self.y_lab = tf.placeholder(tf.float32, shape=[None, self.num_classes], name='y_lab')
             self.y_true_cls = tf.argmax(self.y_lab, axis=1)
             self._objective()
             self.saver = tf.train.Saver()
             self.session = tf.Session()
             self.current_dir = os.getcwd()
-            self.save_path = self.current_dir + "/summaries/model"
+            self.save_path = self.current_dir + "/summaries/semi_supervised_model"
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
             self.merged = tf.summary.merge_all()
 
@@ -75,8 +75,7 @@ class GenerativeClassifier(object):
         self.num_lab_batch, self.num_ulab_batch, self.batch_size = get_batch_size(num_examples=self.num_examples,
                                                                                   num_batches=self.num_batches,
                                                                                   num_lab=self.n_labeled)
-        self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, \
-        self.y_pred_cls = self.labeled_model()
+        self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, self.y_pred_cls = self.labeled_model()
         if self.n_labeled == self.num_examples:
             self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
                 -self.num_batches * self.num_batches)
@@ -218,7 +217,7 @@ class GenerativeClassifier(object):
             z, z_mu, z_logvar = q_z_given_xy(x=x_unlab, y=y_ulab, latent_dim=self.latent_dim,
                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
             x_mu = px_given_zy(y=y_ulab, z=z, latent_dim=self.latent_dim,
-                               num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                               num_classes=self.num_classes, hidden_dim=self.hidden_dim,
                                reuse=True)
             _elbo = tf.expand_dims(elbo_M2(x_recon=x_mu, x=x_unlab, y=y_ulab, z=[z, z_mu, z_logvar]), 1)
             class_elbo = tf.identity(_elbo)
@@ -234,7 +233,7 @@ class GenerativeClassifier(object):
         logits = qy_given_x(x=x_lab, latent_dim=self.latent_dim,
                             num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         x_mu = px_given_zy(y=self.y_lab, z=z, latent_dim=self.latent_dim,
-                           num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
+                           num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         elbo = elbo_M2(x_recon=x_mu, x=x_lab, y=self.y_lab, z=[z, z_mu, z_logvar])
-        classifier_loss, y_pred_cls = softmax_classifier(logits=self.y_lab_logits, y_true=self.y_lab)
+        classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
         return elbo, logits, x_mu, classifier_loss, y_pred_cls

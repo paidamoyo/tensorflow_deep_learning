@@ -49,6 +49,6 @@ def plot_images(x_test, x_reconstruct, n_images, name):
 
     # plt.title("Left: Test input and Right: Reconstruction")
     plt.tight_layout()
-    save_path = name + "/reconstructed_digit"
+    save_path = name + "_reconstructed_digit"
     plt.savefig(save_path)
     # plt.axis('off')
