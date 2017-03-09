@@ -60,7 +60,7 @@ def elbo_M2(x_recon, x, y, z):
 
     log_prior_y = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
     log_lik = tf.reduce_sum(tf_normal_logpdf(x=x, mu=x_recon[0], log_sigma_sq=x_recon[1]), 1)
-    print("log lik :{}".format(log_lik.shape))
+
 
     return log_prior_y + log_lik + log_prior_z - log_post_z
 

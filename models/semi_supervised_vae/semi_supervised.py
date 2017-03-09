@@ -219,11 +219,13 @@ class GenerativeClassifier(object):
                                          num_classes=self.num_classes, hidden_dim=self.hidden_dim,
                                          reuse=True)
             _elbo = tf.expand_dims(elbo_M2(x_recon=[x_mu, x_logvar], x=x_unlab, y=y_ulab, z=[z, z_mu, z_logvar]), 1)
-            class_elbo = tf.identity(_elbo)
-            if label > 0:
+
+            if label == 0:
+                class_elbo = tf.identity(_elbo)
+            else:
                 class_elbo = tf.concat((class_elbo, _elbo), axis=1)  # Decoder Model
-            print("unlabeled class_elbo:{}".format(class_elbo))
-            return class_elbo, logits
+        print("unlabeled class_elbo:{}".format(class_elbo))
+        return class_elbo, logits
 
     def labeled_model(self):
         x_lab = draw_norm(dim=self.latent_dim, mu=self.x_lab_mu, logvar=self.x_lab_logvar)
