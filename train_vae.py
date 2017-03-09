@@ -6,7 +6,7 @@ def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, train=True):
     vae = VariationalAutoencoder(batch_size=200, learning_rate=FLAGS['learning_rate'],
                                  beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],
                                  require_improvement=5000, seed=FLAGS['seed'],
-                                 num_iterations=200,
+                                 num_iterations=FLAGS['num_iterations'],
                                  input_dim=FLAGS['input_dim'],
                                  latent_dim=FLAGS['latent_dim'])  # Should be consistent with model being loaded
 
