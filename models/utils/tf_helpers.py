@@ -46,11 +46,11 @@ def create_z_weights(layer, shape):
 
 
 def create_biases(shape):
-    return tf.Variable(tf.random_normal(shape))
+    return tf.Variable(tf.constant(shape=shape, value=0.0))
 
 
 def create_weights(shape):
-    return tf.Variable(tf.truncated_normal(shape, stddev=0.05))
+    return tf.Variable(tf.random_normal(shape, stddev=tf.square(0.0001)))
 
 
 def variable_summaries(var, summary_name):

@@ -46,22 +46,24 @@ def reconstruction_loss(x_input, x_hat):
     return tf.reduce_sum(tf.squared_difference(x_input, x_hat), axis=1)
 
 
-def regularization_loss(z2_mu, z2_logvar):
-    z_regularization = -0.5 * tf.reduce_sum(
-        1 + z2_logvar - tf.pow(z2_mu, 2) - tf.exp(z2_logvar), axis=1)
+def regularization_loss(z_mu, z_logvar):
+    z_regularization = -0.5 * tf.reduce_sum(1 + z_logvar - tf.pow(z_mu, 2) - tf.exp(z_logvar), axis=1)
     return z_regularization
 
 
 def elbo_M2(x_recon, x, y, z):
     num_classes = 10
     y_prior = (1. / num_classes) * tf.ones_like(y)
-    log_prior_z = tf.reduce_sum(tf_gaussian_marg(z[1], z[2]), 1)
-    log_post_z = tf.reduce_sum(tf_gaussian_ent(z[2]), 1)
-
     log_prior_y = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
-    log_lik = tf.reduce_sum(tf_normal_logpdf(x=x, mu=x_recon[0], log_sigma_sq=x_recon[1]), 1)
 
-    return log_prior_y + log_lik + log_prior_z - log_post_z
+    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z[0], mu=z[1], log_sigma_sq=z[2]), axis=1)
+    z_prior = tf.ones_like(z[0])
+    log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
+
+    log_lik = tf.reduce_sum(tf_normal_logpdf(x=x, mu=x_recon[0], log_sigma_sq=x_recon[1]), 1)
+    # log_prior_y + log_lik + log_prior_z - log_post_z
+
+    return -tf.add(regularization_loss(z_mu=z[1], z_logvar=z[2]), reconstruction_loss(x_input=x, x_hat=x_recon[0]))
 
 
 def elbo_M1(x_recon, x_true, z, z_mu, z_lsgms):
