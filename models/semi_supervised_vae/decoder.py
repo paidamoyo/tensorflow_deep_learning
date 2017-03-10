@@ -15,7 +15,7 @@ def px_given_zy(y, z, latent_dim, num_classes, hidden_dim, reuse=False):
         h1 = mlp_neuron(tf.concat([y, z], axis=1), w_h1, b_h1)
         h2 = mlp_neuron(h1, w_h2, b_h2)
 
-        # x_logvar = mlp_neuron(h2, w_logvar, b_logvar, activation=False)
+        x_logvar = mlp_neuron(h2, w_logvar, b_logvar, activation=False)
         x_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)
 
-        return x_mu
+        return x_mu, x_logvar
