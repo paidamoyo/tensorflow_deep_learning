@@ -34,7 +34,7 @@ if __name__ == '__main__':
     FLAGS_ = {
         'num_iterations': 40000,
         'num_batches': 100,
-        'seed': 12000,
+        'seed': 31415,
         'n_labeled': 100,
         'alpha': 0.1,
         'latent_dim': 50,
