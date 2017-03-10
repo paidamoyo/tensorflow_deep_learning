@@ -13,7 +13,7 @@ if __name__ == '__main__':
         'num_iterations': 100000,
         'num_batches': 200,
         'seed': 31415,
-        'n_labeled': 50000,
+        'n_labeled': 3000,
         'alpha': 0.1,
         'latent_dim': 50,
         'require_improvement': 10000,
