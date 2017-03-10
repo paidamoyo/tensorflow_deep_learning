@@ -32,7 +32,7 @@ if __name__ == '__main__':
     #                    n_minibatches=200, comment='')
 
     FLAGS_ = {
-        'num_iterations': 40000,
+        'num_iterations': 300,
         'num_batches': 100,
         'seed': 31415,
         'n_labeled': 100,
@@ -49,7 +49,9 @@ if __name__ == '__main__':
 
     train_x_lab, train_l_y, train_x_unlab, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(
         FLAGS_['n_labeled'])
+
     train_x_l_mu, train_x_l_logvar, train_x_u_mu, train_x_u_logvar, valid_x_mu, \
+ \
     valid_x_logvar, test_x_mu, test_x_logvar = encode_dataset(FLAGS=FLAGS_, train_lab=train_x_lab,
                                                               train_unlab=train_x_unlab, valid=valid_x,
                                                               test=test_x)

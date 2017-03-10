@@ -8,49 +8,26 @@ def mlp_neuron(layer_input, weights, biases, activation=True):
         return tf.add(tf.matmul(layer_input, weights), biases)
 
 
-def create_h_weights(layer, network, shape):
+def create_nn_weights(layer, network, shape):
     h_vars = {}
     w_h = 'W_' + network + '_' + layer
     b_h = 'b_' + network + '_' + layer
-    print("layer:{}, network:{}, shape:{}".format(layer, network, shape))
-    h_vars[w_h] = create_weights(shape)
-    h_vars[b_h] = create_biases([shape[1]])
+    h_vars[w_h] = create_weights(shape=shape, name=w_h)
+    h_vars[b_h] = create_biases([shape[1]], b_h)
     variable_summaries(h_vars[w_h], w_h)
     variable_summaries(h_vars[b_h], b_h)
 
     return h_vars[w_h], h_vars[b_h]
 
 
-def create_z_weights(layer, shape):
-    print("layer:{}, z_latent, shape:{}".format(layer, shape))
-    z_vars = {}
-    network = 'encoder'
-
-    # Mean
-    w_z_mu = 'W_' + network + 'mu_' + layer
-    b_z_mu = 'b_' + network + 'mu_' + layer
-    z_vars[w_z_mu] = create_weights(shape)
-    z_vars[b_z_mu] = create_biases([shape[1]])
-    variable_summaries(z_vars[w_z_mu], w_z_mu)
-    variable_summaries(z_vars[b_z_mu], b_z_mu)
-
-    # Variance
-    w_z_var = 'W_' + network + 'var_' + layer
-    b_z_var = 'b_' + network + 'var_' + layer
-    z_vars[w_z_var] = create_weights(shape)
-    z_vars[b_z_var] = create_biases([shape[1]])
-    variable_summaries(z_vars[w_z_var], w_z_var)
-    variable_summaries(z_vars[b_z_var], b_z_var)
-
-    return z_vars[w_z_mu], z_vars[w_z_var], z_vars[b_z_mu], z_vars[b_z_var]
+def create_biases(shape, name):
+    print("name:{}, shape{}".format(name, shape))
+    return tf.Variable(tf.constant(shape=shape, value=0.0), name=name)
 
 
-def create_biases(shape):
-    return tf.Variable(tf.constant(shape=shape, value=0.0))
-
-
-def create_weights(shape):
-    return tf.Variable(tf.random_normal(shape, stddev=tf.square(0.0001)))
+def create_weights(shape, name):
+    print("name:{}, shape{}".format(name, shape))
+    return tf.Variable(tf.random_normal(shape, stddev=tf.square(0.0001)), name=name)
 
 
 def variable_summaries(var, summary_name):
@@ -66,15 +43,20 @@ def variable_summaries(var, summary_name):
         tf.summary.histogram('histogram', var)
 
 
+def get_variables(name):
+    var = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=name)[0]
+    return var
+
+
 def one_label_tensor(label, num_ulab_batch, num_classes):
     indices = []
     values = []
     for i in range(num_ulab_batch):
         indices += [[i, label]]
         values += [1.]
-    y_ulab = tf.sparse_tensor_to_dense(
+    lab = tf.sparse_tensor_to_dense(
         tf.SparseTensor(indices=indices, values=values, dense_shape=[num_ulab_batch, num_classes]), 0.0)
-    return y_ulab
+    return lab
 
 
 if __name__ == '__main__':
