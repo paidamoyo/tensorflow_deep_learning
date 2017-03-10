@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     FLAGS = {
         'num_iterations': 100000,
-        'num_batches': 200,
+        'num_batches': 100,
         'seed': 31415,
         'n_labeled': 100,
         'alpha': 0.1,
