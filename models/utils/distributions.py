@@ -66,8 +66,9 @@ def elbo_M2(x_recon, x, y, z):
 
 def elbo_M1(x_recon, x_true, z, z_mu, z_lsgms):
     log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_true, x_approx=x_recon))
-    log_post_z = tf.reduce_sum(tf_gaussian_marg(z_mu, z_lsgms), 1)
-    log_prior_z = tf.reduce_sum(tf_gaussian_ent(z_lsgms), 1)
+    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z, mu=z_mu, log_sigma_sq=z_lsgms), axis=1)
+    z_prior = tf.ones_like(z)
+    log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
     negative_log_lik = tf.scalar_mul(-1, log_lik)
     tf.summary.scalar('negative_log_lik', negative_log_lik)
     return log_lik + log_prior_z - log_post_z
