@@ -171,7 +171,7 @@ class GenerativeClassifier(object):
         y_ulab = tf.nn.softmax(logits=self.y_ulab_logits)
         variable_summaries(self.y_lab, 'y_lab')
         weighted_elbo = tf.reduce_sum(
-            tf.multiply(y_ulab + const, tf.subtract(self.unlabeled_ELBO, tf.log(self.y_lab + const))),
+            tf.multiply(y_ulab + const, tf.subtract(self.unlabeled_ELBO, tf.log(y_ulab + const))),
             1)
         unlabeled_loss = tf.reduce_sum(weighted_elbo)
         print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(self.unlabeled_ELBO, unlabeled_loss))
@@ -216,8 +216,8 @@ class GenerativeClassifier(object):
             z, z_mu, z_logvar = q_z_given_xy(x=x_unlab, y=y_ulab, latent_dim=self.latent_dim,
                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
             x_mu = px_given_zy(y=y_ulab, z=z, latent_dim=self.latent_dim,
-                                         num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                         reuse=True)
+                               num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                               reuse=True)
             _elbo = tf.expand_dims(elbo_M2(x_recon=[x_mu], x=x_unlab, y=y_ulab, z=[z, z_mu, z_logvar]), 1)
 
             if label == 0:
@@ -234,7 +234,7 @@ class GenerativeClassifier(object):
         logits = qy_given_x(x=x_lab, latent_dim=self.latent_dim,
                             num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         x_mu = px_given_zy(y=self.y_lab, z=z, latent_dim=self.latent_dim,
-                                     num_classes=self.num_classes, hidden_dim=self.hidden_dim)
+                           num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         elbo = elbo_M2(x_recon=[x_mu], x=x_lab, y=self.y_lab, z=[z, z_mu, z_logvar])
         classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
         return elbo, logits, x_mu, classifier_loss, y_pred_cls
