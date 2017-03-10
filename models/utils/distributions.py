@@ -63,7 +63,8 @@ def elbo_M2(x_recon, x, y, z):
     log_lik = tf.reduce_sum(tf_normal_logpdf(x=x, mu=x_recon[0], log_sigma_sq=x_recon[1]), 1)
     # log_prior_y + log_lik + log_prior_z - log_post_z
 
-    return -tf.add(regularization_loss(z_mu=z[1], z_logvar=z[2]), reconstruction_loss(x_input=x, x_hat=x_recon[0]))
+    return -tf.add(regularization_loss(z_mu=z[1], z_logvar=z[2]),
+                   reconstruction_loss(x_input=x, x_hat=x_recon[0])) + log_prior_y
 
 
 def elbo_M1(x_recon, x_true, z, z_mu, z_lsgms):
