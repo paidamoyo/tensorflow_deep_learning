@@ -54,7 +54,7 @@ class VariationalAutoencoder(object):
         num_batches = int(n_train_examples / self.batch_size)
         self.train_x = np.concatenate((train_x_l, train_u_x), axis=0)
         self.train_y = np.concatenate((train_l_y, train_u_y), axis=0)
-        elbo, self.x_recon_mu, self.z_sample, self.z_mu, self.z_logvar = self.build_model()
+        elbo, self.x_recon_mu, self.z_sample, self.z_mu, self.z_logvar, self.loglik = self.build_model()
         self.cost = (elbo * num_batches + prior_weights()) / (-self.batch_size * num_batches)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
@@ -71,15 +71,15 @@ class VariationalAutoencoder(object):
         for i in range(self.num_iterations):
             # Batch Training
             x_batch, _, idx = get_next_batch(self.train_x, self.train_y, idx, self.batch_size)
-            summary, batch_loss, _ = self.session.run([self.merged, self.cost, self.optimizer],
-                                                      feed_dict={self.x: x_batch})
+            summary, batch_loss, log_lik, _ = self.session.run([self.merged, self.cost, self.loglik, self.optimizer],
+                                                               feed_dict={self.x: x_batch})
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
             self.train_writer.add_summary(summary, i)
 
             if (i % 100 == 0) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
 
-                validation_loss = self.calculate_loss(images=self.valid_x)
+                validation_loss, val_log_lik = self.calculate_loss(images=self.valid_x)
                 if validation_loss < best_validation_loss:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
                     self.saver.save(sess=self.session, save_path=self.save_path)
@@ -91,8 +91,9 @@ class VariationalAutoencoder(object):
                 else:
                     improved_str = ''
 
-                print("Optimization Iteration: {}, Training Loss: {}, "
-                      " Validation Loss:{}, {}".format(i + 1, batch_loss, validation_loss, improved_str))
+                print("Optimization Iteration: {}, Training:  Loss{},  log_lik:{}"
+                      " Validation: Loss {}, log_lik {} {}".format(i + 1, batch_loss, log_lik, validation_loss,
+                                                                  val_log_lik, improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 # Break o    ut from the for-loop.
@@ -104,24 +105,26 @@ class VariationalAutoencoder(object):
     def calculate_loss(self, images):
         num_images = len(images)
         total_loss = 0.0
+        total_log_lik = 0.0
         i = 0
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
             batch_images = images[i:j, :]
             feed_dict = {self.x: batch_images}
-            batch_loss = self.session.run(self.cost, feed_dict=feed_dict)
+            batch_loss, log_lik = self.session.run([self.cost, self.loglik], feed_dict=feed_dict)
             total_loss += batch_loss
+            total_log_lik += log_lik
             i = j
-        return total_loss
+        return total_loss / self.batch_size, total_log_lik / self.batch_size
 
     def build_model(self):
         z, z_mu, z_logvar = q_z1_given_x(self.x, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
                                          latent_dim=self.latent_dim)
         x_mu = px_given_z1(z1=z, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
                            latent_dim=self.latent_dim)
-        loss = elbo_M1(x_recon=x_mu, x_true=self.x, z=z, z_lsgms=z_logvar, z_mu=z_mu)
-        return tf.reduce_sum(loss), x_mu, z, z_mu, z_logvar
+        loss, log_lik = elbo_M1(x_recon=x_mu, x_true=self.x, z1=z, z1_lsgms=z_logvar, z1_mu=z_mu)
+        return tf.reduce_sum(loss), x_mu, z, z_mu, z_logvar, log_lik
 
     def train_test(self):
         self.train()

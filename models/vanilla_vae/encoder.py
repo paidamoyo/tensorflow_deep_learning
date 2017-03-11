@@ -5,7 +5,7 @@ from models.utils.tf_helpers import create_nn_weights, mlp_neuron
 
 
 def q_z1_given_x(x, hidden_dim, input_dim, latent_dim, reuse=False):
-    with tf.variable_scope("encoder_z1", reuse=reuse):
+    with tf.variable_scope("encoder_M1", reuse=reuse):
         # Variables
         w_h1, b_h1 = create_nn_weights('h1_z1', 'encoder', [input_dim, hidden_dim])
         w_h2, b_h2 = create_nn_weights('h2_z1', 'encoder', [hidden_dim, hidden_dim])

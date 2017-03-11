@@ -75,13 +75,16 @@ def create_semisupervised(x, y, n_labeled):
     if n_labeled % n_classes != 0: raise (
         "n_labeled (wished number of labeled samples) not divisible by n_classes (number of classes)")
     n_labels_per_class = int(n_labeled / n_classes)
+    print("n_labels_per_class {}".format(n_labels_per_class))
     x_labeled = [0] * n_classes
     x_unlabeled = [0] * n_classes
     y_labeled = [0] * n_classes
     y_unlabeled = [0] * n_classes
+
     for i in range(n_classes):
-        num_train = x[i].shape[1]
-        idx = np.arange(num_train)
+        num_train_per_class = x[i].shape[1]
+        print(" class {}, num_train_per_class:{}".format(i, num_train_per_class))
+        idx = np.arange(num_train_per_class)
         random.shuffle(idx)
         idx_labeled = idx[:n_labels_per_class]
         idx_unlabeled = idx[n_labels_per_class:]
@@ -107,11 +110,12 @@ def extract_data(n_labeled):
 
 
 if __name__ == '__main__':
-    num_lab = 100
+    num_lab = 50000
     train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
     x_l, y_l, x_u, y_u = create_semisupervised(train_x, train_y, num_lab)
 
     x_lab, y_lab = x_l.T, y_l.T
     x_ulab, y_ulab = x_u.T, y_u.T
+    print(x_lab.shape, y_lab.shape, x_ulab.shape, y_ulab.shape)
     x_valid, y_valid = valid_x.T, valid_y.T
     x_test, y_test = test_x.T, test_y.T

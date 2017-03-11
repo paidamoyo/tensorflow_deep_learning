@@ -8,15 +8,17 @@ import tensorflow as tf
 from models.classifier import softmax_classifier
 from models.semi_supervised_vae.decoder import pz1_given_z2y
 from models.semi_supervised_vae.encoder import q_z2_given_z1y, qy_given_z1
-from models.utils.batch_processing import get_encoded_next_batch, get_batch_size
-from models.utils.distributions import draw_norm
-from models.utils.distributions import elbo_M2
+from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
+from models.utils.batch_processing import get_batch_size, get_next_batch
+from models.utils.distributions import elbo_M1_M2
 from models.utils.distributions import prior_weights
 from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
+from models.vanilla_vae.decoder import px_given_z1
+from models.vanilla_vae.encoder import q_z1_given_x
 
 
-class GenerativeClassifier(object):
+class PreTrainedGenerativeClassifier(object):
     def __init__(self,
                  num_batches,
                  learning_rate,
@@ -28,10 +30,6 @@ class GenerativeClassifier(object):
                  n_labeled,
                  num_iterations,
                  input_dim, latent_dim,
-                 train_lab,
-                 train_unlab,
-                 valid,
-                 test,
                  hidden_dim=600
                  ):
         self.input_dim, self.latent_dim = input_dim, latent_dim
@@ -43,10 +41,6 @@ class GenerativeClassifier(object):
         self.learning_rate, self.beta1, self.beta2 = learning_rate, beta1, beta2
         self.alpha = alpha
         self.n_labeled = n_labeled
-        self.train_x_l_mu, self.train_x_l_logvar, self.train_l_y = train_lab[0], train_lab[1], train_lab[2]
-        self.train_x_u_mu, self.train_x_u_logvar, self.train_u_y = train_unlab[0], train_unlab[1], train_unlab[2]
-        self.valid_x_mu, self.valid_x_logvar, self.valid_y = valid[0], valid[1], valid[2]
-        self.test_x_mu, self.test_x_logvar, self.test_y = test[0], test[1], test[2]
         self.num_classes = 10
         self.num_examples = 50000
         np.random.seed(seed)
@@ -55,12 +49,12 @@ class GenerativeClassifier(object):
         ''' Create Graph '''
         self.G = tf.Graph()
         with self.G.as_default():
-            self.x_lab_mu = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_lab_mu')
-            self.x_unlab_mu = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_unlab_mu')
-            self.x_lab_logvar = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_ulab_logvar')
-            self.x_unlab_logvar = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_unlab_logvar')
-            self.y_lab = tf.placeholder(tf.float32, shape=[None, self.num_classes], name='y_lab')
+            self.x_lab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_labeled')
+            self.x_unlab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_unlabeled')
+            self.y_lab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='y_lab')
             self.y_true_cls = tf.argmax(self.y_lab, axis=1)
+            self.train_x_l, self.train_l_y, self.train_u_x, self.train_u_y, self.valid_x, self.valid_y, \
+            self.test_x, self.test_y = self.extract_data()
             self._objective()
             self.saver = tf.train.Saver()
             self.session = tf.Session()
@@ -75,12 +69,9 @@ class GenerativeClassifier(object):
         self.num_lab_batch, self.num_ulab_batch, self.batch_size = get_batch_size(num_examples=self.num_examples,
                                                                                   num_batches=self.num_batches,
                                                                                   num_lab=self.n_labeled)
-        self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, self.y_pred_cls = self.labeled_model()
+        self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, \
+        self.y_pred_cls = self.labeled_model()
         if self.n_labeled == self.num_examples:
-            self.train_x_l_mu = np.concatenate((self.train_x_l_mu, self.train_x_u_mu), axis=0)
-            self.train_x_l_logvar = np.concatenate((self.train_x_l_logvar, self.train_x_u_logvar), axis=0)
-            self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y), axis=0)
-
             self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
                 -self.num_batches * self.num_batches)
         else:
@@ -91,8 +82,19 @@ class GenerativeClassifier(object):
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
 
+    def extract_data(self):
+        train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
+        x_l, y_l, x_u, y_u = create_semisupervised(train_x, train_y, self.n_labeled)
+        t_x_l, t_y_l = x_l.T, y_l.T
+        t_x_u, t_y_u = x_u.T, y_u.T
+        x_valid, y_valid = valid_x.T, valid_y.T
+        x_test, y_test = test_x.T, test_y.T
+
+        print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
+        return t_x_l, t_y_l, t_x_u, t_x_u, x_valid, y_valid, x_test, y_test
+
     def train_neural_network(self):
-        print("Training Semisupervised VAE:")
+        print("Training Semi_Supervised VAE:")
         self.session.run(tf.global_variables_initializer())
         best_validation_accuracy = 0
         last_improvement = 0
@@ -104,18 +106,13 @@ class GenerativeClassifier(object):
         for i in range(self.num_iterations):
 
             # Batch Training
-            x_l_mu, x_l_logvar, y_l_batch, idx_labeled = get_encoded_next_batch(self.train_x_l_mu,
-                                                                                self.train_x_l_logvar,
-                                                                                self.train_l_y,
-                                                                                idx_labeled,
-                                                                                self.num_lab_batch)
-            x_u_mu, x_u_logvar, _, idx_unlabeled = get_encoded_next_batch(self.train_x_u_mu, self.train_x_u_logvar,
-                                                                          self.train_u_y,
-                                                                          idx_unlabeled,
-                                                                          self.num_ulab_batch)
-            feed_dict_train = {self.x_lab_mu: x_l_mu, self.y_lab: y_l_batch, self.x_unlab_mu: x_u_mu,
-                               self.x_lab_logvar: x_l_logvar,
-                               self.x_unlab_logvar: x_u_logvar}
+            # Batch Training
+            x_l_batch, y_l_batch, idx_labeled = get_next_batch(self.train_x_l, self.train_l_y, idx_labeled,
+                                                               self.num_lab_batch)
+            x_u_batch, _, idx_unlabeled = get_next_batch(self.train_u_x, self.train_u_y, idx_unlabeled,
+                                                         self.num_ulab_batch)
+            feed_dict_train = {self.x_lab: x_l_batch, self.y_lab: y_l_batch, self.x_unlab: x_u_batch}
+
             summary, batch_loss, _ = self.session.run([self.merged, self.cost, self.optimizer],
                                                       feed_dict=feed_dict_train)
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
@@ -123,8 +120,7 @@ class GenerativeClassifier(object):
 
             if (i % 100 == 0) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
-                correct, _ = self.predict_cls(mu=self.valid_x_mu,
-                                              logvar=self.valid_x_logvar,
+                correct, _ = self.predict_cls(images=self.valid_x,
                                               labels=self.valid_y,
                                               cls_true=convert_labels_to_cls(self.valid_y))
                 acc_validation, _ = cls_accuracy(correct)
@@ -149,17 +145,14 @@ class GenerativeClassifier(object):
         time_dif = end_time - start_time
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
-    def reconstruct(self, test_mu, test_logvar, y_test):
-        return self.session.run(self.x_recon_lab_mu,
-                                feed_dict={self.x_lab_mu: test_mu, self.x_lab_logvar: test_logvar, self.y_lab: y_test})
+    def reconstruct(self, x_test, y_test):
+        return self.session.run(self.x_recon_lab_mu, feed_dict={self.x_lab: x_test, self.y_lab: y_test})
 
     def test_reconstruction(self):
         num_images = 20
-        mu = self.test_x_mu[0:num_images, ]
-        logvar = self.test_x_logvar[0:num_images, ]
+        x_test = self.test_x[0:num_images, ]
         y_test = self.test_y[0:num_images, ]
-        plot_images(mu, self.reconstruct(test_mu=mu, test_logvar=logvar, y_test=y_test), n_images=num_images,
-                    name="semi_supervised")
+        plot_images(x_test, self.reconstruct(x_test, y_test), num_images, "semi_supervised")
 
     def total_lab_loss(self):
         # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
@@ -182,18 +175,17 @@ class GenerativeClassifier(object):
         tf.summary.scalar('unlabeled_loss', unlabeled_loss)
         return unlabeled_loss
 
-    def predict_cls(self, mu, logvar, labels, cls_true):
-        num_images = len(mu)
+    def predict_cls(self, images, labels, cls_true):
+        num_images = len(images)
+        print("testing: images shape:{}, labels shape:{} ".format(images.shape, labels.shape))
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
-            batch_mu = mu[i:j, :]
-            batch_logavar = logvar[i:j, :]
+            batch_images = images[i:j, :]
             batch_labels = labels[i:j, :]
-            feed_dict = {self.x_lab_mu: batch_mu,
-                         self.x_lab_logvar: batch_logavar,
+            feed_dict = {self.x_lab: batch_images,
                          self.y_lab: batch_labels}
             cls_pred[i:j] = self.session.run(self.y_pred_cls, feed_dict=feed_dict)
             i = j
@@ -204,25 +196,31 @@ class GenerativeClassifier(object):
     def train_test(self):
         self.train_neural_network()
         self.saver.restore(sess=self.session, save_path=self.save_path)
-        correct, cls_pred = self.predict_cls(mu=self.test_x_mu,
-                                             logvar=self.test_x_logvar,
+        correct, cls_pred = self.predict_cls(images=self.test_x,
                                              labels=self.test_y,
                                              cls_true=(convert_labels_to_cls(self.test_y)))
         print_test_accuracy(correct, cls_pred, self.test_y)
+        self.test_reconstruction()
 
     def unlabeled_model(self):
         # Ulabeled
-        x_unlab = draw_norm(dim=self.latent_dim, mu=self.x_unlab_mu, logvar=self.x_unlab_logvar)
-        logits = qy_given_z1(x_unlab, latent_dim=self.latent_dim,
+        z1, z1_mu, z1_logvar = q_z1_given_x(self.x_unlab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                            latent_dim=self.latent_dim, reuse=True)
+        logits = qy_given_z1(z1, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
         for label in range(self.num_classes):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
-            z, z_mu, z_logvar = q_z2_given_z1y(z1=x_unlab, y=y_ulab, latent_dim=self.latent_dim,
-                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
-            x_mu, x_logvar = pz1_given_z2y(y=y_ulab, z2=z, latent_dim=self.latent_dim,
-                                           num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                           reuse=True)
-            _elbo = tf.expand_dims(elbo_M2(z1_recon=[x_mu, x_logvar], z1=x_unlab, y=y_ulab, z2=[z, z_mu, z_logvar]), 1)
+            z2, z2_mu, z2_logvar = q_z2_given_z1y(z1=z1, y=y_ulab, latent_dim=self.latent_dim,
+                                                  num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
+            z1_recon, z1_mu_recon, z1_mu_recon = pz1_given_z2y(y=y_ulab, z2=z2, latent_dim=self.latent_dim,
+                                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                                               reuse=True)
+            x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
+                                     hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
+            _elbo = tf.expand_dims(
+                elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_mu_recon], xtrue=self.x_unlab, y=y_ulab,
+                           z2=[z2, z2_mu, z2_logvar],
+                           z1=[z1, z1_mu, z1_logvar]), 1)
 
             if label == 0:
                 class_elbo = tf.identity(_elbo)
@@ -232,13 +230,21 @@ class GenerativeClassifier(object):
         return class_elbo, logits
 
     def labeled_model(self):
-        x_lab = draw_norm(dim=self.latent_dim, mu=self.x_lab_mu, logvar=self.x_lab_logvar)
-        z, z_mu, z_logvar = q_z2_given_z1y(z1=x_lab, y=self.y_lab, latent_dim=self.latent_dim,
-                                           num_classes=self.num_classes, hidden_dim=self.hidden_dim)
-        logits = qy_given_z1(z1=x_lab, latent_dim=self.latent_dim,
+        z1, z1_mu, z1_logvar = q_z1_given_x(self.x_lab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                            latent_dim=self.latent_dim)
+
+        logits = qy_given_z1(z1, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim)
-        x_mu, x_logvar = pz1_given_z2y(y=self.y_lab, z2=z, latent_dim=self.latent_dim,
-                                       num_classes=self.num_classes, hidden_dim=self.hidden_dim)
-        elbo = elbo_M2(z1_recon=[x_mu, x_logvar], z1=x_lab, y=self.y_lab, z2=[z, z_mu, z_logvar])
+
+        z2, z2_mu, z2_logvar = q_z2_given_z1y(z1=z1, y=self.y_lab, latent_dim=self.latent_dim,
+                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim)
+        z1_recon, z1_mu_recon, z1_mu_recon = pz1_given_z2y(y=self.y_lab, z2=z2, latent_dim=self.latent_dim,
+                                                           num_classes=self.num_classes, hidden_dim=self.hidden_dim)
+        x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
+                                 hidden_dim=self.hidden_dim, input_dim=self.input_dim)
+        elbo = elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_mu_recon], xtrue=self.x_lab, y=self.y_lab,
+                          z2=[z2, z2_mu, z2_logvar],
+                          z1=[z1, z1_mu, z1_logvar])
+
         classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
-        return elbo, logits, x_mu, classifier_loss, y_pred_cls
+        return elbo, logits, x_recon_mu, classifier_loss, y_pred_cls

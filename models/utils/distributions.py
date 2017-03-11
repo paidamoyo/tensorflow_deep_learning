@@ -51,29 +51,37 @@ def regularization_loss(z_mu, z_logvar):
     return z_regularization
 
 
-def elbo_M2(x_recon, x, y, z):
+def elbo_M2(z1_recon, z1, y, z2):
     # -tf.add(regularization_loss(z_mu=z[1], z_logvar=z[2]),
     # reconstruction_loss(x_input=x, x_hat=x_recon[0])) + log_prior_y
     num_classes = 10
     y_prior = (1. / num_classes) * tf.ones_like(y)
     log_prior_y = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
 
-    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z[0], mu=z[1], log_sigma_sq=z[2]), axis=1)
-    z_prior = tf.ones_like(z[0])
+    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z2[0], mu=z2[1], log_sigma_sq=z2[2]), axis=1)
+    z_prior = tf.ones_like(z2[0])
     log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
 
-    log_lik = tf.reduce_sum(tf_normal_logpdf(x=x, mu=x_recon[0], log_sigma_sq=x_recon[1]), 1)
+    log_lik = tf.reduce_sum(tf_normal_logpdf(x=z1, mu=z1_recon[0], log_sigma_sq=z1_recon[1]), 1)
 
     # return log_prior_y + log_lik + log_prior_z - log_post_z
-    return -tf.add(regularization_loss(z_mu=z[1], z_logvar=z[2]),
-                   reconstruction_loss(x_input=x, x_hat=x_recon[0])) + log_prior_y
+    return -tf.add(regularization_loss(z_mu=z2[1], z_logvar=z2[2]),
+                   reconstruction_loss(x_input=z1, x_hat=z1_recon[0])) + log_prior_y
 
 
-def elbo_M1(x_recon, x_true, z, z_mu, z_lsgms):
+def elbo_M1(x_recon, x_true, z1, z1_mu, z1_lsgms):
     log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_true, x_approx=x_recon))
-    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z, mu=z_mu, log_sigma_sq=z_lsgms), axis=1)
-    z_prior = tf.ones_like(z)
+    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z1, mu=z1_mu, log_sigma_sq=z1_lsgms), axis=1)
+    z_prior = tf.ones_like(z1)
     log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
     negative_log_lik = tf.scalar_mul(-1, log_lik)
     tf.summary.scalar('negative_log_lik', negative_log_lik)
-    return log_lik + log_prior_z - log_post_z
+    cost = log_lik + log_prior_z - log_post_z
+    return cost, log_lik
+
+
+def elbo_M1_M2(x_recon, z1_recon, xtrue, y, z2, z1):
+    m1_cost = elbo_M1(x_recon=x_recon, x_true=xtrue, z1=z1[0], z1_mu=z1[1], z1_lsgms=z1[2])
+    m2_cost = elbo_M2(z1_recon, z1, y, z2)
+    cost = tf.add(m1_cost, m2_cost)
+    return cost
