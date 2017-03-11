@@ -273,8 +273,8 @@ class PreTrainedGenerativeClassifier(object):
         i = 0
         num_val_batches = int(10000 / self.batch_size)
         mean_value, update_op = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
+        final_mean_value = 0.0
         self.session.run(tf.initialize_local_variables())
-
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
@@ -287,9 +287,8 @@ class PreTrainedGenerativeClassifier(object):
                                                       feed_dict=feed_dict)
             total_log_lik += log_lik
             i = j
-
-            print('Mean after batch %d: %f' % (i, update_op.eval(feed_dict=feed_dict)))
-            print('Final Mean: %f' % mean_value.eval(feed_dict=feed_dict))
+            final_mean_value = mean_value.eval(feed_dict=feed_dict)
+        print('Final Mean AUC: %f' % final_mean_value)
         # Create a boolean array whether each image is correctly classified.
         correct = (cls_true == cls_pred)
         return correct, cls_pred, total_log_lik / num_val_batches
