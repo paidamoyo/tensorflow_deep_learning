@@ -79,7 +79,7 @@ class VariationalAutoencoder(object):
             if (i % 100 == 0) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
 
-                validation_loss, val_log_lik = self.calculate_loss(images=self.valid_x)
+                validation_loss, val_log_lik = self.validation_loss(images=self.valid_x)
                 if validation_loss < best_validation_loss:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
                     self.saver.save(sess=self.session, save_path=self.save_path)
@@ -91,9 +91,9 @@ class VariationalAutoencoder(object):
                 else:
                     improved_str = ''
 
-                print("Optimization Iteration: {}, Training:  Loss{},  log_lik:{}"
+                print("Optimization Iteration: {}, Training:  Loss {}, log_lik {}"
                       " Validation: Loss {}, log_lik {} {}".format(i + 1, batch_loss, log_lik, validation_loss,
-                                                                  val_log_lik, improved_str))
+                                                                   val_log_lik, improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 # Break o    ut from the for-loop.
@@ -102,11 +102,12 @@ class VariationalAutoencoder(object):
         time_dif = end_time - start_time
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
-    def calculate_loss(self, images):
+    def validation_loss(self, images):
         num_images = len(images)
         total_loss = 0.0
         total_log_lik = 0.0
         i = 0
+        num_val_batches = int(10000 / self.batch_size)
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
@@ -116,7 +117,7 @@ class VariationalAutoencoder(object):
             total_loss += batch_loss
             total_log_lik += log_lik
             i = j
-        return total_loss / self.batch_size, total_log_lik / self.batch_size
+        return total_loss / num_val_batches, total_log_lik / num_val_batches
 
     def build_model(self):
         z, z_mu, z_logvar = q_z1_given_x(self.x, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
@@ -124,7 +125,7 @@ class VariationalAutoencoder(object):
         x_mu = px_given_z1(z1=z, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
                            latent_dim=self.latent_dim)
         loss, log_lik = elbo_M1(x_recon=x_mu, x_true=self.x, z1=z, z1_lsgms=z_logvar, z1_mu=z_mu)
-        return tf.reduce_sum(loss), x_mu, z, z_mu, z_logvar, log_lik
+        return tf.reduce_sum(loss), x_mu, z, z_mu, z_logvar, log_lik / self.batch_size
 
     def train_test(self):
         self.train()
