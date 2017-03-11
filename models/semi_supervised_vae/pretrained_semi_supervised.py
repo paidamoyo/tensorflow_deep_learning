@@ -10,7 +10,7 @@ from models.semi_supervised_vae.decoder import pz1_given_z2y
 from models.semi_supervised_vae.encoder import q_z2_given_z1y, qy_given_z1
 from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from models.utils.batch_processing import get_batch_size, get_next_batch
-from models.utils.distributions import elbo_M1_M2
+from models.utils.distributions import elbo_M1_M2, elbo_M1
 from models.utils.distributions import prior_weights
 from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
@@ -30,7 +30,7 @@ class PreTrainedGenerativeClassifier(object):
                  n_labeled,
                  num_iterations,
                  input_dim, latent_dim,
-                 hidden_dim=600
+                 hidden_dim=600, pre_train=True
                  ):
         self.input_dim, self.latent_dim = input_dim, latent_dim
         self.hidden_dim = hidden_dim
@@ -43,18 +43,23 @@ class PreTrainedGenerativeClassifier(object):
         self.n_labeled = n_labeled
         self.num_classes = 10
         self.num_examples = 50000
+        self.pre_train = pre_train
         np.random.seed(seed)
         tf.set_random_seed(seed)
 
         ''' Create Graph '''
         self.G = tf.Graph()
         with self.G.as_default():
+            self.x = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x')
             self.x_lab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_labeled')
             self.x_unlab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_unlabeled')
             self.y_lab = tf.placeholder(tf.float32, shape=[None, self.num_classes], name='y_lab')
             self.y_true_cls = tf.argmax(self.y_lab, axis=1)
             self.train_x_l, self.train_l_y, self.train_u_x, self.train_u_y, self.valid_x, self.valid_y, \
             self.test_x, self.test_y = self.extract_data()
+            print(self.train_l_y.shape, self.train_u_y.shape)
+            self.train_x = np.concatenate((self.train_x_l, self.train_u_x), axis=0)
+            self.train_y = np.concatenate((self.train_l_y, self.train_u_y), axis=0)
             self._objective()
             self.saver = tf.train.Saver()
             self.session = tf.Session()
@@ -71,6 +76,8 @@ class PreTrainedGenerativeClassifier(object):
                                                                                   num_lab=self.n_labeled)
         self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, \
         self.y_pred_cls = self.labeled_model()
+        self.vae_elbo, self.log_lik = self.vae_model()
+        self.vae_cost = (self.vae_elbo * self.num_batches + prior_weights()) / (-self.batch_size * self.num_batches)
         if self.n_labeled == self.num_examples:
             self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
                 -self.num_batches * self.num_batches)
@@ -81,6 +88,8 @@ class PreTrainedGenerativeClassifier(object):
 
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
+        self.vae_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
+                                                    beta2=self.beta2).minimize(self.vae_cost)
 
     def extract_data(self):
         train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
@@ -91,11 +100,85 @@ class PreTrainedGenerativeClassifier(object):
         x_test, y_test = test_x.T, test_y.T
 
         print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
-        return t_x_l, t_y_l, t_x_u, t_x_u, x_valid, y_valid, x_test, y_test
+        return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test
+
+    def vae_model(self):
+        z, z_mu, z_logvar = q_z1_given_x(self.x, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                         latent_dim=self.latent_dim)
+        x_mu = px_given_z1(z1=z, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                           latent_dim=self.latent_dim)
+        loss, log_lik = elbo_M1(x_recon=x_mu, x_true=self.x, z1=z, z1_lsgms=z_logvar, z1_mu=z_mu)
+        return tf.reduce_sum(loss), log_lik / self.batch_size
+
+    def vae_validation_loss(self, images):
+        num_images = len(images)
+        total_loss = 0.0
+        total_log_lik = 0.0
+        i = 0
+        num_val_batches = int(10000 / self.batch_size)
+        while i < num_images:
+            # The ending index for the next batch is denoted j.
+            j = min(i + self.batch_size, num_images)
+            batch_images = images[i:j, :]
+            feed_dict = {self.x: batch_images}
+            batch_loss, log_lik = self.session.run([self.cost, self.log_lik], feed_dict=feed_dict)
+            total_loss += batch_loss
+            total_log_lik += log_lik
+            i = j
+        return total_loss / num_val_batches, total_log_lik / num_val_batches
+
+    def train_vae(self):
+        print("Training Vanilla VAE:")
+        self.session.run(tf.global_variables_initializer())
+        best_validation_loss = 1e20
+        last_improvement = 0
+
+        start_time = time.time()
+        idx = 0
+
+        for i in range(self.num_iterations):
+            # Batch Training
+            x_batch, y_batch, idx = get_next_batch(self.train_x, self.train_y, idx, self.batch_size)
+            summary, batch_loss, log_lik, _ = self.session.run(
+                [self.merged, self.vae_cost, self.log_lik, self.vae_optimizer],
+                feed_dict={self.x: x_batch, self.x_lab: np.empty_like(x_batch), self.x_unlab: np.empty_like(x_batch),
+                           self.y_lab: np.empty_like(y_batch)})
+            # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
+            self.train_writer.add_summary(summary, i)
+
+            if (i % 100 == 0) or (i == (self.num_iterations - 1)):
+                # Calculate the accuracy
+
+                validation_loss, val_log_lik = self.vae_validation_loss(images=self.valid_x)
+                if validation_loss < best_validation_loss:
+                    # Save  Best Perfoming all variables of the TensorFlow graph to file.
+                    self.saver.save(sess=self.session, save_path=self.save_path)
+                    # update best validation accuracy
+                    best_validation_loss = validation_loss
+                    last_improvement = i
+                    improved_str = '*'
+
+                else:
+                    improved_str = ''
+
+                print("Optimization Iteration: {}, Training:  Loss {}, log_lik {}"
+                      " Validation: Loss {}, log_lik {} {}".format(i + 1, batch_loss, log_lik, validation_loss,
+                                                                   val_log_lik, improved_str))
+            if i - last_improvement > self.require_improvement:
+                print("No improvement found in a while, stopping optimization.")
+                # Break o    ut from the for-loop.
+                break  # Ending time.
+        end_time = time.time()
+        time_dif = end_time - start_time
+        print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def train_neural_network(self):
         print("Training Pre_trained Semi_Supervised VAE:")
-        self.session.run(tf.global_variables_initializer())
+        if self.pre_train:
+            self.train_vae()
+            self.saver.restore(sess=self.session, save_path=self.save_path)
+        else:
+            self.session.run(tf.global_variables_initializer())
         best_validation_accuracy = 0
         last_improvement = 0
 
@@ -111,7 +194,8 @@ class PreTrainedGenerativeClassifier(object):
                                                                self.num_lab_batch)
             x_u_batch, _, idx_unlabeled = get_next_batch(self.train_u_x, self.train_u_y, idx_unlabeled,
                                                          self.num_ulab_batch)
-            feed_dict_train = {self.x_lab: x_l_batch, self.y_lab: y_l_batch, self.x_unlab: x_u_batch}
+            feed_dict_train = {self.x: np.empty_like(x_l_batch), self.x_lab: x_l_batch, self.y_lab: y_l_batch,
+                               self.x_unlab: x_u_batch}
 
             summary, batch_loss, _ = self.session.run([self.merged, self.cost, self.optimizer],
                                                       feed_dict=feed_dict_train)
@@ -231,7 +315,7 @@ class PreTrainedGenerativeClassifier(object):
 
     def labeled_model(self):
         z1, z1_mu, z1_logvar = q_z1_given_x(self.x_lab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                                            latent_dim=self.latent_dim)
+                                            latent_dim=self.latent_dim, reuse=True)
 
         logits = qy_given_z1(z1, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim)
@@ -241,7 +325,7 @@ class PreTrainedGenerativeClassifier(object):
         z1_recon, z1_mu_recon, z1_mu_recon = pz1_given_z2y(y=self.y_lab, z2=z2, latent_dim=self.latent_dim,
                                                            num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
-                                 hidden_dim=self.hidden_dim, input_dim=self.input_dim)
+                                 hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
         elbo = elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_mu_recon], xtrue=self.x_lab, y=self.y_lab,
                           z2=[z2, z2_mu, z2_logvar],
                           z1=[z1, z1_mu, z1_logvar])
