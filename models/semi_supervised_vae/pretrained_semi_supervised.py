@@ -243,7 +243,7 @@ class PreTrainedGenerativeClassifier(object):
         num_images = 20
         x_test = self.test_x[0:num_images, ]
         y_test = self.test_y[0:num_images, ]
-        plot_images(x_test, self.reconstruct(x_test, y_test), num_images, "semi_supervised")
+        plot_images(x_test, self.reconstruct(x_test, y_test), num_images, "pre_semi_supervised")
 
     def total_lab_loss(self):
         # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
