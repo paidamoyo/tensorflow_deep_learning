@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from datetime import timedelta
@@ -49,6 +50,8 @@ class GenerativeClassifier(object):
         self.test_x_mu, self.test_x_logvar, self.test_y = test[0], test[1], test[2]
         self.num_classes = 10
         self.num_examples = 50000
+        self.log_file = 'semi_supervised.log'
+        logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
         tf.set_random_seed(seed)
 
@@ -93,6 +96,7 @@ class GenerativeClassifier(object):
 
     def train_neural_network(self):
         print("Training Semisupervised VAE:")
+        logging.debug("Training Semisupervised VAE:")
         self.session.run(tf.global_variables_initializer())
         best_validation_accuracy = 0
         last_improvement = 0
@@ -140,14 +144,18 @@ class GenerativeClassifier(object):
 
                 print("Optimization Iteration: {}, Training Loss: {}, "
                       " Validation Acc:{}, {}".format(i + 1, int(batch_loss), acc_validation, improved_str))
+                logging.debug("Optimization Iteration: {}, Training Loss: {}, "
+                              " Validation Acc:{}, {}".format(i + 1, int(batch_loss), acc_validation, improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
+                logging.debug("No improvement found in a while, stopping optimization.")
                 # Break out from the for-loop.
                 break
         # Ending time.
         end_time = time.time()
         time_dif = end_time - start_time
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
+        logging.debug("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def reconstruct(self, test_mu, test_logvar, y_test):
         return self.session.run(self.x_recon_lab_mu,
@@ -202,6 +210,7 @@ class GenerativeClassifier(object):
             i = j
             final_mean_value = mean_value.eval(feed_dict=feed_dict)
         print('Final Mean AUC: %f' % final_mean_value)
+        logging.debug('Final Mean AUC: %f' % final_mean_value)
         # Create a boolean array whether each image is correctly classified.
         correct = (cls_true == cls_pred)
         return correct, cls_pred
@@ -213,7 +222,7 @@ class GenerativeClassifier(object):
                                              logvar=self.test_x_logvar,
                                              labels=self.test_y,
                                              cls_true=(convert_labels_to_cls(self.test_y)))
-        print_test_accuracy(correct, cls_pred, self.test_y)
+        print_test_accuracy(correct, cls_pred, self.test_y, logging)
 
     def unlabeled_model(self):
         # Ulabeled

@@ -13,23 +13,27 @@ def cls_accuracy(correct):
     return acc, correct_sum
 
 
-def plot_confusion_matrix(cls_pred, labels):
+def plot_confusion_matrix(cls_pred, labels, logging):
     cls_true = convert_labels_to_cls(labels)
     cm = confusion_matrix(y_true=cls_true,
                           y_pred=cls_pred)
     print(cm)
+    logging.debug(cm)
     plt.matshow(cm)
 
 
-def print_test_accuracy(correct, cls_pred, labels):
+def print_test_accuracy(correct, cls_pred, labels, logging):
     acc, correct_sum = cls_accuracy(correct)
     num_images = len(correct)
     msg = "Accuracy on Test-Set: {0:.1%} ({1} / {2})"
     print(msg.format(acc, correct_sum, num_images))
+    logging.debug(msg.format(acc, correct_sum, num_images))
 
     print("Confusion Matrix:")
+    logging.debug("Confusion Matrix:")
+
     # print(tf.confusion_matrix(labels=convert_labels_to_cls(labels), predictions=cls_pred, num_classes=10))
-    plot_confusion_matrix(cls_pred=cls_pred, labels=labels)
+    plot_confusion_matrix(cls_pred=cls_pred, labels=labels, logging=logging)
 
 
 def plot_images(x_test, x_reconstruct, n_images, name):

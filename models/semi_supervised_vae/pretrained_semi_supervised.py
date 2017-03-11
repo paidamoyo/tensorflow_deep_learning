@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from datetime import timedelta
@@ -43,6 +44,8 @@ class PreTrainedGenerativeClassifier(object):
         self.n_labeled = n_labeled
         self.num_classes = 10
         self.num_examples = 50000
+        self.log_file = 'pre_trained.log'
+        logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
         tf.set_random_seed(seed)
 
@@ -101,6 +104,7 @@ class PreTrainedGenerativeClassifier(object):
         x_test, y_test = test_x.T, test_y.T
 
         print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
+        logging.debug("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
         return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test
 
     def vae_model(self):
@@ -130,6 +134,7 @@ class PreTrainedGenerativeClassifier(object):
 
     def train_vae(self):
         print("Training Vanilla VAE:")
+        logging.debug("Training Vanilla VAE:")
         self.session.run(tf.global_variables_initializer())
         best_validation_loss = 1e20
         last_improvement = 0
@@ -173,18 +178,25 @@ class PreTrainedGenerativeClassifier(object):
                       " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
                                                                    int(validation_loss),
                                                                    int(val_log_lik), improved_str))
+                logging.debug("Optimization Iteration: {}, Training:  Loss {}, log_lik {}"
+                              " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
+                                                                           int(validation_loss),
+                                                                           int(val_log_lik), improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
+                logging.debug("No improvement found in a while, stopping optimization.")
                 # Break o    ut from the for-loop.
                 break  # Ending time.
         end_time = time.time()
         time_dif = end_time - start_time
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
+        logging.debug("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def train_neural_network(self):
         self.train_vae()
         self.saver.restore(sess=self.session, save_path=self.save_path)
         print("Training Pre_trained Semi_Supervised VAE:")
+        logging.debug("Training Pre_trained Semi_Supervised VAE:")
 
         best_validation_accuracy = 0
         last_improvement = 0
@@ -231,6 +243,10 @@ class PreTrainedGenerativeClassifier(object):
                       " Validation:  log_lik {},  Acc {}, {}".format(i + 1, int(batch_loss), int(log_lik),
                                                                      acc_validation,
                                                                      improved_str))
+                logging.debug("Iteration: {}, Training Loss: {}, "
+                              " Validation:  log_lik {},  Acc {}, {}".format(i + 1, int(batch_loss), int(log_lik),
+                                                                             acc_validation,
+                                                                             improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 # Break out from the for-loop.
@@ -239,6 +255,7 @@ class PreTrainedGenerativeClassifier(object):
         end_time = time.time()
         time_dif = end_time - start_time
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
+        logging.debug("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def reconstruct(self, x_test, y_test):
         return self.session.run(self.x_recon_lab_mu, feed_dict={self.x: x_test, self.x_lab: x_test, self.y_lab: y_test})
@@ -272,7 +289,6 @@ class PreTrainedGenerativeClassifier(object):
 
     def predict_cls(self, images, labels, cls_true):
         num_images = len(images)
-        print("testing: images shape:{}, labels shape:{} ".format(images.shape, labels.shape))
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         total_log_lik = 0.0
         i = 0
@@ -294,6 +310,7 @@ class PreTrainedGenerativeClassifier(object):
             i = j
             final_mean_value = mean_value.eval(feed_dict=feed_dict)
         print('Final Mean AUC: %f' % final_mean_value)
+        logging.debug('Final Mean AUC: %f' % final_mean_value)
         # Create a boolean array whether each image is correctly classified.
         correct = (cls_true == cls_pred)
         return correct, cls_pred, total_log_lik / num_val_batches
@@ -304,7 +321,7 @@ class PreTrainedGenerativeClassifier(object):
         correct, cls_pred, _ = self.predict_cls(images=self.test_x,
                                                 labels=self.test_y,
                                                 cls_true=(convert_labels_to_cls(self.test_y)))
-        print_test_accuracy(correct, cls_pred, self.test_y)
+        print_test_accuracy(correct, cls_pred, self.test_y, logging)
         self.test_reconstruction()
 
     def unlabeled_model(self):

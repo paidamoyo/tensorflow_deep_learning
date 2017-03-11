@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from datetime import timedelta
@@ -32,6 +33,8 @@ class VariationalAutoencoder(object):
         self.require_improvement = require_improvement
         self.num_iterations = num_iterations
         self.learning_rate, self.beta1, self.beta2 = learning_rate, beta1, beta2
+        self.log_file = 'vanilla_vae.log'
+        logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
         tf.set_random_seed(seed)
 
@@ -61,6 +64,7 @@ class VariationalAutoencoder(object):
 
     def train(self):
         print("Training Vanilla VAE:")
+        logging.debug("Training Vanilla VAE:")
         self.session.run(tf.global_variables_initializer())
         best_validation_loss = 1e20
         last_improvement = 0
@@ -95,13 +99,19 @@ class VariationalAutoencoder(object):
                       " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
                                                                    int(validation_loss),
                                                                    int(val_log_lik), improved_str))
+                logging.debug("Optimization Iteration: {}, Training:  Loss {}, log_lik {}"
+                              " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
+                                                                           int(validation_loss),
+                                                                           int(val_log_lik), improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
+                logging.debug("No improvement found in a while, stopping optimization.")
                 # Break o    ut from the for-loop.
                 break  # Ending time.
         end_time = time.time()
         time_dif = end_time - start_time
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
+        logging.debug("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def validation_loss(self, images):
         num_images = len(images)
