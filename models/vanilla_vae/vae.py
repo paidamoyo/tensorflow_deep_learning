@@ -92,8 +92,9 @@ class VariationalAutoencoder(object):
                     improved_str = ''
 
                 print("Optimization Iteration: {}, Training:  Loss {}, log_lik {}"
-                      " Validation: Loss {}, log_lik {} {}".format(i + 1, batch_loss, log_lik, validation_loss,
-                                                                   val_log_lik, improved_str))
+                      " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
+                                                                   int(validation_loss),
+                                                                   int(val_log_lik), improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 # Break o    ut from the for-loop.

@@ -78,6 +78,8 @@ class PreTrainedGenerativeClassifier(object):
         self.vae_elbo, self.log_lik = self.vae_model()
         self.vae_cost = (self.vae_elbo * self.num_batches + prior_weights()) / (-self.batch_size * self.num_batches)
         if self.n_labeled == self.num_examples:
+            self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x), axis=0)
+            self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y), axis=0)
             self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
                 -self.num_batches * self.num_batches)
         else:
@@ -168,8 +170,9 @@ class PreTrainedGenerativeClassifier(object):
                     improved_str = ''
 
                 print("Optimization Iteration: {}, Training:  Loss {}, log_lik {}"
-                      " Validation: Loss {}, log_lik {} {}".format(i + 1, batch_loss, log_lik, validation_loss,
-                                                                   val_log_lik, improved_str))
+                      " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
+                                                                   int(validation_loss),
+                                                                   int(val_log_lik), improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 # Break o    ut from the for-loop.
@@ -225,7 +228,8 @@ class PreTrainedGenerativeClassifier(object):
                     improved_str = ''
 
                 print("Iteration: {}, Training Loss: {}, "
-                      " Validation:  log_lik {},  Acc {}, {}".format(i + 1, batch_loss, log_lik, acc_validation,
+                      " Validation:  log_lik {},  Acc {}, {}".format(i + 1, int(batch_loss), int(log_lik),
+                                                                     acc_validation,
                                                                      improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")

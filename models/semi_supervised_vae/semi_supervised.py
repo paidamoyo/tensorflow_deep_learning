@@ -139,7 +139,7 @@ class GenerativeClassifier(object):
                     improved_str = ''
 
                 print("Optimization Iteration: {}, Training Loss: {}, "
-                      " Validation Acc:{}, {}".format(i + 1, batch_loss, acc_validation, improved_str))
+                      " Validation Acc:{}, {}".format(i + 1, int(batch_loss), acc_validation, improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 # Break out from the for-loop.
