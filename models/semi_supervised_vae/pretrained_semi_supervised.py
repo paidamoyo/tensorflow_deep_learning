@@ -179,9 +179,10 @@ class PreTrainedGenerativeClassifier(object):
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def train_neural_network(self):
-        print("Training Pre_trained Semi_Supervised VAE:")
         self.train_vae()
         self.saver.restore(sess=self.session, save_path=self.save_path)
+        print("Training Pre_trained Semi_Supervised VAE:")
+
         best_validation_accuracy = 0
         last_improvement = 0
 
@@ -236,7 +237,7 @@ class PreTrainedGenerativeClassifier(object):
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def reconstruct(self, x_test, y_test):
-        return self.session.run(self.x_recon_lab_mu, feed_dict={self.x: x_test, self.y_lab: y_test})
+        return self.session.run(self.x_recon_lab_mu, feed_dict={self.x: x_test, self.x_lab: x_test, self.y_lab: y_test})
 
     def test_reconstruction(self):
         num_images = 20
@@ -274,7 +275,7 @@ class PreTrainedGenerativeClassifier(object):
         num_val_batches = int(10000 / self.batch_size)
         mean_value, update_op = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
         final_mean_value = 0.0
-        self.session.run(tf.initialize_local_variables())
+        self.session.run(tf.local_variables_initializer())
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)

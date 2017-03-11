@@ -187,7 +187,7 @@ class GenerativeClassifier(object):
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
         mean_value, _ = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
-        self.session.run(tf.initialize_local_variables())
+        self.session.run(tf.local_variables_initializer())
         final_mean_value = 0.0
         while i < num_images:
             # The ending index for the next batch is denoted j.
