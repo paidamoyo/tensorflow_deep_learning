@@ -89,6 +89,11 @@ class PreTrainedGenerativeClassifier(object):
                                                 beta2=self.beta2).minimize(self.cost)
         self.vae_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                     beta2=self.beta2).minimize(self.vae_cost)
+        self.mean_AUC, self.batch_AUC = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, weights=None,
+                                                                         num_thresholds=200,
+                                                                         metrics_collections=None,
+                                                                         updates_collections=None,
+                                                                         curve='ROC', name=None)
 
     def extract_data(self):
         train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
@@ -272,10 +277,7 @@ class PreTrainedGenerativeClassifier(object):
         total_log_lik = 0.0
         i = 0
         num_val_batches = int(10000 / self.batch_size)
-        mean_value, update_op = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, weights=None,
-                                                                 num_thresholds=200,
-                                                                 metrics_collections=None, updates_collections=None,
-                                                                 curve='ROC', name=None)
+
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
@@ -286,7 +288,7 @@ class PreTrainedGenerativeClassifier(object):
                          self.y_lab: batch_labels}
             cls_pred[i:j], log_lik = self.session.run([self.y_pred_cls, self.log_lik],
                                                       feed_dict=feed_dict)
-            mean_AUC, batch_AUC = self.session.run([mean_value, update_op], feed_dict=feed_dict)
+            mean_AUC, batch_AUC = self.session.run([self.mean_AUC, self.batch_AUC], feed_dict=feed_dict)
             total_log_lik += log_lik
             i = j
 
