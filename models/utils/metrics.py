@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
 from sklearn.metrics import confusion_matrix
 
 
@@ -28,6 +29,7 @@ def print_test_accuracy(correct, cls_pred, labels):
     print(msg.format(acc, correct_sum, num_images))
 
     print("Confusion Matrix:")
+    print(tf.confusion_matrix(labels=labels, predictions=cls_pred, num_classes=10))
     plot_confusion_matrix(cls_pred=cls_pred, labels=labels)
 
 
