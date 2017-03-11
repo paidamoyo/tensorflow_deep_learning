@@ -219,9 +219,9 @@ class GenerativeClassifier(object):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
             z, z_mu, z_logvar = q_z2_given_z1y(z1=x_unlab, y=y_ulab, latent_dim=self.latent_dim,
                                                num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
-            x_mu, x_logvar = pz1_given_z2y(y=y_ulab, z2=z, latent_dim=self.latent_dim,
-                                           num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                           reuse=True)
+            x, x_mu, x_logvar = pz1_given_z2y(y=y_ulab, z2=z, latent_dim=self.latent_dim,
+                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                              reuse=True)
             _elbo = tf.expand_dims(elbo_M2(z1_recon=[x_mu, x_logvar], z1=x_unlab, y=y_ulab, z2=[z, z_mu, z_logvar]), 1)
 
             if label == 0:
@@ -237,8 +237,8 @@ class GenerativeClassifier(object):
                                            num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         logits = qy_given_z1(z1=x_lab, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim)
-        x_mu, x_logvar = pz1_given_z2y(y=self.y_lab, z2=z, latent_dim=self.latent_dim,
-                                       num_classes=self.num_classes, hidden_dim=self.hidden_dim)
+        x, x_mu, x_logvar = pz1_given_z2y(y=self.y_lab, z2=z, latent_dim=self.latent_dim,
+                                          num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         elbo = elbo_M2(z1_recon=[x_mu, x_logvar], z1=x_lab, y=self.y_lab, z2=[z, z_mu, z_logvar])
         classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
         return elbo, logits, x_mu, classifier_loss, y_pred_cls

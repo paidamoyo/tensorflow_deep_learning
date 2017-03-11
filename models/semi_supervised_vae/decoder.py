@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from  models.utils.distributions import draw_norm
 from models.utils.tf_helpers import create_nn_weights, mlp_neuron
 
 
@@ -15,7 +16,8 @@ def pz1_given_z2y(y, z2, latent_dim, num_classes, hidden_dim, reuse=False):
         h1 = mlp_neuron(tf.concat([y, z2], axis=1), w_h1, b_h1)
         h2 = mlp_neuron(h1, w_h2, b_h2)
 
-        x_logvar = mlp_neuron(h2, w_logvar, b_logvar, activation=False)
-        x_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)
+        z1_logvar = mlp_neuron(h2, w_logvar, b_logvar, activation=False)
+        z1_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)
+        z1 = draw_norm(latent_dim, z1_mu, z1_logvar)
 
-        return x_mu, x_logvar
+        return z1, z1_mu, z1_logvar

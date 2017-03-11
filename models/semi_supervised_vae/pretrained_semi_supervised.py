@@ -51,7 +51,7 @@ class PreTrainedGenerativeClassifier(object):
         with self.G.as_default():
             self.x_lab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_labeled')
             self.x_unlab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_unlabeled')
-            self.y_lab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='y_lab')
+            self.y_lab = tf.placeholder(tf.float32, shape=[None, self.num_classes], name='y_lab')
             self.y_true_cls = tf.argmax(self.y_lab, axis=1)
             self.train_x_l, self.train_l_y, self.train_u_x, self.train_u_y, self.valid_x, self.valid_y, \
             self.test_x, self.test_y = self.extract_data()
@@ -94,7 +94,7 @@ class PreTrainedGenerativeClassifier(object):
         return t_x_l, t_y_l, t_x_u, t_x_u, x_valid, y_valid, x_test, y_test
 
     def train_neural_network(self):
-        print("Training Semi_Supervised VAE:")
+        print("Training Pre_trained Semi_Supervised VAE:")
         self.session.run(tf.global_variables_initializer())
         best_validation_accuracy = 0
         last_improvement = 0
