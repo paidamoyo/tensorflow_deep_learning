@@ -30,5 +30,6 @@ if __name__ == '__main__':
                                               num_iterations=FLAGS['num_iterations'],
                                               input_dim=FLAGS['input_dim'],
                                               latent_dim=FLAGS['latent_dim'])  # Should be consistent with model being
+
     with genclass.session:
         genclass.train_test()

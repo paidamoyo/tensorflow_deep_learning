@@ -66,7 +66,7 @@ class PreTrainedGenerativeClassifier(object):
             self.saver = tf.train.Saver()
             self.session = tf.Session()
             self.current_dir = os.getcwd()
-            self.save_path = self.current_dir + "/summaries/semi_supervised_model"
+            self.save_path = self.current_dir + "/summaries/pre_semi_supervised_model"
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
             self.merged = tf.summary.merge_all()
 
