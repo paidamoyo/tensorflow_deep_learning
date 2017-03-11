@@ -30,7 +30,7 @@ class PreTrainedGenerativeClassifier(object):
                  n_labeled,
                  num_iterations,
                  input_dim, latent_dim,
-                 hidden_dim=600, pre_train=True
+                 hidden_dim=600
                  ):
         self.input_dim, self.latent_dim = input_dim, latent_dim
         self.hidden_dim = hidden_dim
@@ -43,7 +43,6 @@ class PreTrainedGenerativeClassifier(object):
         self.n_labeled = n_labeled
         self.num_classes = 10
         self.num_examples = 50000
-        self.pre_train = pre_train
         np.random.seed(seed)
         tf.set_random_seed(seed)
 
@@ -210,9 +209,9 @@ class PreTrainedGenerativeClassifier(object):
 
             if (i % 100 == 0) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
-                correct, _ = self.predict_cls(images=self.valid_x,
-                                              labels=self.valid_y,
-                                              cls_true=convert_labels_to_cls(self.valid_y))
+                correct, _, log_lik = self.predict_cls(images=self.valid_x,
+                                                       labels=self.valid_y,
+                                                       cls_true=convert_labels_to_cls(self.valid_y))
                 acc_validation, _ = cls_accuracy(correct)
                 if acc_validation > best_validation_accuracy:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
@@ -225,7 +224,8 @@ class PreTrainedGenerativeClassifier(object):
                     improved_str = ''
 
                 print("Optimization Iteration: {}, Training Loss: {}, "
-                      " Validation Acc:{}, {}".format(i + 1, batch_loss, acc_validation, improved_str))
+                      " Validation:  log_lik {},  Acc {}, {}".format(i + 1, batch_loss, log_lik, acc_validation,
+                                                                     improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 # Break out from the for-loop.
@@ -269,7 +269,9 @@ class PreTrainedGenerativeClassifier(object):
         num_images = len(images)
         print("testing: images shape:{}, labels shape:{} ".format(images.shape, labels.shape))
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
+        total_log_lik = 0.0
         i = 0
+        num_val_batches = int(10000 / self.batch_size)
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
@@ -277,18 +279,19 @@ class PreTrainedGenerativeClassifier(object):
             batch_labels = labels[i:j, :]
             feed_dict = {self.x_lab: batch_images,
                          self.y_lab: batch_labels}
-            cls_pred[i:j] = self.session.run(self.y_pred_cls, feed_dict=feed_dict)
+            cls_pred[i:j], log_lik = self.session.run([self.y_pred_cls, self.log_lik], feed_dict=feed_dict)
+            total_log_lik += log_lik
             i = j
         # Create a boolean array whether each image is correctly classified.
         correct = (cls_true == cls_pred)
-        return correct, cls_pred
+        return correct, cls_pred, total_log_lik / num_val_batches
 
     def train_test(self):
         self.train_neural_network()
         self.saver.restore(sess=self.session, save_path=self.save_path)
-        correct, cls_pred = self.predict_cls(images=self.test_x,
-                                             labels=self.test_y,
-                                             cls_true=(convert_labels_to_cls(self.test_y)))
+        correct, cls_pred, _ = self.predict_cls(images=self.test_x,
+                                                labels=self.test_y,
+                                                cls_true=(convert_labels_to_cls(self.test_y)))
         print_test_accuracy(correct, cls_pred, self.test_y)
         self.test_reconstruction()
 
