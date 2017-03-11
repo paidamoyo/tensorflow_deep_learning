@@ -121,7 +121,7 @@ class PreTrainedGenerativeClassifier(object):
             j = min(i + self.batch_size, num_images)
             batch_images = images[i:j, :]
             feed_dict = {self.x: batch_images}
-            batch_loss, log_lik = self.session.run([self.cost, self.log_lik], feed_dict=feed_dict)
+            batch_loss, log_lik = self.session.run([self.vae_cost, self.log_lik], feed_dict=feed_dict)
             total_loss += batch_loss
             total_log_lik += log_lik
             i = j
