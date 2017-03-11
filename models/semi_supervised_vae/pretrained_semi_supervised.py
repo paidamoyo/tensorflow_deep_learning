@@ -135,14 +135,21 @@ class PreTrainedGenerativeClassifier(object):
 
         start_time = time.time()
         idx = 0
+        idx_labeled = 0
+        idx_unlabeled = 0
 
         for i in range(self.num_iterations):
             # Batch Training
-            x_batch, y_batch, idx = get_next_batch(self.train_x, self.train_y, idx, self.batch_size)
+            x_batch, _, idx = get_next_batch(self.train_x, self.train_y, idx, self.batch_size)
+            x_l_batch, y_l_batch, idx_labeled = get_next_batch(self.train_x_l, self.train_l_y, idx_labeled,
+                                                               self.num_lab_batch)
+            x_u_batch, _, idx_unlabeled = get_next_batch(self.train_u_x, self.train_u_y, idx_unlabeled,
+                                                         self.num_ulab_batch)
+
+            feed_dict = {self.x: x_batch, self.x_lab: x_l_batch, self.x_unlab: x_u_batch, self.y_lab: y_l_batch}
             summary, batch_loss, log_lik, _ = self.session.run(
                 [self.merged, self.vae_cost, self.log_lik, self.vae_optimizer],
-                feed_dict={self.x: x_batch, self.x_lab: np.empty_like(x_batch), self.x_unlab: np.empty_like(x_batch),
-                           self.y_lab: np.empty_like(y_batch)})
+                feed_dict=feed_dict)
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
             self.train_writer.add_summary(summary, i)
 
@@ -174,27 +181,26 @@ class PreTrainedGenerativeClassifier(object):
 
     def train_neural_network(self):
         print("Training Pre_trained Semi_Supervised VAE:")
-        if self.pre_train:
-            self.train_vae()
-            self.saver.restore(sess=self.session, save_path=self.save_path)
-        else:
-            self.session.run(tf.global_variables_initializer())
+        self.train_vae()
+        self.saver.restore(sess=self.session, save_path=self.save_path)
         best_validation_accuracy = 0
         last_improvement = 0
 
         start_time = time.time()
         idx_labeled = 0
         idx_unlabeled = 0
+        idx = 0
 
         for i in range(self.num_iterations):
 
             # Batch Training
             # Batch Training
+            x_batch, _, idx = get_next_batch(self.train_x, self.train_y, idx, self.batch_size)
             x_l_batch, y_l_batch, idx_labeled = get_next_batch(self.train_x_l, self.train_l_y, idx_labeled,
                                                                self.num_lab_batch)
             x_u_batch, _, idx_unlabeled = get_next_batch(self.train_u_x, self.train_u_y, idx_unlabeled,
                                                          self.num_ulab_batch)
-            feed_dict_train = {self.x: np.empty_like(x_l_batch), self.x_lab: x_l_batch, self.y_lab: y_l_batch,
+            feed_dict_train = {self.x: x_batch, self.x_lab: x_l_batch, self.y_lab: y_l_batch,
                                self.x_unlab: x_u_batch}
 
             summary, batch_loss, _ = self.session.run([self.merged, self.cost, self.optimizer],
