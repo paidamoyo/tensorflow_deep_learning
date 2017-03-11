@@ -272,7 +272,7 @@ class PreTrainedGenerativeClassifier(object):
         total_log_lik = 0.0
         i = 0
         num_val_batches = int(10000 / self.batch_size)
-        mean_value, update_op = tf.contrib.metrics.streaming_mean(self.y_lab_logits, self.y_lab, curve='ROC')
+        mean_value, update_op = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
         self.session.run(tf.initialize_local_variables())
 
         while i < num_images:
