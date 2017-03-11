@@ -146,9 +146,9 @@ class GenerativeClassifier(object):
                 else:
                     improved_str = ''
 
-                print("Optimization Iteration: {}, Training Loss: {}, "
+                print("Iteration: {}, Training Loss: {}, "
                       " Validation Acc:{}, {}".format(i + 1, int(batch_loss), acc_validation, improved_str))
-                logging.debug("Optimization Iteration: {}, Training Loss: {}, "
+                logging.debug("Iteration: {}, Training Loss: {}, "
                               " Validation Acc:{}, {}".format(i + 1, int(batch_loss), acc_validation, improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")

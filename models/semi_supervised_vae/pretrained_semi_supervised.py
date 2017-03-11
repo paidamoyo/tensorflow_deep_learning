@@ -178,11 +178,11 @@ class PreTrainedGenerativeClassifier(object):
                 else:
                     improved_str = ''
 
-                print("Optimization Iteration: {}, Training:  Loss {}, log_lik {}"
+                print("Iteration: {}, Training:  Loss {}, log_lik {}"
                       " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
                                                                    int(validation_loss),
                                                                    int(val_log_lik), improved_str))
-                logging.debug("Optimization Iteration: {}, Training:  Loss {}, log_lik {}"
+                logging.debug("Iteration: {}, Training:  Loss {}, log_lik {}"
                               " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
                                                                            int(validation_loss),
                                                                            int(val_log_lik), improved_str))
