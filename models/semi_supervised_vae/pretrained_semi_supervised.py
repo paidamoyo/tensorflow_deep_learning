@@ -32,7 +32,7 @@ class PreTrainedGenerativeClassifier(object):
                  num_iterations,
                  input_dim, latent_dim,
                  hidden_dim=600,
-                 restore_vae=True
+                 restore_vae=False
                  ):
         self.input_dim, self.latent_dim = input_dim, latent_dim
         self.hidden_dim = hidden_dim
