@@ -11,7 +11,7 @@ from models.semi_supervised_vae.decoder import pz1_given_z2y
 from models.semi_supervised_vae.encoder import q_z2_given_z1y, qy_given_z1
 from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from models.utils.batch_processing import get_batch_size, get_next_batch
-from models.utils.distributions import elbo_M1_M2, elbo_M1
+from models.utils.distributions import elbo_M1, compute_ELBO
 from models.utils.distributions import prior_weights
 from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
@@ -339,14 +339,13 @@ class PreTrainedGenerativeClassifier(object):
             z2, z2_mu, z2_logvar = q_z2_given_z1y(z1=z1, y=y_ulab, latent_dim=self.latent_dim,
                                                   num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
             z1_recon, z1_mu_recon, z1_var_recon = pz1_given_z2y(y=y_ulab, z2=z2, latent_dim=self.latent_dim,
-                                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                                               reuse=True)
+                                                                num_classes=self.num_classes,
+                                                                hidden_dim=self.hidden_dim,
+                                                                reuse=True)
             x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
                                      hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
-            _elbo = tf.expand_dims(
-                elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_var_recon], xtrue=self.x_unlab, y=y_ulab,
-                           z2=[z2, z2_mu, z2_logvar],
-                           z1=[z1, z1_mu, z1_logvar]), 1)
+            _elbo = tf.expand_dims(compute_ELBO(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]),
+                                   1)
 
             if label == 0:
                 class_elbo = tf.identity(_elbo)
@@ -365,12 +364,10 @@ class PreTrainedGenerativeClassifier(object):
         z2, z2_mu, z2_logvar = q_z2_given_z1y(z1=z1, y=self.y_lab, latent_dim=self.latent_dim,
                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         z1_recon, z1_mu_recon, z1_var_recon = pz1_given_z2y(y=self.y_lab, z2=z2, latent_dim=self.latent_dim,
-                                                           num_classes=self.num_classes, hidden_dim=self.hidden_dim)
+                                                            num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
                                  hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
-        elbo = elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_var_recon], xtrue=self.x_lab, y=self.y_lab,
-                          z2=[z2, z2_mu, z2_logvar],
-                          z1=[z1, z1_mu, z1_logvar])
+        elbo = compute_ELBO(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, z=[z2, z2_mu, z2_logvar])
 
         classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
         return elbo, logits, x_recon_mu, classifier_loss, y_pred_cls
