@@ -8,13 +8,13 @@ if __name__ == '__main__':
     #                    n_minibatches=200, comment='')
 
     FLAGS = {
-        'num_iterations': 30000, #should 3000 epochs
+        'num_iterations': 300000,  # should 3000 epochs (30000/100)
         'num_batches': 100,
         'seed': 31415,
         'n_labeled': 100,
         'alpha': 0.1,
         'latent_dim': 50,
-        'require_improvement': 5000,
+        'require_improvement': 5000,  # 50 epochs
         'n_train': 50000,
         'learning_rate': 3e-4,
         'beta1': 0.9,
