@@ -216,7 +216,7 @@ class GenerativeClassifier(object):
             cls_pred[i:j] = self.session.run(self.y_pred_cls, feed_dict=feed_dict)
             i = j
             final_mean_value, auc = self.session.run([mean_AUC, batch_AUC], feed_dict=feed_dict)
-            print("batch auc:{}".format(auc))
+            # print("batch auc:{}".format(auc))
         print('Final Mean AUC: %f' % final_mean_value)
         logging.debug('Final Mean AUC: %f' % final_mean_value)
         # Create a boolean array whether each image is correctly classified.
