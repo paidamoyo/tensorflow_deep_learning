@@ -11,7 +11,7 @@ def pz1_given_z2y(y, z2, latent_dim, num_classes, hidden_dim, input_dim, reuse=F
         w_h2, b_h2 = create_nn_weights('h2_z1', 'decoder', [hidden_dim, hidden_dim])
 
         w_mu, b_mu = create_nn_weights('mu_z1', 'decoder', [hidden_dim, input_dim])
-        w_logvar, b_logvar = create_nn_weights('var_x', 'decoder', [hidden_dim, input_dim])
+        w_logvar, b_logvar = create_nn_weights('var_z1', 'decoder', [hidden_dim, input_dim])
 
         h1 = mlp_neuron(tf.concat([y, z2], axis=1), w_h1, b_h1)
         h2 = mlp_neuron(h1, w_h2, b_h2)
