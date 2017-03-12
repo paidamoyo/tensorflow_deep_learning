@@ -31,7 +31,8 @@ class PreTrainedGenerativeClassifier(object):
                  n_labeled,
                  num_iterations,
                  input_dim, latent_dim,
-                 hidden_dim=600
+                 hidden_dim=600,
+                 restore_vae=True
                  ):
         self.input_dim, self.latent_dim = input_dim, latent_dim
         self.hidden_dim = hidden_dim
@@ -43,6 +44,7 @@ class PreTrainedGenerativeClassifier(object):
         self.alpha = alpha
         self.n_labeled = n_labeled
         self.num_classes = 10
+        self.restore_vae = restore_vae
         self.num_examples = 50000
         self.log_file = 'pre_trained.log'
         logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
@@ -200,8 +202,10 @@ class PreTrainedGenerativeClassifier(object):
         logging.debug("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def train_neural_network(self):
-        self.train_vae()
-        self.saver.restore(sess=self.session, save_path=self.save_path)
+        if self.restore_vae:
+            self.saver.restore(sess=self.session, save_path=self.save_path)
+        else:
+            self.train_vae()
         print("Training Pre_trained Semi_Supervised VAE:")
         logging.debug("Training Pre_trained Semi_Supervised VAE:")
 
