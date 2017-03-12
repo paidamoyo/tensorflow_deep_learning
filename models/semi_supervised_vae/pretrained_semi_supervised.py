@@ -76,10 +76,13 @@ class PreTrainedGenerativeClassifier(object):
         self.num_lab_batch, self.num_ulab_batch, self.batch_size = get_batch_size(num_examples=self.num_examples,
                                                                                   num_batches=self.num_batches,
                                                                                   num_lab=self.n_labeled)
-        logging.debug("num batches:{}, batch_size:{},  num_lab_batch {}, num_ulab_batch:{}".format(self.num_batches,
-                                                                                                   self.batch_size,
-                                                                                                   self.num_lab_batch,
-                                                                                                   self.num_ulab_batch))
+        logging.debug(
+            "num batches:{}, batch_size:{},  num_lab_batch {}, num_ulab_batch:{}, epochs:{}".format(self.num_batches,
+                                                                                                    self.batch_size,
+                                                                                                    self.num_lab_batch,
+                                                                                                    self.num_ulab_batch,
+                                                                                                    int(
+                                                                                                        self.num_iterations / self.num_batches)))
         self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, \
         self.y_pred_cls = self.labeled_model()
         self.vae_elbo, self.log_lik = self.vae_model()

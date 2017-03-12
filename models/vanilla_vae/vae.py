@@ -55,7 +55,8 @@ class VariationalAutoencoder(object):
         train_x_l, train_l_y, train_u_x, train_u_y, self.valid_x, self.valid_y, self.test_x, self.test_y = extract_data(
             n_train_examples)
         num_batches = int(n_train_examples / self.batch_size)
-        logging.debug("num batches:{}, batch_size:{}".format(num_batches, self.batch_size))
+        logging.debug("num batches:{}, batch_size:{}, epochs:{}".format(num_batches, self.batch_size, int(
+            self.num_iterations / num_batches)))
         self.train_x = np.concatenate((train_x_l, train_u_x), axis=0)
         self.train_y = np.concatenate((train_l_y, train_u_y), axis=0)
         elbo, self.x_recon_mu, self.z_sample, self.z_mu, self.z_logvar, self.loglik = self.build_model()
