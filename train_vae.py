@@ -1,8 +1,10 @@
+import numpy as np
+
 from models.utils.MNIST_pickled_preprocess import extract_data
 from models.vanilla_vae.vae import VariationalAutoencoder
 
 
-def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, train=True):
+def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, min_std=0.0, train=True):
     vae = VariationalAutoencoder(batch_size=200, learning_rate=FLAGS['learning_rate'],
                                  beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],
                                  require_improvement=5000, seed=FLAGS['seed'],
@@ -19,6 +21,16 @@ def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, train=True):
         enc_x_ulab_mean, enc_x_ulab_var = vae.encode(train_unlab)
         enc_x_valid_mean, enc_x_valid_var = vae.encode(valid)
         enc_x_test_mean, enc_x_test_var = vae.encode(test)
+
+        id_x_keep = np.std(enc_x_ulab_mean, axis=0) > min_std
+        print("idx_keep:{} , shape:{}".format(id_x_keep[np.where(id_x_keep == True)], id_x_keep.shape))
+        print("shape before red:{}".format(enc_x_lab_mean.shape))
+
+        enc_x_lab_mean, enc_x_lab_var = enc_x_lab_mean[:, id_x_keep], enc_x_lab_var[:, id_x_keep]
+        enc_x_ulab_mean, enc_x_ulab_var = enc_x_ulab_mean[:, id_x_keep], enc_x_ulab_var[:, id_x_keep]
+        enc_x_valid_mean, enc_x_valid_var = enc_x_valid_mean[:, id_x_keep], enc_x_valid_var[:, id_x_keep]
+        enc_x_test_mean, enc_x_test_var = enc_x_test_mean[:, id_x_keep], enc_x_test_var[:, id_x_keep]
+        print("shape reduction:{}".format(enc_x_lab_mean.shape))
 
     return enc_x_lab_mean, enc_x_lab_var, enc_x_ulab_mean, enc_x_ulab_var, enc_x_valid_mean, \
            enc_x_valid_var, enc_x_test_mean, enc_x_test_var

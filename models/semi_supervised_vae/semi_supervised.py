@@ -48,8 +48,8 @@ class GenerativeClassifier(object):
         self.train_x_u_mu, self.train_x_u_logvar, self.train_u_y = train_unlab[0], train_unlab[1], train_unlab[2]
         self.valid_x_mu, self.valid_x_logvar, self.valid_y = valid[0], valid[1], valid[2]
         self.test_x_mu, self.test_x_logvar, self.test_y = test[0], test[1], test[2]
-        self.num_classes = 10
-        self.num_examples = 50000
+        self.num_classes = self.train_l_y.shape[1]
+        self.num_examples = self.train_x_l_mu.shape[0] + self.train_x_u_mu.shape[0]
         self.log_file = 'semi_supervised.log'
         logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)

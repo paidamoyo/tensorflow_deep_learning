@@ -22,7 +22,8 @@ if __name__ == '__main__':
         'beta1': 0.9,
         'beta2': 0.999,
         'input_dim': 28 * 28,
-        'num_classes': 10
+        'num_classes': 10,
+        'min_std': 0.1  # Dimensions with std < min_std are removed before training with GC
     }
 
     train_x_lab, train_l_y, train_x_unlab, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     train_x_l_mu, train_x_l_logvar, train_x_u_mu, train_x_u_logvar, valid_x_mu, \
     valid_x_logvar, test_x_mu, test_x_logvar = encode_dataset(FLAGS=FLAGS, train_lab=train_x_lab,
                                                               train_unlab=train_x_unlab, valid=valid_x,
-                                                              test=test_x, train=False)
+                                                              test=test_x, min_std=FLAGS['min_std'], train=False)
     train_lab = [train_x_l_mu, train_x_l_logvar, train_l_y]
     train_unlab = [train_x_u_mu, train_x_u_logvar, train_u_y]
     valid = [valid_x_mu, valid_x_logvar, valid_y]
@@ -46,7 +47,7 @@ if __name__ == '__main__':
                                     require_improvement=FLAGS['require_improvement'], seed=FLAGS['seed'],
                                     n_labeled=FLAGS['n_labeled'],
                                     num_iterations=FLAGS['num_iterations'],
-                                    input_dim=FLAGS['input_dim'],
+                                    input_dim=train_x_l_mu.shape[1],
                                     latent_dim=FLAGS['latent_dim'],
                                     train_lab=train_lab, train_unlab=train_unlab, valid=valid,
                                     test=test)  # Should be consistent with model being
