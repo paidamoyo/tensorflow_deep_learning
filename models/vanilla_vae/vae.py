@@ -8,7 +8,7 @@ import tensorflow as tf
 
 from models.utils.MNIST_pickled_preprocess import extract_data
 from models.utils.batch_processing import get_next_batch
-from models.utils.distributions import elbo_M1, l2_loss
+from models.utils.distributions import elbo_M1, prior_weights
 from models.utils.metrics import plot_images
 from models.vanilla_vae.decoder import px_given_z1
 from models.vanilla_vae.encoder import q_z1_given_x
@@ -35,7 +35,7 @@ class VariationalAutoencoder(object):
         self.num_iterations = num_iterations
         self.learning_rate, self.beta1, self.beta2 = learning_rate, beta1, beta2
         self.log_file = 'vanilla_vae.log'
-        self.l2_loss_weight = l2_weight
+        self.l2_loss_mult = l2_weight
         logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
         tf.set_random_seed(seed)
@@ -62,7 +62,7 @@ class VariationalAutoencoder(object):
         self.train_x = np.concatenate((train_x_l, train_u_x), axis=0)
         self.train_y = np.concatenate((train_l_y, train_u_y), axis=0)
         elbo, self.x_recon_mu, self.z_sample, self.z_mu, self.z_logvar, self.loglik = self.build_model()
-        self.cost = -(elbo - l2_loss() * self.l2_loss_weight)
+        self.cost = (elbo * num_batches + prior_weights()) / (-self.batch_size * num_batches)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
 
