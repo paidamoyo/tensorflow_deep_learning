@@ -52,16 +52,17 @@ def regularization_loss(z_mu, z_logvar):
 
 
 def elbo_M2(z1_recon, z1, y, z2):
-    log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(z2[0]), 1)
-
     num_classes = 10
     y_prior = (1. / num_classes) * tf.ones_like(y)
-    log_prior_y = - tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
-
-    log_lik = tf.reduce_sum(tf_normal_logpdf(x=z1, mu=z1_recon[0], log_sigma_sq=z1_recon[1]), 1)
-
-    log_post_z = tf.reduce_sum(tf_normal_logpdf(z2[0], z2[1], z2[2]), 1)
-
+    z_prior = tf.ones_like(z2[0])  # or z[0]?
+    log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
+    log_prior_y = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
+    # log_lik = tf.reduce_sum(tf_normal_logpdf(x, x_recon[0], x_recon[1]), axis=1)
+    log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=z1, x_approx=z1_recon))
+    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z2[0], mu=z2[1], log_sigma_sq=z2[2]), axis=1)
+    negative_log_lik = tf.scalar_mul(-1, log_lik)
+    tf.summary.scalar('negative_log_lik', negative_log_lik)
+    # log_prior_y - tf.add(reconstruction_loss(x, x_recon[0]), regularization_loss(z[1], z[2]))
     return log_prior_y + log_lik + log_prior_z - log_post_z
 
 
