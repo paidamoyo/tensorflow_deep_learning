@@ -338,13 +338,13 @@ class PreTrainedGenerativeClassifier(object):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
             z2, z2_mu, z2_logvar = q_z2_given_z1y(z1=z1, y=y_ulab, latent_dim=self.latent_dim,
                                                   num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
-            z1_recon, z1_mu_recon, z1_mu_recon = pz1_given_z2y(y=y_ulab, z2=z2, latent_dim=self.latent_dim,
+            z1_recon, z1_mu_recon, z1_var_recon = pz1_given_z2y(y=y_ulab, z2=z2, latent_dim=self.latent_dim,
                                                                num_classes=self.num_classes, hidden_dim=self.hidden_dim,
                                                                reuse=True)
             x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
                                      hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
             _elbo = tf.expand_dims(
-                elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_mu_recon], xtrue=self.x_unlab, y=y_ulab,
+                elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_var_recon], xtrue=self.x_unlab, y=y_ulab,
                            z2=[z2, z2_mu, z2_logvar],
                            z1=[z1, z1_mu, z1_logvar]), 1)
 
@@ -364,11 +364,11 @@ class PreTrainedGenerativeClassifier(object):
 
         z2, z2_mu, z2_logvar = q_z2_given_z1y(z1=z1, y=self.y_lab, latent_dim=self.latent_dim,
                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim)
-        z1_recon, z1_mu_recon, z1_mu_recon = pz1_given_z2y(y=self.y_lab, z2=z2, latent_dim=self.latent_dim,
+        z1_recon, z1_mu_recon, z1_var_recon = pz1_given_z2y(y=self.y_lab, z2=z2, latent_dim=self.latent_dim,
                                                            num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
                                  hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
-        elbo = elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_mu_recon], xtrue=self.x_lab, y=self.y_lab,
+        elbo = elbo_M1_M2(x_recon=x_recon_mu, z1_recon=[z1_mu_recon, z1_var_recon], xtrue=self.x_lab, y=self.y_lab,
                           z2=[z2, z2_mu, z2_logvar],
                           z1=[z1, z1_mu, z1_logvar])
 

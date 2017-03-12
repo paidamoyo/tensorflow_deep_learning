@@ -68,8 +68,8 @@ def elbo_M2(z1_recon, z1, y, z2):
     reg_loss = regularization_loss(z_mu=z2[1], z_logvar=z2[2])
     recon_loss = reconstruction_loss(x_input=z1, x_hat=z1_recon[0])
     print("M2 cost:{}, {}, {}".format(reg_loss, recon_loss, log_prior_y))
-    return -tf.add(reg_loss,
-                   recon_loss) + log_prior_y
+    # return -tf.add(reg_loss, recon_loss) + log_prior_y
+    return log_prior_y + log_lik + log_prior_z - log_post_z
 
 
 def elbo_M1(x_recon, x_true, z1, z1_mu, z1_lsgms):
@@ -86,7 +86,7 @@ def elbo_M1(x_recon, x_true, z1, z1_mu, z1_lsgms):
 
 def elbo_M1_M2(x_recon, z1_recon, xtrue, y, z2, z1):
     m1_cost = elbo_M1(x_recon=x_recon, x_true=xtrue, z1=z1[0], z1_mu=z1[1], z1_lsgms=z1[2])[0]
-    m2_cost = elbo_M2(z1_recon, z1[0], y, z2)
+    m2_cost = elbo_M2(z1_recon=z1_recon, z1=z1[0], y=y, z2=z2)
     print("costs {} {}".format(m1_cost.shape, m2_cost.shape))
     cost = tf.add(m1_cost, m2_cost)
     return cost
