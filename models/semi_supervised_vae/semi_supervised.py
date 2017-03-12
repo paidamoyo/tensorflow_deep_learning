@@ -237,6 +237,7 @@ class GenerativeClassifier(object):
         x_unlab = draw_norm(dim=self.latent_dim, mu=self.x_unlab_mu, logvar=self.x_unlab_logvar)
         logits = qy_given_z1(x_unlab, input_dim=self.input_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
+        elbo = []
         for label in range(self.num_classes):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
             z, z_mu, z_logvar = q_z2_given_z1y(z1=x_unlab, y=y_ulab, latent_dim=self.latent_dim,
@@ -245,14 +246,12 @@ class GenerativeClassifier(object):
             x, x_mu, x_logvar = pz1_given_z2y(y=y_ulab, z2=z, latent_dim=self.latent_dim,
                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim,
                                               input_dim=self.input_dim, reuse=True)
-            _elbo = tf.expand_dims(elbo_M2(z1_recon=[x_mu, x_logvar], z1=x_unlab, y=y_ulab, z2=[z, z_mu, z_logvar]), 1)
 
-            if label == 0:
-                class_elbo = tf.identity(_elbo)
-            else:
-                class_elbo = tf.concat((class_elbo, _elbo), axis=1)  # Decoder Model
-        print("unlabeled class_elbo:{}".format(class_elbo))
-        return class_elbo, logits
+            class_elbo = elbo_M2(z1_recon=[x_mu, x_logvar], z1=x_unlab, y=y_ulab, z2=[z, z_mu, z_logvar])
+            elbo.append(class_elbo)
+        elbo = tf.convert_to_tensor(elbo)
+        print("unlabeled class_elbo:{}".format(elbo))
+        return tf.transpose(elbo), logits
 
     def labeled_model(self):
         x_lab = draw_norm(dim=self.latent_dim, mu=self.x_lab_mu, logvar=self.x_lab_logvar)
