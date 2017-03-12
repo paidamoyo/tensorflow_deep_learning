@@ -16,7 +16,7 @@ if __name__ == '__main__':
         'n_labeled': 100,
         'alpha': 0.1,
         'latent_dim': 50,
-        'require_improvement': 5000,
+        'require_improvement': 10000,
         'n_train': 50000,
         'learning_rate': 3e-4,
         'beta1': 0.9,
