@@ -10,7 +10,8 @@ def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, min_std=0.0, trai
                                  require_improvement=5000, seed=FLAGS['seed'],
                                  num_iterations=FLAGS['num_iterations'],
                                  input_dim=FLAGS['input_dim'],
-                                 latent_dim=FLAGS['latent_dim'])  # Should be consistent with model being loaded
+                                 latent_dim=FLAGS['latent_dim'],
+                                 l2_weight=FLAGS['l2_weight'])  # Should be consistent with model being loaded
 
     with vae.session:
         if train:
@@ -44,7 +45,7 @@ if __name__ == '__main__':
     #                    n_minibatches=200, comment='')
 
     FLAGS_ = {
-        'num_iterations': 300000,  # should 3000 epochs
+        'num_iterations': 3,  # should 3000 epochs
         'num_batches': 100,
         'seed': 31415,
         'n_labeled': 100,
@@ -56,7 +57,9 @@ if __name__ == '__main__':
         'beta1': 0.9,
         'beta2': 0.999,
         'input_dim': 28 * 28,
-        'num_classes': 10
+        'num_classes': 10,
+        'min_std': 0.1,  # Dimensions with std < min_std are removed before training with GC
+        'l2_weight': 1e-6
     }
 
     train_x_lab, train_l_y, train_x_unlab, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(

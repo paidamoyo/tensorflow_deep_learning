@@ -27,6 +27,11 @@ def tf_binary_xentropy(x_true, x_approx, const=1e-10):
         tf.clip_by_value(tf.subtract(1.0, x_approx), const, 1.0)))
 
 
+def l2_loss():
+    l2 = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+    return l2
+
+
 def draw_norm(dim, mu, logvar):
     epsilon = tf.random_normal(tf.shape(dim), name='epsilon')
     std = tf.exp(0.5 * logvar)
