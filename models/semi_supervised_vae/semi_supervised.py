@@ -58,10 +58,10 @@ class GenerativeClassifier(object):
         ''' Create Graph '''
         self.G = tf.Graph()
         with self.G.as_default():
-            self.x_lab_mu = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_lab_mu')
-            self.x_unlab_mu = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_unlab_mu')
-            self.x_lab_logvar = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_ulab_logvar')
-            self.x_unlab_logvar = tf.placeholder(tf.float32, shape=[None, latent_dim], name='x_unlab_logvar')
+            self.x_lab_mu = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_lab_mu')
+            self.x_unlab_mu = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_unlab_mu')
+            self.x_lab_logvar = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_ulab_logvar')
+            self.x_unlab_logvar = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_unlab_logvar')
             self.y_lab = tf.placeholder(tf.float32, shape=[None, self.num_classes], name='y_lab')
             self.y_true_cls = tf.argmax(self.y_lab, axis=1)
             self._objective()
@@ -201,7 +201,7 @@ class GenerativeClassifier(object):
         num_images = len(mu)
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
-        mean_AUC, batch_AUC = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
+        mean_auc, batch_auc = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
         self.session.run(tf.local_variables_initializer())
         final_mean_value = 0.0
         while i < num_images:
@@ -215,7 +215,7 @@ class GenerativeClassifier(object):
                          self.y_lab: batch_labels}
             cls_pred[i:j] = self.session.run(self.y_pred_cls, feed_dict=feed_dict)
             i = j
-            final_mean_value, auc = self.session.run([mean_AUC, batch_AUC], feed_dict=feed_dict)
+            final_mean_value, auc = self.session.run([mean_auc, batch_auc], feed_dict=feed_dict)
             # print("batch auc:{}".format(auc))
         print('Final Mean AUC: %f' % final_mean_value)
         logging.debug('Final Mean AUC: %f' % final_mean_value)
@@ -235,15 +235,16 @@ class GenerativeClassifier(object):
     def unlabeled_model(self):
         # Ulabeled
         x_unlab = draw_norm(dim=self.latent_dim, mu=self.x_unlab_mu, logvar=self.x_unlab_logvar)
-        logits = qy_given_z1(x_unlab, latent_dim=self.latent_dim,
+        logits = qy_given_z1(x_unlab, input_dim=self.input_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
         for label in range(self.num_classes):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
             z, z_mu, z_logvar = q_z2_given_z1y(z1=x_unlab, y=y_ulab, latent_dim=self.latent_dim,
-                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
+                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                               input_dim=self.input_dim, reuse=True)
             x, x_mu, x_logvar = pz1_given_z2y(y=y_ulab, z2=z, latent_dim=self.latent_dim,
                                               num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                              reuse=True)
+                                              input_dim=self.input_dim, reuse=True)
             _elbo = tf.expand_dims(elbo_M2(z1_recon=[x_mu, x_logvar], z1=x_unlab, y=y_ulab, z2=[z, z_mu, z_logvar]), 1)
 
             if label == 0:
@@ -256,11 +257,13 @@ class GenerativeClassifier(object):
     def labeled_model(self):
         x_lab = draw_norm(dim=self.latent_dim, mu=self.x_lab_mu, logvar=self.x_lab_logvar)
         z, z_mu, z_logvar = q_z2_given_z1y(z1=x_lab, y=self.y_lab, latent_dim=self.latent_dim,
-                                           num_classes=self.num_classes, hidden_dim=self.hidden_dim)
-        logits = qy_given_z1(z1=x_lab, latent_dim=self.latent_dim,
+                                           num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                           input_dim=self.input_dim)
+        logits = qy_given_z1(z1=x_lab, input_dim=self.input_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim)
         x, x_mu, x_logvar = pz1_given_z2y(y=self.y_lab, z2=z, latent_dim=self.latent_dim,
-                                          num_classes=self.num_classes, hidden_dim=self.hidden_dim)
+                                          num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                          input_dim=self.input_dim, )
         elbo = elbo_M2(z1_recon=[x_mu, x_logvar], z1=x_lab, y=self.y_lab, z2=[z, z_mu, z_logvar])
         classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
         return elbo, logits, x_mu, classifier_loss, y_pred_cls
