@@ -52,23 +52,16 @@ def regularization_loss(z_mu, z_logvar):
 
 
 def elbo_M2(z1_recon, z1, y, z2):
-    # -tf.add(regularization_loss(z_mu=z[1], z_logvar=z[2]),
-    # reconstruction_loss(x_input=x, x_hat=x_recon[0])) + log_prior_y
+    log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(z2[0]), 1)
+
     num_classes = 10
     y_prior = (1. / num_classes) * tf.ones_like(y)
-    log_prior_y = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
-
-    log_post_z = tf.reduce_sum(tf_normal_logpdf(x=z2[0], mu=z2[1], log_sigma_sq=z2[2]), axis=1)
-    z_prior = tf.ones_like(z2[0])
-    log_prior_z = tf.reduce_sum(tf_stdnormal_logpdf(mu=z_prior), axis=1)
+    log_prior_y = - tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
 
     log_lik = tf.reduce_sum(tf_normal_logpdf(x=z1, mu=z1_recon[0], log_sigma_sq=z1_recon[1]), 1)
 
-    # return log_prior_y + log_lik + log_prior_z - log_post_z
-    reg_loss = regularization_loss(z_mu=z2[1], z_logvar=z2[2])
-    recon_loss = reconstruction_loss(x_input=z1, x_hat=z1_recon[0])
-    print("M2 cost:{}, {}, {}".format(reg_loss, recon_loss, log_prior_y))
-    # return -tf.add(reg_loss, recon_loss) + log_prior_y
+    log_post_z = tf.reduce_sum(tf_normal_logpdf(z2[0], z2[1], z2[2]), 1)
+
     return log_prior_y + log_lik + log_prior_z - log_post_z
 
 
