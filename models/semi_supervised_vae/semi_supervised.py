@@ -213,10 +213,10 @@ class GenerativeClassifier(object):
                          self.x_lab_logvar: batch_logavar,
                          self.y_lab: batch_labels}
             cls_pred[i:j] = self.session.run(self.y_pred_cls, feed_dict=feed_dict)
-            i = j
             batch_auc = self.session.run([auc], feed_dict=feed_dict)
-            total_auc += batch_auc
-
+            print("batch auc:{}".format(batch_auc.shape))
+            total_auc += tf.reduce_sum(batch_auc)
+            i = j
         mean_auc = total_auc / num_batches
         print('Final Mean AUC: %f' % mean_auc)
         logging.debug('Final Mean AUC: %f' % mean_auc)
