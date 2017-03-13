@@ -102,8 +102,9 @@ def binarize_images(images):
     bin_images = []
     for i in range(images.shape[0]):
         means = images[i]
-        bin_images[i] = np.random.binomial(n=1, p=means)
-    return bin_images
+        samples = np.random.binomial(n=1, p=means)
+        images[i, :] = samples
+    return images
 
 
 def extract_data(n_labeled):
@@ -114,20 +115,17 @@ def extract_data(n_labeled):
     x_valid, y_valid = valid_x.T, valid_y.T
     x_test, y_test = test_x.T, test_y.T
 
+    t_x_l = binarize_images(t_x_l)
+    t_x_u = binarize_images(t_x_u)
+    x_valid = binarize_images(x_valid)
+    x_test = binarize_images(x_test)
     print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
     return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test
 
 
 if __name__ == '__main__':
     num_lab = 50000
-    train_x, train_y, valid_x, valid_y, test_x, test_y = load_numpy_split(binarize_y=True)
-    x_l, y_l, x_u, y_u = create_semisupervised(train_x, train_y, num_lab)
-
-    x_lab, y_lab = x_l.T, y_l.T
-    x_ulab, y_ulab = x_u.T, y_u.T
-    print(x_lab.shape, y_lab.shape, x_ulab.shape, y_ulab.shape)
+    x_lab, y_lab, x_ulab, y_ulab, _, _, _, _ = extract_data(100)
     print(x_lab[0])
     plt.imshow(x_lab[0].reshape(28, 28), cmap="gray")
     plt.show()
-    x_valid, y_valid = valid_x.T, valid_y.T
-    x_test, y_test = test_x.T, test_y.T
