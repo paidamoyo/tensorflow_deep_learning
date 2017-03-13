@@ -11,7 +11,7 @@ from models.auxiliary_semi_supervised.encoder import qa_given_x, q_z_given_ayx, 
 from models.classifier import softmax_classifier
 from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from models.utils.batch_processing import get_batch_size, get_next_batch
-from models.utils.distributions import auxiliary_elbo
+from models.utils.distributions import auxiliary_elbo, tf_binary_xentropy
 from models.utils.distributions import prior_weights
 from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
@@ -99,18 +99,16 @@ class Auxiliary(object):
                                                                                                     int(
                                                                                                         self.num_iterations / self.num_batches)))
         self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, \
-        self.y_pred_cls, lab_log_lik = self.labeled_model()
+        self.y_pred_cls = self.labeled_model()
         if self.n_labeled == self.num_examples:
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y), axis=0)
             self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
                 -self.num_batches * self.num_batches)
-            self.log_lik = lab_log_lik
         else:
-            self.unlabeled_ELBO, self.y_ulab_logits, unlab_log_lik = self.unlabeled_model()
+            self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
             self.cost = ((self.total_lab_loss() + self.total_unlab_loss()) * self.num_batches + prior_weights()) / (
                 -self.batch_size * self.num_batches)
-            self.log_lik = (lab_log_lik + unlab_log_lik) / 2
 
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
@@ -123,13 +121,15 @@ class Auxiliary(object):
         x_valid, y_valid = valid_x.T, valid_y.T
         x_test, y_test = test_x.T, test_y.T
 
-        print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
-        logging.debug("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
+        train_data_print = "x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape)
+        print(train_data_print)
+        logging.debug(train_data_print)
         return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test
 
     def train_neural_network(self):
-        print("Training Auxiliary VAE:")
-        logging.debug("TTraining Auxiliary VAE:")
+        train_print = "Training Auxiliary VAE:"
+        print(train_print)
+        logging.debug(train_print)
         self.session.run(tf.global_variables_initializer())
 
         best_validation_accuracy = 0
@@ -156,9 +156,9 @@ class Auxiliary(object):
 
             if (i % 100 == 0) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
-                correct, _, log_lik = self.predict_cls(images=self.valid_x,
-                                                       labels=self.valid_y,
-                                                       cls_true=convert_labels_to_cls(self.valid_y))
+                correct, _ = self.predict_cls(images=self.valid_x,
+                                              labels=self.valid_y,
+                                              cls_true=convert_labels_to_cls(self.valid_y))
                 acc_validation, _ = cls_accuracy(correct)
                 if acc_validation > best_validation_accuracy:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
@@ -170,14 +170,11 @@ class Auxiliary(object):
                 else:
                     improved_str = ''
 
-                print("Iteration: {}, Training Loss: {}, "
-                      " Validation:  log_lik {},  Acc {}, {}".format(i + 1, int(batch_loss), int(log_lik),
-                                                                     acc_validation,
-                                                                     improved_str))
-                logging.debug("Iteration: {}, Training Loss: {}, "
-                              " Validation:  log_lik {},  Acc {}, {}".format(i + 1, int(batch_loss), int(log_lik),
-                                                                             acc_validation,
-                                                                             improved_str))
+                optimization_print = "Iteration: {}, Training Loss: {}, " \
+                                     " Validation Acc {}, {}".format(i + 1, int(batch_loss), acc_validation,
+                                                                     improved_str)
+                print(optimization_print)
+                logging.debug(optimization_print)
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 # Break out from the for-loop.
@@ -185,17 +182,24 @@ class Auxiliary(object):
         # Ending time.
         end_time = time.time()
         time_dif = end_time - start_time
-        print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
-        logging.debug("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
+        time_dif_print = "Time usage: " + str(timedelta(seconds=int(round(time_dif))))
+        print(time_dif_print)
+        logging.debug(time_dif_print)
 
     def reconstruct(self, x_test, y_test):
-        return self.session.run(self.x_recon_lab_mu, feed_dict={self.x_lab: x_test, self.y_lab: y_test})
+        x_recon = self.session.run(self.x_recon_lab_mu, feed_dict={self.x_lab: x_test, self.y_lab: y_test})
+        log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_test, x_approx=x_recon))
+        return x_recon, log_lik.eval()
 
     def test_reconstruction(self):
         num_images = 20
         x_test = self.test_x[0:num_images, ]
         y_test = self.test_y[0:num_images, ]
-        plot_images(x_test, self.reconstruct(x_test, y_test), num_images, "pre_semi_supervised")
+        x_recon, log_lik = self.reconstruct(x_test, y_test)
+        log_lik_print = "test log_lik:{}".format(log_lik / num_images)
+        print(log_lik_print)
+        logging.debug(log_lik_print)
+        plot_images(x_test, x_recon, num_images, "auxiliary")
 
     def total_lab_loss(self):
         # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
@@ -221,9 +225,7 @@ class Auxiliary(object):
     def predict_cls(self, images, labels, cls_true):
         num_images = len(images)
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
-        total_log_lik = 0.0
         i = 0
-        num_val_batches = int(10000 / self.batch_size)
         mean_auc, batch_auc = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
         final_mean_value = 0.0
         self.session.run(tf.local_variables_initializer())
@@ -233,25 +235,24 @@ class Auxiliary(object):
             batch_images = images[i:j, :]
             batch_labels = labels[i:j, :]
             feed_dict = {self.x_lab: batch_images,
-                         self.y_lab: batch_labels,
-                         self.x_unlab: []}
-            cls_pred[i:j], log_lik = self.session.run([self.y_pred_cls, self.log_lik],
-                                                      feed_dict=feed_dict)
-            total_log_lik += log_lik
+                         self.y_lab: batch_labels}
+            cls_pred[i:j] = self.session.run(self.y_pred_cls,
+                                             feed_dict=feed_dict)
             final_mean_value, auc = self.session.run([mean_auc, batch_auc], feed_dict=feed_dict)
             i = j
-        print('Final Mean AUC: %f' % final_mean_value)
-        logging.debug('Final Mean AUC: %f' % final_mean_value)
+        mean_auc_print = 'Final Mean AUC: %f' % final_mean_value
+        print(mean_auc_print)
+        logging.debug(mean_auc_print)
         # Create a boolean array whether each image is correctly classified.
         correct = (cls_true == cls_pred)
-        return correct, cls_pred, total_log_lik / num_val_batches
+        return correct, cls_pred
 
     def train_test(self):
         self.train_neural_network()
         self.saver.restore(sess=self.session, save_path=self.save_path)
-        correct, cls_pred, _ = self.predict_cls(images=self.test_x,
-                                                labels=self.test_y,
-                                                cls_true=(convert_labels_to_cls(self.test_y)))
+        correct, cls_pred = self.predict_cls(images=self.test_x,
+                                             labels=self.test_y,
+                                             cls_true=(convert_labels_to_cls(self.test_y)))
         print_test_accuracy(correct, cls_pred, self.test_y, logging)
         self.test_reconstruction()
 
@@ -283,7 +284,7 @@ class Auxiliary(object):
             total_log_lik += log_lik
         elbo = tf.convert_to_tensor(elbo)
         print("unlabeled class_elbo:{}".format(elbo))
-        return tf.transpose(elbo), logits, total_log_lik / (self.num_ulab_batch * self.num_classes)
+        return tf.transpose(elbo), logits
 
     def labeled_model(self):
         a, a_mu, a_logvar = qa_given_x(self.x_lab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
@@ -305,4 +306,4 @@ class Auxiliary(object):
                                        qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
 
         classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
-        return elbo, logits, x_recon_mu, classifier_loss, y_pred_cls, log_lik / self.num_lab_batch
+        return elbo, logits, x_recon_mu, classifier_loss, y_pred_cls
