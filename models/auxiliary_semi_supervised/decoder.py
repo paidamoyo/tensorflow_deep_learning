@@ -4,7 +4,7 @@ from models.utils.distributions import draw_norm
 from models.utils.tf_helpers import create_nn_weights, mlp_neuron
 
 
-def px_given_azy(z, y, a_recon, hidden_dim, input_dim, latent_dim, num_classes, reuse=False):
+def px_given_azy(z, y, qa, hidden_dim, input_dim, latent_dim, num_classes, reuse=False):
     with tf.variable_scope("decoder", reuse=reuse):
         # Variables
         w_h1, b_h1 = create_nn_weights('h1_x', 'decoder', [latent_dim + num_classes + latent_dim, hidden_dim])
@@ -13,7 +13,7 @@ def px_given_azy(z, y, a_recon, hidden_dim, input_dim, latent_dim, num_classes, 
         w_mu, b_mu = create_nn_weights('mu_x', 'decoder', [hidden_dim, input_dim])
         # Model
         # Decoder hidden layer
-        h1 = mlp_neuron(tf.concat((z, y, a_recon), axis=1), w_h1, b_h1)
+        h1 = mlp_neuron(tf.concat((z, y, qa), axis=1), w_h1, b_h1)
         h2 = mlp_neuron(h1, w_h2, b_h2)
         # Reconstruction layer
         # x_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)

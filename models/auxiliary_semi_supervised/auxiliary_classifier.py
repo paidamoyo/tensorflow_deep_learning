@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from models.auxiliary_semi_supervised.decoder import px_given_azy, pa_given_zy
-from models.auxiliary_semi_supervised.encoder import qa_given_x, q_z_given_ayx, qy_given_ax
+from models.auxiliary_semi_supervised.encoder import qa_given_x, qz_given_ayx, qy_given_ax
 from models.classifier import softmax_classifier
 from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from models.utils.batch_processing import get_batch_size, get_next_batch
@@ -16,6 +16,10 @@ from models.utils.distributions import prior_weights
 from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
+
+# TODO binarize input
+# TODO reduce dimensions of input to greate min std
+# TODO Batch Normalization
 
 class Auxiliary(object):
     def __init__(self,
@@ -268,14 +272,14 @@ class Auxiliary(object):
         total_log_lik = 0.0
         for label in range(self.num_classes):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
-            z, z_mu, z_logvar = q_z_given_ayx(a=a, y=y_ulab, x=self.x_unlab, latent_dim=self.latent_dim,
-                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                              input_dim=self.input_dim, reuse=True)
+            z, z_mu, z_logvar = qz_given_ayx(a=a, y=y_ulab, x=self.x_unlab, latent_dim=self.latent_dim,
+                                             num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                             input_dim=self.input_dim, reuse=True)
 
             a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=y_ulab, latent_dim=self.latent_dim,
                                                               hidden_dim=self.hidden_dim,
                                                               num_classes=self.num_classes, reuse=True)
-            x_recon_mu = px_given_azy(y=y_ulab, z=z, a_recon=a_recon, latent_dim=self.latent_dim,
+            x_recon_mu = px_given_azy(y=y_ulab, z=z, qa=a, latent_dim=self.latent_dim,
                                       num_classes=self.num_classes,
                                       hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
             class_elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
@@ -293,14 +297,14 @@ class Auxiliary(object):
         logits = qy_given_ax(a=a, x=self.x_lab, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
 
-        z, z_mu, z_logvar = q_z_given_ayx(a=a, y=self.y_lab, x=self.x_lab, latent_dim=self.latent_dim,
-                                          num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                          input_dim=self.input_dim)
+        z, z_mu, z_logvar = qz_given_ayx(a=a, y=self.y_lab, x=self.x_lab, latent_dim=self.latent_dim,
+                                         num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                         input_dim=self.input_dim)
 
         a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=self.y_lab, latent_dim=self.latent_dim,
                                                           hidden_dim=self.hidden_dim,
                                                           num_classes=self.num_classes)
-        x_recon_mu = px_given_azy(y=self.y_lab, z=z, a_recon=a_recon, latent_dim=self.latent_dim,
+        x_recon_mu = px_given_azy(y=self.y_lab, z=z, qa=a, latent_dim=self.latent_dim,
                                   num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
         elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
                                        qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])

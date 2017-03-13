@@ -4,7 +4,7 @@ from models.utils.distributions import draw_norm
 from models.utils.tf_helpers import create_nn_weights, mlp_neuron
 
 
-def q_z_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, reuse=False):
+def qz_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, reuse=False):
     with tf.variable_scope("encoder", reuse=reuse):
         # Variables
         w_h1, b_h1 = create_nn_weights('h1_z', 'encoder', [input_dim + num_classes + latent_dim, hidden_dim])
