@@ -99,7 +99,6 @@ def create_semisupervised(x, y, n_labeled):
 
 
 def binarize_images(images):
-    bin_images = []
     for i in range(images.shape[0]):
         means = images[i]
         samples = np.random.binomial(n=1, p=means)
@@ -115,10 +114,10 @@ def extract_data(n_labeled):
     x_valid, y_valid = valid_x.T, valid_y.T
     x_test, y_test = test_x.T, test_y.T
 
-    t_x_l = binarize_images(t_x_l)
-    t_x_u = binarize_images(t_x_u)
-    x_valid = binarize_images(x_valid)
-    x_test = binarize_images(x_test)
+    # t_x_l = binarize_images(t_x_l)
+    # t_x_u = binarize_images(t_x_u)
+    # x_valid = binarize_images(x_valid)
+    # x_test = binarize_images(x_test)
     print("x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape))
     return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test
 
