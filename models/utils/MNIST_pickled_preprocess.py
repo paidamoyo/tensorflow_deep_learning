@@ -10,6 +10,7 @@ import pickle
 import random
 
 import numpy as np
+import tensorflow as tf
 
 
 def load_numpy(path, binarize_y=False):
@@ -117,5 +118,12 @@ if __name__ == '__main__':
     x_lab, y_lab = x_l.T, y_l.T
     x_ulab, y_ulab = x_u.T, y_u.T
     print(x_lab.shape, y_lab.shape, x_ulab.shape, y_ulab.shape)
+    print(x_lab[0])
+    means = x_lab[0]
+
+    samples = tf.select(tf.random_uniform([1, means.shape]) - means > 0.5, tf.ones([1, means.shape]),
+                        tf.zeros([1, means.shape]))
+    session = tf.Session()
+    print("sample:{}".format(session.run(samples)))
     x_valid, y_valid = valid_x.T, valid_y.T
     x_test, y_test = test_x.T, test_y.T

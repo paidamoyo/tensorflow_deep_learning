@@ -14,7 +14,7 @@ if __name__ == '__main__':
         'num_batches': 100,
         'seed': 31415,
         'n_labeled': 100,
-        'alpha': 2,
+        'alpha': 1,  # 0.1 - 2
         'latent_dim': 50,
         'require_improvement': 10000,
         'n_train': 50000,

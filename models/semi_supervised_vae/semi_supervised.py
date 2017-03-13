@@ -199,9 +199,10 @@ class GenerativeClassifier(object):
         num_images = len(mu)
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
-        mean_auc, batch_auc = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
+        auc = tf.metrics.auc(predictions=self.y_lab_logits, labels=self.y_lab, curve='ROC')
+        num_batches = int(num_images / self.batch_size)
         self.session.run(tf.local_variables_initializer())
-        final_mean_value = 0.0
+        total_auc = 0.0
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
@@ -213,10 +214,12 @@ class GenerativeClassifier(object):
                          self.y_lab: batch_labels}
             cls_pred[i:j] = self.session.run(self.y_pred_cls, feed_dict=feed_dict)
             i = j
-            final_mean_value, auc = self.session.run([mean_auc, batch_auc], feed_dict=feed_dict)
-            # print("batch auc:{}".format(auc))
-        print('Final Mean AUC: %f' % final_mean_value)
-        logging.debug('Final Mean AUC: %f' % final_mean_value)
+            batch_auc = self.session.run([auc], feed_dict=feed_dict)
+            total_auc += batch_auc
+
+        mean_auc = total_auc / num_batches
+        print('Final Mean AUC: %f' % mean_auc)
+        logging.debug('Final Mean AUC: %f' % mean_auc)
         # Create a boolean array whether each image is correctly classified.
         correct = (cls_true == cls_pred)
         return correct, cls_pred
