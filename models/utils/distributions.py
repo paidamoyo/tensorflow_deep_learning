@@ -5,8 +5,8 @@ logc = np.log(2. * np.pi)
 c = - 0.5 * np.log(2 * np.pi)
 
 
-def tf_normal_logpdf(x, mu, log_sigma_sq):
-    return - 0.5 * logc - log_sigma_sq / 2. - tf.div(tf.squared_difference(x, mu), 2 * tf.exp(log_sigma_sq))
+def tf_normal_logpdf(x, mu, log_var):
+    return - 0.5 * logc - log_var / 2. - tf.div(tf.squared_difference(x, mu), 2 * tf.exp(log_var))
 
 
 def tf_stdnormal_logpdf(mu):
@@ -61,7 +61,7 @@ def elbo_M2(z1_recon, z1, y, z2):
     y_prior = (1. / num_classes) * tf.ones_like(y)
     log_prior_y = - tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
 
-    log_lik = tf.reduce_sum(tf_normal_logpdf(x=z1, mu=z1_recon[0], log_sigma_sq=z1_recon[1]), 1)
+    log_lik = tf.reduce_sum(tf_normal_logpdf(x=z1, mu=z1_recon[0], log_var=z1_recon[1]), 1)
     log_post_z = tf.reduce_sum(tf_gaussian_ent(z2[2]), 1)
     log_prior_z = tf.reduce_sum(tf_gaussian_marg(z2[1], z2[2]), 1)
 
@@ -100,3 +100,22 @@ def compute_ELBO(x_recon, x, y, z):
     tf.summary.scalar('negative_log_lik', negative_log_lik)
     # log_prior_y - tf.add(reconstruction_loss(x, x_recon[0]), regularization_loss(z[1], z[2]))
     return log_prior_y + log_lik + log_prior_z - log_post_z
+
+
+def auxiliary_elbo(x_recon, x, y, qz, qa, pa):
+    num_classes = 10
+    y_prior = (1. / num_classes) * tf.ones_like(y)
+
+    print(x, x_recon)
+    log_px = -tf.reduce_sum(tf_binary_xentropy(x_true=x, x_approx=x_recon))
+    log_qz = tf.reduce_sum(tf_normal_logpdf(x=qz[0], mu=qz[1], log_var=qz[2]), 1)
+    log_qa = tf.reduce_sum(tf_normal_logpdf(x=qa[0], mu=qa[1], log_var=qa[2]))
+
+    log_pz = tf.reduce_sum(tf_stdnormal_logpdf(mu=qa[0]))
+    log_py = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
+    log_pa = tf.reduce_sum(tf_normal_logpdf(x=qa[0], mu=pa[1], log_var=pa[2]))
+
+    negative_log_lik = tf.scalar_mul(-1, log_px)
+    tf.summary.scalar('negative_log_lik', negative_log_lik)
+    elbo = log_px + log_py + log_pz + log_pa - log_qa - log_qz
+    return elbo, log_px

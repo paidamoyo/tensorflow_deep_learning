@@ -6,12 +6,12 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 
+from models.auxiliary_semi_supervised.decoder import px_given_azy, pa_given_zy
+from models.auxiliary_semi_supervised.encoder import qa_given_x, q_z_given_ayx, qy_given_ax
 from models.classifier import softmax_classifier
-from models.auxiliary_semi_supervised.decoder import px_given_zy
-from models.auxiliary_semi_supervised.encoder import q_a_given_x, q_z_given_yx, qy_given_ax
 from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from models.utils.batch_processing import get_batch_size, get_next_batch
-from models.utils.distributions import compute_ELBO
+from models.utils.distributions import auxiliary_elbo
 from models.utils.distributions import prior_weights
 from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
@@ -30,8 +30,7 @@ class Auxiliary(object):
                  num_iterations,
                  input_dim,
                  latent_dim=100,
-                 hidden_dim=500,
-                 restore_vae=False
+                 hidden_dim=500
                  ):
         self.input_dim, self.latent_dim = input_dim, latent_dim
         self.hidden_dim = hidden_dim
@@ -43,12 +42,30 @@ class Auxiliary(object):
         self.alpha = alpha
         self.n_labeled = n_labeled
         self.num_classes = 10
-        self.restore_vae = restore_vae
         self.num_examples = 50000
         self.log_file = 'auxiliary.log'
         logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
         tf.set_random_seed(seed)
+        """
+               Initialize an skip deep generative model consisting of
+               discriminative classifier q(y|a,x),
+               generative model P p(a|z,y) and p(x|a,z,y),
+               inference model Q q(a|x) and q(z|a,x,y).
+               Weights are initialized using the Bengio and Glorot (2010) initialization scheme.
+               :param n_x: Number of inputs.
+               :param n_a: Number of auxiliary.
+               :param n_z: Number of latent.
+               :param n_y: Number of classes.
+               :param qa_hid: List of number of deterministic hidden q(a|x).
+               :param qz_hid: List of number of deterministic hidden q(z|a,x,y).
+               :param qy_hid: List of number of deterministic hidden q(y|a,x).
+               :param px_hid: List of number of deterministic hidden p(a|z,y) & p(x|z,y).
+               :param nonlinearity: The transfer function used in the deterministic layers.
+               :param x_dist: The x distribution, 'bernoulli', 'multinomial', or 'gaussian'.
+               :param batchnorm: Boolean value for batch normalization.
+               :param seed: The random seed.
+         """
 
         ''' Create Graph '''
         self.G = tf.Graph()
@@ -82,16 +99,18 @@ class Auxiliary(object):
                                                                                                     int(
                                                                                                         self.num_iterations / self.num_batches)))
         self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, \
-        self.y_pred_cls = self.labeled_model()
+        self.y_pred_cls, lab_log_lik = self.labeled_model()
         if self.n_labeled == self.num_examples:
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y), axis=0)
             self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
                 -self.num_batches * self.num_batches)
+            self.log_lik = lab_log_lik
         else:
-            self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
+            self.unlabeled_ELBO, self.y_ulab_logits, unlab_log_lik = self.unlabeled_model()
             self.cost = ((self.total_lab_loss() + self.total_unlab_loss()) * self.num_batches + prior_weights()) / (
                 -self.batch_size * self.num_batches)
+            self.log_lik = (lab_log_lik + unlab_log_lik) / 2
 
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
@@ -119,7 +138,6 @@ class Auxiliary(object):
         start_time = time.time()
         idx_labeled = 0
         idx_unlabeled = 0
-        idx = 0
 
         for i in range(self.num_iterations):
 
@@ -171,7 +189,7 @@ class Auxiliary(object):
         logging.debug("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
     def reconstruct(self, x_test, y_test):
-        return self.session.run(self.x_recon_lab_mu, feed_dict={self.x: x_test, self.x_lab: x_test, self.y_lab: y_test})
+        return self.session.run(self.x_recon_lab_mu, feed_dict={self.x_lab: x_test, self.y_lab: y_test})
 
     def test_reconstruction(self):
         num_images = 20
@@ -206,7 +224,7 @@ class Auxiliary(object):
         total_log_lik = 0.0
         i = 0
         num_val_batches = int(10000 / self.batch_size)
-        mean_value, update_op = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
+        mean_auc, batch_auc = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
         final_mean_value = 0.0
         self.session.run(tf.local_variables_initializer())
         while i < num_images:
@@ -215,13 +233,13 @@ class Auxiliary(object):
             batch_images = images[i:j, :]
             batch_labels = labels[i:j, :]
             feed_dict = {self.x_lab: batch_images,
-                         self.x: batch_images,
-                         self.y_lab: batch_labels}
+                         self.y_lab: batch_labels,
+                         self.x_unlab: []}
             cls_pred[i:j], log_lik = self.session.run([self.y_pred_cls, self.log_lik],
                                                       feed_dict=feed_dict)
             total_log_lik += log_lik
+            final_mean_value, auc = self.session.run([mean_auc, batch_auc], feed_dict=feed_dict)
             i = j
-            final_mean_value = mean_value.eval(feed_dict=feed_dict)
         print('Final Mean AUC: %f' % final_mean_value)
         logging.debug('Final Mean AUC: %f' % final_mean_value)
         # Create a boolean array whether each image is correctly classified.
@@ -239,45 +257,52 @@ class Auxiliary(object):
 
     def unlabeled_model(self):
         # Ulabeled
-        a, a_mu, a_logvar = q_a_given_x(self.x_unlab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                                            latent_dim=self.latent_dim, reuse=True)
+        a, a_mu, a_logvar = qa_given_x(self.x_unlab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                       latent_dim=self.latent_dim, reuse=True)
+
         logits = qy_given_ax(a=a, x=self.x_unlab, latent_dim=self.latent_dim,
-                             num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
+                             num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                             reuse=True)
+        elbo = []
+        total_log_lik = 0.0
         for label in range(self.num_classes):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
-            z2, z2_mu, z2_logvar = q_z2_given_z1y(z1=z1, y=y_ulab, latent_dim=self.latent_dim,
-                                                  num_classes=self.num_classes, hidden_dim=self.hidden_dim, reuse=True)
-            z1_recon, z1_mu_recon, z1_var_recon = pz1_given_z2y(y=y_ulab, z2=z2, latent_dim=self.latent_dim,
-                                                                num_classes=self.num_classes,
-                                                                hidden_dim=self.hidden_dim,
-                                                                reuse=True)
-            x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
-                                     hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
-            _elbo = tf.expand_dims(compute_ELBO(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, z=[z2, z2_mu, z2_logvar]),
-                                   1)
+            z, z_mu, z_logvar = q_z_given_ayx(a=a, y=y_ulab, x=self.x_unlab, latent_dim=self.latent_dim,
+                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                              input_dim=self.input_dim, reuse=True)
 
-            if label == 0:
-                class_elbo = tf.identity(_elbo)
-            else:
-                class_elbo = tf.concat((class_elbo, _elbo), axis=1)  # Decoder Model
-        print("unlabeled class_elbo:{}".format(class_elbo))
-        return class_elbo, logits
+            a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=y_ulab, latent_dim=self.latent_dim,
+                                                              hidden_dim=self.hidden_dim,
+                                                              num_classes=self.num_classes, reuse=True)
+            x_recon_mu = px_given_azy(y=y_ulab, z=z, a_recon=a_recon, latent_dim=self.latent_dim,
+                                      num_classes=self.num_classes,
+                                      hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
+            class_elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
+                                                 qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
+            elbo.append(class_elbo)
+            total_log_lik += log_lik
+        elbo = tf.convert_to_tensor(elbo)
+        print("unlabeled class_elbo:{}".format(elbo))
+        return tf.transpose(elbo), logits, total_log_lik / (self.num_ulab_batch * self.num_classes)
 
     def labeled_model(self):
-        a, a_mu, a_logvar = q_a_given_x(self.x_lab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                                            latent_dim=self.latent_dim, reuse=True)
+        a, a_mu, a_logvar = qa_given_x(self.x_lab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                       latent_dim=self.latent_dim)
 
-
-        logits = qy_given_ax(a=a,x=self.x_lab, latent_dim=self.latent_dim,
+        logits = qy_given_ax(a=a, x=self.x_lab, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
 
-        z2, z2_mu, z2_logvar = q_z_given_yx(z1=z1, y=self.y_lab, latent_dim=self.latent_dim,
-                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim)
-        z1_recon, z1_mu_recon, z1_var_recon = pz1_given_z2y(y=self.y_lab, z2=z2, latent_dim=self.latent_dim,
-                                                            num_classes=self.num_classes, hidden_dim=self.hidden_dim)
-        x_recon_mu = px_given_z1(z1_recon, latent_dim=self.latent_dim,
-                                 hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
-        elbo = compute_ELBO(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, z=[z2, z2_mu, z2_logvar])
+        z, z_mu, z_logvar = q_z_given_ayx(a=a, y=self.y_lab, x=self.x_lab, latent_dim=self.latent_dim,
+                                          num_classes=self.num_classes, hidden_dim=self.hidden_dim,
+                                          input_dim=self.input_dim)
+
+        a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=self.y_lab, latent_dim=self.latent_dim,
+                                                          hidden_dim=self.hidden_dim,
+                                                          num_classes=self.num_classes)
+        x_recon_mu = px_given_azy(y=self.y_lab, z=z, a_recon=a_recon, latent_dim=self.latent_dim,
+                                  num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
+        elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
+                                       qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
 
         classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
-        return elbo, logits, x_recon_mu, classifier_loss, y_pred_cls
+        return elbo, logits, x_recon_mu, classifier_loss, y_pred_cls, log_lik / self.num_lab_batch

@@ -14,7 +14,7 @@ if __name__ == '__main__':
         'num_batches': 100,
         'seed': 31415,
         'n_labeled': 100,
-        'alpha': 0.5,  # 0.1 - 2
+        'alpha': 0.1,  # 0.1 - 2
         'latent_dim': 50,
         'require_improvement': 10000,
         'n_train': 50000,
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     train_x_l_mu, train_x_l_logvar, train_x_u_mu, train_x_u_logvar, valid_x_mu, \
     valid_x_logvar, test_x_mu, test_x_logvar = encode_dataset(FLAGS=FLAGS, train_lab=train_x_lab,
                                                               train_unlab=train_x_unlab, valid=valid_x,
-                                                              test=test_x, min_std=FLAGS['min_std'])
+                                                              test=test_x, min_std=FLAGS['min_std'], train=False)
     train_lab = [train_x_l_mu, train_x_l_logvar, train_l_y]
     train_unlab = [train_x_u_mu, train_x_u_logvar, train_u_y]
     valid = [valid_x_mu, valid_x_logvar, valid_y]

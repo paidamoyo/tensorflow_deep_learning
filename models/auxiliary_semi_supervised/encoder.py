@@ -23,7 +23,7 @@ def q_z_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, reuse
         return z, mu_z, logvar_z
 
 
-def q_a_given_x(x, hidden_dim, input_dim, latent_dim, reuse=False):
+def qa_given_x(x, hidden_dim, input_dim, latent_dim, reuse=False):
     with tf.variable_scope("encoder", reuse=reuse):
         # Variables
         w_h1, b_h1 = create_nn_weights('h1_a', 'encoder', [input_dim, hidden_dim])
@@ -36,7 +36,7 @@ def q_a_given_x(x, hidden_dim, input_dim, latent_dim, reuse=False):
         h1 = mlp_neuron(x, w_h1, b_h1)
         h2 = mlp_neuron(h1, w_h2, b_h2)
 
-        # Z1 latent layer mu and var
+        # a latent layer mu and var
         logvar_a = mlp_neuron(h2, w_var_a, b_var_a, activation=False)
         mu_a = mlp_neuron(h2, w_mu_a, b_mu_a, activation=False)
         # Model
