@@ -18,7 +18,6 @@ if __name__ == '__main__':
         'learning_rate': 3e-4,
         'beta1': 0.9,
         'beta2': 0.999,
-        'input_dim': 28 * 28,
         'num_classes': 10
     }
 
@@ -26,8 +25,7 @@ if __name__ == '__main__':
                     beta1=FLAGS['beta1'], beta2=FLAGS['beta2'], alpha=FLAGS['alpha'],
                     require_improvement=FLAGS['require_improvement'], seed=FLAGS['seed'],
                     n_labeled=FLAGS['n_labeled'],
-                    num_iterations=FLAGS['num_iterations'],
-                    input_dim=FLAGS['input_dim'])  # Should be consistent with model being
+                    num_iterations=FLAGS['num_iterations'])  # Should be consistent with model being
 
     with aux.session:
         aux.train_test()

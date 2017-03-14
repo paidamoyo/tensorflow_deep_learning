@@ -13,12 +13,13 @@ from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semis
 from models.utils.batch_processing import get_next_batch
 from models.utils.distributions import auxiliary_elbo, tf_binary_xentropy
 from models.utils.distributions import prior_weights
-from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
+from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
 # TODO Batch Normalization , http://ruishu.io/2016/12/27/batchnorm/
 # TODO initialize weights using Glorot and Bengio(2010) scheme
+# TODO plot reconstructed images
 
 class Auxiliary(object):
     def __init__(self,
@@ -31,11 +32,10 @@ class Auxiliary(object):
                  seed,
                  n_labeled,
                  num_iterations,
-                 input_dim,
                  latent_dim=100,
                  hidden_dim=500
                  ):
-        self.input_dim, self.latent_dim = input_dim, latent_dim
+        self.latent_dim = latent_dim
         self.hidden_dim = hidden_dim
         self.batch_size = batch_size
         self.seed = seed
@@ -74,13 +74,13 @@ class Auxiliary(object):
         ''' Create Graph '''
         self.G = tf.Graph()
         with self.G.as_default():
+            self.train_x_l, self.train_l_y, self.train_u_x, self.train_u_y, self.valid_x, self.valid_y, \
+            self.test_x, self.test_y, self.input_dim = self.extract_data()
             self.x = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x')
             self.x_lab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_labeled')
             self.x_unlab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_unlabeled')
             self.y_lab = tf.placeholder(tf.float32, shape=[None, self.num_classes], name='y_lab')
             self.y_true_cls = tf.argmax(self.y_lab, axis=1)
-            self.train_x_l, self.train_l_y, self.train_u_x, self.train_u_y, self.valid_x, self.valid_y, \
-            self.test_x, self.test_y = self.extract_data()
             self._objective()
             self.saver = tf.train.Saver()
             self.session = tf.Session()
@@ -123,7 +123,8 @@ class Auxiliary(object):
         x_test, y_test = test_x.T, test_y.T
 
         id_x_keep = np.std(t_x_u, axis=0) > self.min_std
-        idx_print = "idx_keep count:{}".format(len(id_x_keep[np.where(id_x_keep == True)]))
+        input_dim = len(id_x_keep[np.where(id_x_keep == True)])
+        idx_print = "idx_keep count:{}".format(input_dim)
         print(idx_print)
         logging.debug(idx_print)
 
@@ -135,7 +136,7 @@ class Auxiliary(object):
         train_data_print = "x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape)
         print(train_data_print)
         logging.debug(train_data_print)
-        return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test
+        return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test, input_dim
 
     def train_neural_network(self):
         train_print = "Training Auxiliary VAE:"
@@ -210,7 +211,7 @@ class Auxiliary(object):
         log_lik_print = "test log_lik:{}".format(log_lik / num_images)
         print(log_lik_print)
         logging.debug(log_lik_print)
-        plot_images(x_test, x_recon, num_images, "auxiliary")
+        # plot_images(x_test, x_recon, num_images, "auxiliary")
 
     def total_lab_loss(self):
         # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))

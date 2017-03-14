@@ -18,7 +18,6 @@ def px_given_azy(z, y, qa, hidden_dim, input_dim, latent_dim, num_classes, reuse
         # Reconstruction layer
         # x_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)
         x_mu = tf.nn.sigmoid(tf.add(tf.matmul(h2, w_mu), b_mu))
-        tf.summary.image('x_mu', tf.reshape(x_mu[0], [1, 28, 28, 1]))
         return x_mu
 
 
