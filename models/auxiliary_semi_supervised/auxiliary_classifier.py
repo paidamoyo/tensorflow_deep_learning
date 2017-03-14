@@ -90,7 +90,7 @@ class Auxiliary(object):
             self.merged = tf.summary.merge_all()
 
     def _objective(self):
-        self.num_lab_batch, self.num_ulab_batch = 100, 100
+        self.num_lab_batch, self.num_ulab_batch = 1, 499
         self.num_batches = self.num_examples / self.batch_size
         logging.debug(
             "num batches:{}, batch_size:{},  num_lab_batch {}, num_ulab_batch:{}, epochs:{}".format(self.num_batches,
