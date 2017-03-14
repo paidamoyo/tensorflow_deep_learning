@@ -9,11 +9,11 @@ import tensorflow as tf
 from models.auxiliary_semi_supervised.decoder import px_given_azy, pa_given_zy
 from models.auxiliary_semi_supervised.encoder import qa_given_x, qz_given_ayx, qy_given_ax
 from models.classifier import softmax_classifier
-from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised, binarize_images
+from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from models.utils.batch_processing import get_next_batch
 from models.utils.distributions import auxiliary_elbo, tf_binary_xentropy
 from models.utils.distributions import prior_weights
-from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls
+from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
@@ -121,21 +121,21 @@ class Auxiliary(object):
         x_valid, y_valid = valid_x.T, valid_y.T
         x_test, y_test = test_x.T, test_y.T
 
-        id_x_keep = np.std(t_x_u, axis=0) > self.min_std
-        input_dim = len(id_x_keep[np.where(id_x_keep == True)])
-        idx_print = "idx_keep count:{}".format(input_dim)
-        print(idx_print)
-        logging.debug(idx_print)
-
-        t_x_l = binarize_images(t_x_l)[:, id_x_keep]
-        t_x_u = binarize_images(t_x_u)[:, id_x_keep]
-        x_valid = binarize_images(x_valid)[:, id_x_keep]
-        x_test = binarize_images(x_test)[:, id_x_keep]
+        # id_x_keep = np.std(t_x_u, axis=0) > self.min_std
+        # input_dim = len(id_x_keep[np.where(id_x_keep == True)])
+        # idx_print = "idx_keep count:{}".format(input_dim)
+        # print(idx_print)
+        # logging.debug(idx_print)
+        #
+        # t_x_l = binarize_images(t_x_l)[:, id_x_keep]
+        # t_x_u = binarize_images(t_x_u)[:, id_x_keep]
+        # x_valid = binarize_images(x_valid)[:, id_x_keep]
+        # x_test = binarize_images(x_test)[:, id_x_keep]
 
         train_data_print = "x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape)
         print(train_data_print)
         logging.debug(train_data_print)
-        return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test, input_dim
+        return t_x_l, t_y_l, t_x_u, t_y_u, x_valid, y_valid, x_test, y_test, t_x_l.shape[1]
 
     def train_neural_network(self):
         train_print = "Training Auxiliary VAE:"
@@ -210,7 +210,7 @@ class Auxiliary(object):
         log_lik_print = "test log_lik:{}".format(log_lik / num_images)
         print(log_lik_print)
         logging.debug(log_lik_print)
-        # plot_images(x_test, x_recon, num_images, "auxiliary")
+        plot_images(x_test, x_recon, num_images, "auxiliary")
 
     def total_lab_loss(self):
         # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
