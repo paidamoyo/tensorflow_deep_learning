@@ -287,7 +287,7 @@ class Auxiliary(object):
             a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=y_ulab, latent_dim=self.latent_dim,
                                                               hidden_dim=self.hidden_dim,
                                                               num_classes=self.num_classes, reuse=True)
-            x_recon_mu = px_given_azy(y=y_ulab, z=z, qa=a, latent_dim=self.latent_dim,
+            x_recon_mu = px_given_azy(y=y_ulab, z=z, a=a_recon, latent_dim=self.latent_dim,
                                       num_classes=self.num_classes,
                                       hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
             class_elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
@@ -312,7 +312,7 @@ class Auxiliary(object):
         a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=self.y_lab, latent_dim=self.latent_dim,
                                                           hidden_dim=self.hidden_dim,
                                                           num_classes=self.num_classes)
-        x_recon_mu = px_given_azy(y=self.y_lab, z=z, qa=a, latent_dim=self.latent_dim,
+        x_recon_mu = px_given_azy(y=self.y_lab, z=z, a=a_recon, latent_dim=self.latent_dim,
                                   num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
         elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
                                        qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
