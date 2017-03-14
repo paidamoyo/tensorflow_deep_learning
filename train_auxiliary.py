@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     FLAGS = {
         'num_iterations': 300000,  # should 3000 epochs (30000/100)
-        'num_batches': 100,
+        'batch_size': 200,
         'seed': 31415,
         'n_labeled': 100,
         'alpha': 0.1,
@@ -22,7 +22,7 @@ if __name__ == '__main__':
         'num_classes': 10
     }
 
-    aux = Auxiliary(num_batches=FLAGS['num_batches'], learning_rate=FLAGS['learning_rate'],
+    aux = Auxiliary(batch_size=FLAGS['batch_size'], learning_rate=FLAGS['learning_rate'],
                     beta1=FLAGS['beta1'], beta2=FLAGS['beta2'], alpha=FLAGS['alpha'],
                     require_improvement=FLAGS['require_improvement'], seed=FLAGS['seed'],
                     n_labeled=FLAGS['n_labeled'],

@@ -9,21 +9,20 @@ import tensorflow as tf
 from models.auxiliary_semi_supervised.decoder import px_given_azy, pa_given_zy
 from models.auxiliary_semi_supervised.encoder import qa_given_x, qz_given_ayx, qy_given_ax
 from models.classifier import softmax_classifier
-from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
-from models.utils.batch_processing import get_batch_size, get_next_batch
+from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised, binarize_images
+from models.utils.batch_processing import get_next_batch
 from models.utils.distributions import auxiliary_elbo, tf_binary_xentropy
 from models.utils.distributions import prior_weights
 from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
-# TODO binarize input
-# TODO reduce dimensions of input to greate min std
-# TODO Batch Normalization
+# TODO Batch Normalization , http://ruishu.io/2016/12/27/batchnorm/
+# TODO initialize weights using Glorot and Bengio(2010) scheme
 
 class Auxiliary(object):
     def __init__(self,
-                 num_batches,
+                 batch_size,
                  learning_rate,
                  beta1,
                  beta2,
@@ -38,7 +37,7 @@ class Auxiliary(object):
                  ):
         self.input_dim, self.latent_dim = input_dim, latent_dim
         self.hidden_dim = hidden_dim
-        self.num_batches = num_batches
+        self.batch_size = batch_size
         self.seed = seed
         self.require_improvement = require_improvement
         self.num_iterations = num_iterations
@@ -47,6 +46,7 @@ class Auxiliary(object):
         self.n_labeled = n_labeled
         self.num_classes = 10
         self.num_examples = 50000
+        self.min_std = 0.1
         self.log_file = 'auxiliary.log'
         logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
@@ -90,11 +90,8 @@ class Auxiliary(object):
             self.merged = tf.summary.merge_all()
 
     def _objective(self):
-
-        # Labeled
-        self.num_lab_batch, self.num_ulab_batch, self.batch_size = get_batch_size(num_examples=self.num_examples,
-                                                                                  num_batches=self.num_batches,
-                                                                                  num_lab=self.n_labeled)
+        self.num_lab_batch, self.num_ulab_batch = int(self.batch_size / 2), int(self.batch_size / 2)
+        self.num_batches = self.num_examples / self.batch_size
         logging.debug(
             "num batches:{}, batch_size:{},  num_lab_batch {}, num_ulab_batch:{}, epochs:{}".format(self.num_batches,
                                                                                                     self.batch_size,
@@ -124,6 +121,16 @@ class Auxiliary(object):
         t_x_u, t_y_u = x_u.T, y_u.T
         x_valid, y_valid = valid_x.T, valid_y.T
         x_test, y_test = test_x.T, test_y.T
+
+        id_x_keep = np.std(t_x_u, axis=0) > self.min_std
+        idx_print = "idx_keep count:{}".format(len(id_x_keep[np.where(id_x_keep == True)]))
+        print(idx_print)
+        logging.debug(idx_print)
+
+        t_x_l = binarize_images(t_x_l)[:, id_x_keep]
+        t_x_u = binarize_images(t_x_u)[:, id_x_keep]
+        x_valid = binarize_images(x_valid)[:, id_x_keep]
+        x_test = binarize_images(x_test)[:, id_x_keep]
 
         train_data_print = "x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape)
         print(train_data_print)
