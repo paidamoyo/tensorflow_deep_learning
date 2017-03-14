@@ -18,7 +18,6 @@ from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
 # TODO Batch Normalization , http://ruishu.io/2016/12/27/batchnorm/
-# TODO initialize weights using Glorot and Bengio(2010) scheme
 # TODO plot reconstructed images
 
 class Auxiliary(object):
