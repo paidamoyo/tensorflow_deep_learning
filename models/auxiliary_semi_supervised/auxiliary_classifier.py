@@ -6,10 +6,10 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 
-from models.auxiliary_semi_supervised.decoder import px_given_azy, pa_given_zy
+from models.auxiliary_semi_supervised.decoder import px_given_zy, pa_given_zy
 from models.auxiliary_semi_supervised.encoder import qa_given_x, qz_given_ayx, qy_given_ax
 from models.classifier import softmax_classifier
-from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
+from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised, binarize_images
 from models.utils.batch_processing import get_next_batch
 from models.utils.distributions import auxiliary_elbo, tf_binary_xentropy
 from models.utils.distributions import prior_weights
@@ -17,7 +17,8 @@ from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labe
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
-# TODO Batch Normalization , http://ruishu.io/2016/12/27/batchnorm/
+# TODO Batch Normalization , http://ruishu.io/2016/12/27/batchnorm/,
+# TODO http://r2rt.com/implementing-batch-normalization-in-tensorflow.html
 # TODO plot reconstructed images
 
 class Auxiliary(object):
@@ -89,7 +90,7 @@ class Auxiliary(object):
             self.merged = tf.summary.merge_all()
 
     def _objective(self):
-        self.num_lab_batch, self.num_ulab_batch = 1, 499
+        self.num_lab_batch, self.num_ulab_batch = 100, 100
         self.num_batches = self.num_examples / self.batch_size
         logging.debug(
             "num batches:{}, batch_size:{},  num_lab_batch {}, num_ulab_batch:{}, epochs:{}".format(self.num_batches,
@@ -121,16 +122,16 @@ class Auxiliary(object):
         x_valid, y_valid = valid_x.T, valid_y.T
         x_test, y_test = test_x.T, test_y.T
 
-        # id_x_keep = np.std(t_x_u, axis=0) > self.min_std
-        # input_dim = len(id_x_keep[np.where(id_x_keep == True)])
-        # idx_print = "idx_keep count:{}".format(input_dim)
-        # print(idx_print)
-        # logging.debug(idx_print)
-        #
-        # t_x_l = binarize_images(t_x_l)[:, id_x_keep]
-        # t_x_u = binarize_images(t_x_u)[:, id_x_keep]
-        # x_valid = binarize_images(x_valid)[:, id_x_keep]
-        # x_test = binarize_images(x_test)[:, id_x_keep]
+        id_x_keep = np.std(t_x_u, axis=0) > self.min_std
+        input_dim = len(id_x_keep[np.where(id_x_keep == True)])
+        idx_print = "idx_keep count:{}".format(input_dim)
+        print(idx_print)
+        logging.debug(idx_print)
+
+        t_x_l = binarize_images(t_x_l)[:, id_x_keep]
+        t_x_u = binarize_images(t_x_u)[:, id_x_keep]
+        x_valid = binarize_images(x_valid)[:, id_x_keep]
+        x_test = binarize_images(x_test)[:, id_x_keep]
 
         train_data_print = "x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape)
         print(train_data_print)
@@ -286,9 +287,9 @@ class Auxiliary(object):
             a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=y_ulab, latent_dim=self.latent_dim,
                                                               hidden_dim=self.hidden_dim,
                                                               num_classes=self.num_classes, reuse=True)
-            x_recon_mu = px_given_azy(y=y_ulab, z=z, a=a_recon, latent_dim=self.latent_dim,
-                                      num_classes=self.num_classes,
-                                      hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
+            x_recon_mu = px_given_zy(y=y_ulab, z=z, latent_dim=self.latent_dim,
+                                     num_classes=self.num_classes,
+                                     hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
             class_elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
                                                  qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
             elbo.append(class_elbo)
@@ -311,8 +312,8 @@ class Auxiliary(object):
         a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=self.y_lab, latent_dim=self.latent_dim,
                                                           hidden_dim=self.hidden_dim,
                                                           num_classes=self.num_classes)
-        x_recon_mu = px_given_azy(y=self.y_lab, z=z, a=a_recon, latent_dim=self.latent_dim,
-                                  num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
+        x_recon_mu = px_given_zy(y=self.y_lab, z=z, latent_dim=self.latent_dim,
+                                 num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
         elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
                                        qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
 
