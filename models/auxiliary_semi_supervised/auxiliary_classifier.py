@@ -128,7 +128,7 @@ class Auxiliary(object):
         # idx_print = "idx_keep count:{}".format(input_dim)
         # print(idx_print)
         # logging.debug(idx_print)
-        # 
+        #
         # t_x_l = binarize_images(t_x_l)[:, id_x_keep]
         # t_x_u = binarize_images(t_x_u)[:, id_x_keep]
         # x_valid = binarize_images(x_valid)[:, id_x_keep]
