@@ -14,7 +14,7 @@ if __name__ == '__main__':
         'num_batches': 250,
         'seed': 31415,
         'n_labeled': 50000,
-        'alpha': 0.1,  # 0.1 - 2
+        'alpha': 1,  # 0.1 - 2 TODO change alpha back to 0.1
         'latent_dim': 22,  # should be 50  TODO change back to 50
         'require_improvement': 5000,
         'n_train': 50000,
