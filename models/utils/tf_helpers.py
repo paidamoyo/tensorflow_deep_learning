@@ -2,10 +2,11 @@ import tensorflow as tf
 
 
 def mlp_neuron(layer_input, weights, biases, activation=True):
+    mlp = tf.add(tf.matmul(layer_input, weights), biases)
     if activation:
-        return tf.nn.relu(tf.add(tf.matmul(layer_input, weights), biases))
+        return tf.nn.relu(mlp)
     else:
-        return tf.add(tf.matmul(layer_input, weights), biases)
+        return mlp
 
 
 def create_nn_weights(layer, network, shape):
