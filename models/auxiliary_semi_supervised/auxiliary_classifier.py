@@ -112,6 +112,7 @@ class Auxiliary(object):
             self.cost = ((self.total_lab_loss() + self.total_unlab_loss()) * self.num_batches + prior_weights()) / (
                 -self.batch_size * self.num_batches)
 
+        tf.summary.scalar('cost', self.cost)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
 

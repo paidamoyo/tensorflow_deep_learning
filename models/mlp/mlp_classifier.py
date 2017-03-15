@@ -47,7 +47,7 @@ class MLPClassifier(object):
             self.saver = tf.train.Saver()
             self.session = tf.Session()
             self.current_dir = os.getcwd()
-            self.save_path = self.current_dir + "/summaries/vae_model"
+            self.save_path = self.current_dir + "/summaries/mlp_model"
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
             self.merged = tf.summary.merge_all()
 
@@ -62,6 +62,7 @@ class MLPClassifier(object):
             self.num_iterations / num_batches)))
 
         self.y_logits, self.y_pred_cls, self.cost = self.build_model()
+        tf.summary.scalar('cost', self.cost)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
 
