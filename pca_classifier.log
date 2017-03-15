@@ -1,204 +1,745 @@
-DEBUG:root:num batches:250, batch_size:200, epochs:1200
+DEBUG:root:num batches:250, batch_size:200, epochs:160
 DEBUG:root:Training PCA MLP:
-DEBUG:root:Final Mean AUC: 0.148104
-DEBUG:root:Iteration: 1, Training Loss: 2,  Validation Acc:0.1075, *
-DEBUG:root:Final Mean AUC: 0.022917
-DEBUG:root:Iteration: 101, Training Loss: 5,  Validation Acc:0.103, 
-DEBUG:root:Final Mean AUC: 0.027393
-DEBUG:root:Iteration: 201, Training Loss: 3,  Validation Acc:0.2082, *
-DEBUG:root:Final Mean AUC: 0.025767
-DEBUG:root:Iteration: 301, Training Loss: 4,  Validation Acc:0.2382, *
-DEBUG:root:Final Mean AUC: 0.022350
-DEBUG:root:Iteration: 401, Training Loss: 2,  Validation Acc:0.2103, 
-DEBUG:root:Final Mean AUC: 0.028207
-DEBUG:root:Iteration: 501, Training Loss: 1,  Validation Acc:0.3969, *
-DEBUG:root:Final Mean AUC: 0.022009
-DEBUG:root:Iteration: 601, Training Loss: 2,  Validation Acc:0.3114, 
-DEBUG:root:Final Mean AUC: 0.018250
-DEBUG:root:Iteration: 701, Training Loss: 2,  Validation Acc:0.387, 
-DEBUG:root:Final Mean AUC: 0.024947
-DEBUG:root:Iteration: 801, Training Loss: 1,  Validation Acc:0.4951, *
-DEBUG:root:Final Mean AUC: 0.018762
-DEBUG:root:Iteration: 901, Training Loss: 1,  Validation Acc:0.3421, 
-DEBUG:root:Final Mean AUC: 0.020316
-DEBUG:root:Iteration: 1001, Training Loss: 0,  Validation Acc:0.4482, 
-DEBUG:root:Final Mean AUC: 0.029075
-DEBUG:root:Iteration: 1101, Training Loss: 1,  Validation Acc:0.5105, *
-DEBUG:root:Final Mean AUC: 0.018715
-DEBUG:root:Iteration: 1201, Training Loss: 2,  Validation Acc:0.4915, 
-DEBUG:root:Final Mean AUC: 0.022578
-DEBUG:root:Iteration: 1301, Training Loss: 1,  Validation Acc:0.583, *
-DEBUG:root:Final Mean AUC: 0.016944
-DEBUG:root:Iteration: 1401, Training Loss: 0,  Validation Acc:0.4896, 
-DEBUG:root:Final Mean AUC: 0.020686
-DEBUG:root:Iteration: 1501, Training Loss: 0,  Validation Acc:0.5332, 
-DEBUG:root:Final Mean AUC: 0.021758
-DEBUG:root:Iteration: 1601, Training Loss: 2,  Validation Acc:0.5381, 
-DEBUG:root:Final Mean AUC: 0.023242
-DEBUG:root:Iteration: 1701, Training Loss: 2,  Validation Acc:0.5444, 
-DEBUG:root:Final Mean AUC: 0.024644
-DEBUG:root:Iteration: 1801, Training Loss: 1,  Validation Acc:0.6255, *
-DEBUG:root:Final Mean AUC: 0.018865
-DEBUG:root:Iteration: 1901, Training Loss: 0,  Validation Acc:0.6401, *
-DEBUG:root:Final Mean AUC: 0.021316
-DEBUG:root:Iteration: 2001, Training Loss: 0,  Validation Acc:0.5895, 
-DEBUG:root:Final Mean AUC: 0.027115
-DEBUG:root:Iteration: 2101, Training Loss: 1,  Validation Acc:0.6618, *
-DEBUG:root:Final Mean AUC: 0.019103
-DEBUG:root:Iteration: 2201, Training Loss: 1,  Validation Acc:0.6247, 
-DEBUG:root:Final Mean AUC: 0.024108
-DEBUG:root:Iteration: 2301, Training Loss: 1,  Validation Acc:0.6636, *
-DEBUG:root:Final Mean AUC: 0.021764
-DEBUG:root:Iteration: 2401, Training Loss: 0,  Validation Acc:0.7241, *
-DEBUG:root:Final Mean AUC: 0.022885
-DEBUG:root:Iteration: 2501, Training Loss: 0,  Validation Acc:0.6782, 
-DEBUG:root:Final Mean AUC: 0.027467
-DEBUG:root:Iteration: 2601, Training Loss: 1,  Validation Acc:0.7497, *
-DEBUG:root:Final Mean AUC: 0.021410
-DEBUG:root:Iteration: 2701, Training Loss: 1,  Validation Acc:0.6862, 
-DEBUG:root:Final Mean AUC: 0.024444
-DEBUG:root:Iteration: 2801, Training Loss: 1,  Validation Acc:0.7272, 
-DEBUG:root:Final Mean AUC: 0.020745
-DEBUG:root:Iteration: 2901, Training Loss: 0,  Validation Acc:0.773, *
-DEBUG:root:Final Mean AUC: 0.023311
-DEBUG:root:Iteration: 3001, Training Loss: 0,  Validation Acc:0.7319, 
-DEBUG:root:Final Mean AUC: 0.028094
-DEBUG:root:Iteration: 3101, Training Loss: 1,  Validation Acc:0.7978, *
-DEBUG:root:Final Mean AUC: 0.020263
-DEBUG:root:Iteration: 3201, Training Loss: 1,  Validation Acc:0.731, 
-DEBUG:root:Final Mean AUC: 0.022828
-DEBUG:root:Iteration: 3301, Training Loss: 0,  Validation Acc:0.7562, 
-DEBUG:root:Final Mean AUC: 0.020991
-DEBUG:root:Iteration: 3401, Training Loss: 0,  Validation Acc:0.8116, *
-DEBUG:root:Final Mean AUC: 0.023299
-DEBUG:root:Iteration: 3501, Training Loss: 0,  Validation Acc:0.7796, 
-DEBUG:root:Final Mean AUC: 0.027772
-DEBUG:root:Iteration: 3601, Training Loss: 1,  Validation Acc:0.8137, *
-DEBUG:root:Final Mean AUC: 0.020429
-DEBUG:root:Iteration: 3701, Training Loss: 1,  Validation Acc:0.7504, 
-DEBUG:root:Final Mean AUC: 0.022191
-DEBUG:root:Iteration: 3801, Training Loss: 0,  Validation Acc:0.7839, 
-DEBUG:root:Final Mean AUC: 0.020347
-DEBUG:root:Iteration: 3901, Training Loss: 0,  Validation Acc:0.8225, *
-DEBUG:root:Final Mean AUC: 0.023477
-DEBUG:root:Iteration: 4001, Training Loss: 0,  Validation Acc:0.7991, 
-DEBUG:root:Final Mean AUC: 0.027071
-DEBUG:root:Iteration: 4101, Training Loss: 1,  Validation Acc:0.8205, 
-DEBUG:root:Final Mean AUC: 0.019841
-DEBUG:root:Iteration: 4201, Training Loss: 1,  Validation Acc:0.7626, 
-DEBUG:root:Final Mean AUC: 0.021682
-DEBUG:root:Iteration: 4301, Training Loss: 0,  Validation Acc:0.7965, 
-DEBUG:root:Final Mean AUC: 0.019471
-DEBUG:root:Iteration: 4401, Training Loss: 0,  Validation Acc:0.8322, *
-DEBUG:root:Final Mean AUC: 0.022979
-DEBUG:root:Iteration: 4501, Training Loss: 0,  Validation Acc:0.8138, 
-DEBUG:root:Final Mean AUC: 0.026484
-DEBUG:root:Iteration: 4601, Training Loss: 1,  Validation Acc:0.8321, 
-DEBUG:root:Final Mean AUC: 0.019413
-DEBUG:root:Iteration: 4701, Training Loss: 1,  Validation Acc:0.7794, 
-DEBUG:root:Final Mean AUC: 0.020900
-DEBUG:root:Iteration: 4801, Training Loss: 0,  Validation Acc:0.8095, 
-DEBUG:root:Final Mean AUC: 0.019197
-DEBUG:root:Iteration: 4901, Training Loss: 0,  Validation Acc:0.8431, *
-DEBUG:root:Final Mean AUC: 0.022898
-DEBUG:root:Iteration: 5001, Training Loss: 0,  Validation Acc:0.8291, 
-DEBUG:root:Final Mean AUC: 0.024200
-DEBUG:root:Iteration: 5101, Training Loss: 0,  Validation Acc:0.7974, 
-DEBUG:root:Final Mean AUC: 0.017757
-DEBUG:root:Iteration: 5201, Training Loss: 1,  Validation Acc:0.7676, 
-DEBUG:root:Final Mean AUC: 0.021080
-DEBUG:root:Iteration: 5301, Training Loss: 0,  Validation Acc:0.7981, 
-DEBUG:root:Final Mean AUC: 0.019251
-DEBUG:root:Iteration: 5401, Training Loss: 0,  Validation Acc:0.8348, 
-DEBUG:root:Final Mean AUC: 0.021643
-DEBUG:root:Iteration: 5501, Training Loss: 0,  Validation Acc:0.8285, 
-DEBUG:root:Final Mean AUC: 0.025312
-DEBUG:root:Iteration: 5601, Training Loss: 0,  Validation Acc:0.8451, *
-DEBUG:root:Final Mean AUC: 0.018688
-DEBUG:root:Iteration: 5701, Training Loss: 1,  Validation Acc:0.7934, 
-DEBUG:root:Final Mean AUC: 0.020874
-DEBUG:root:Iteration: 5801, Training Loss: 0,  Validation Acc:0.8284, 
-DEBUG:root:Final Mean AUC: 0.018684
-DEBUG:root:Iteration: 5901, Training Loss: 0,  Validation Acc:0.8679, *
-DEBUG:root:Final Mean AUC: 0.021539
-DEBUG:root:Iteration: 6001, Training Loss: 0,  Validation Acc:0.8505, 
-DEBUG:root:Final Mean AUC: 0.023674
-DEBUG:root:Iteration: 6101, Training Loss: 0,  Validation Acc:0.8734, *
-DEBUG:root:Final Mean AUC: 0.016925
-DEBUG:root:Iteration: 6201, Training Loss: 1,  Validation Acc:0.827, 
-DEBUG:root:Final Mean AUC: 0.019430
-DEBUG:root:Iteration: 6301, Training Loss: 0,  Validation Acc:0.8439, 
-DEBUG:root:Final Mean AUC: 0.017105
-DEBUG:root:Iteration: 6401, Training Loss: 0,  Validation Acc:0.8743, *
-DEBUG:root:Final Mean AUC: 0.020648
-DEBUG:root:Iteration: 6501, Training Loss: 0,  Validation Acc:0.8577, 
-DEBUG:root:Final Mean AUC: 0.021925
-DEBUG:root:Iteration: 6601, Training Loss: 0,  Validation Acc:0.8802, *
-DEBUG:root:Final Mean AUC: 0.016568
-DEBUG:root:Iteration: 6701, Training Loss: 1,  Validation Acc:0.8396, 
-DEBUG:root:Final Mean AUC: 0.018075
-DEBUG:root:Iteration: 6801, Training Loss: 0,  Validation Acc:0.8521, 
-DEBUG:root:Final Mean AUC: 0.016236
-DEBUG:root:Iteration: 6901, Training Loss: 0,  Validation Acc:0.8788, 
-DEBUG:root:Final Mean AUC: 0.019338
-DEBUG:root:Iteration: 7001, Training Loss: 0,  Validation Acc:0.8683, 
+DEBUG:root:Final Mean AUC: 0.061614
+DEBUG:root:Iteration: 1, Training Loss: 2.8853766918182373,  Validation Acc:0.1256, *
+DEBUG:root:Final Mean AUC: 0.017759
+DEBUG:root:Iteration: 101, Training Loss: 4.557921409606934,  Validation Acc:0.1052, 
+DEBUG:root:Final Mean AUC: 0.023320
+DEBUG:root:Iteration: 201, Training Loss: 3.2329797744750977,  Validation Acc:0.2011, *
+DEBUG:root:Final Mean AUC: 0.021483
+DEBUG:root:Iteration: 301, Training Loss: 2.7706806659698486,  Validation Acc:0.2547, *
+DEBUG:root:Final Mean AUC: 0.031286
+DEBUG:root:Iteration: 401, Training Loss: 2.1607251167297363,  Validation Acc:0.2481, 
+DEBUG:root:Final Mean AUC: 0.031293
+DEBUG:root:Iteration: 501, Training Loss: 1.3688316345214844,  Validation Acc:0.3525, *
+DEBUG:root:Final Mean AUC: 0.024395
+DEBUG:root:Iteration: 601, Training Loss: 2.1917126178741455,  Validation Acc:0.3665, *
+DEBUG:root:Final Mean AUC: 0.017693
+DEBUG:root:Iteration: 701, Training Loss: 2.486823081970215,  Validation Acc:0.3438, 
+DEBUG:root:Final Mean AUC: 0.023831
+DEBUG:root:Iteration: 801, Training Loss: 1.590674638748169,  Validation Acc:0.4967, *
+DEBUG:root:Final Mean AUC: 0.024662
+DEBUG:root:Iteration: 901, Training Loss: 1.066638708114624,  Validation Acc:0.3858, 
+DEBUG:root:Final Mean AUC: 0.019240
+DEBUG:root:Iteration: 1001, Training Loss: 0.7328802347183228,  Validation Acc:0.4438, 
+DEBUG:root:Final Mean AUC: 0.027716
+DEBUG:root:Iteration: 1101, Training Loss: 1.8222543001174927,  Validation Acc:0.5286, *
+DEBUG:root:Final Mean AUC: 0.019728
+DEBUG:root:Iteration: 1201, Training Loss: 2.764986753463745,  Validation Acc:0.4629, 
+DEBUG:root:Final Mean AUC: 0.023396
+DEBUG:root:Iteration: 1301, Training Loss: 1.6714348793029785,  Validation Acc:0.5712, *
+DEBUG:root:Final Mean AUC: 0.019786
+DEBUG:root:Iteration: 1401, Training Loss: 0.6995968222618103,  Validation Acc:0.5291, 
+DEBUG:root:Final Mean AUC: 0.019147
+DEBUG:root:Iteration: 1501, Training Loss: 0.7068870663642883,  Validation Acc:0.5294, 
+DEBUG:root:Final Mean AUC: 0.023108
+DEBUG:root:Iteration: 1601, Training Loss: 2.204441785812378,  Validation Acc:0.5722, *
+DEBUG:root:Final Mean AUC: 0.021544
+DEBUG:root:Iteration: 1701, Training Loss: 2.1979970932006836,  Validation Acc:0.5935, *
+DEBUG:root:Final Mean AUC: 0.023822
+DEBUG:root:Iteration: 1801, Training Loss: 1.4070894718170166,  Validation Acc:0.6423, *
+DEBUG:root:Final Mean AUC: 0.020379
+DEBUG:root:Iteration: 1901, Training Loss: 0.5131744742393494,  Validation Acc:0.6786, *
+DEBUG:root:Final Mean AUC: 0.021950
+DEBUG:root:Iteration: 2001, Training Loss: 0.5886777639389038,  Validation Acc:0.6421, 
+DEBUG:root:Final Mean AUC: 0.027409
+DEBUG:root:Iteration: 2101, Training Loss: 1.5900304317474365,  Validation Acc:0.7094, *
+DEBUG:root:Final Mean AUC: 0.022454
+DEBUG:root:Iteration: 2201, Training Loss: 1.7711362838745117,  Validation Acc:0.729, *
+DEBUG:root:Final Mean AUC: 0.024313
+DEBUG:root:Iteration: 2301, Training Loss: 1.1966302394866943,  Validation Acc:0.7307, *
+DEBUG:root:Final Mean AUC: 0.021537
+DEBUG:root:Iteration: 2401, Training Loss: 0.4071420729160309,  Validation Acc:0.7783, *
+DEBUG:root:Final Mean AUC: 0.023761
+DEBUG:root:Iteration: 2501, Training Loss: 0.3754886984825134,  Validation Acc:0.7379, 
+DEBUG:root:Final Mean AUC: 0.028110
+DEBUG:root:Iteration: 2601, Training Loss: 1.3057341575622559,  Validation Acc:0.7853, *
+DEBUG:root:Final Mean AUC: 0.021325
+DEBUG:root:Iteration: 2701, Training Loss: 1.5810643434524536,  Validation Acc:0.7718, 
+DEBUG:root:Final Mean AUC: 0.024036
+DEBUG:root:Iteration: 2801, Training Loss: 0.9617103934288025,  Validation Acc:0.7827, 
+DEBUG:root:Final Mean AUC: 0.019590
+DEBUG:root:Iteration: 2901, Training Loss: 0.3285432457923889,  Validation Acc:0.8107, *
+DEBUG:root:Final Mean AUC: 0.024887
+DEBUG:root:Iteration: 3001, Training Loss: 0.31401586532592773,  Validation Acc:0.7781, 
+DEBUG:root:Final Mean AUC: 0.026704
+DEBUG:root:Iteration: 3101, Training Loss: 1.1534490585327148,  Validation Acc:0.8294, *
+DEBUG:root:Final Mean AUC: 0.019880
+DEBUG:root:Iteration: 3201, Training Loss: 1.4290471076965332,  Validation Acc:0.7893, 
+DEBUG:root:Final Mean AUC: 0.022374
+DEBUG:root:Iteration: 3301, Training Loss: 0.8384731411933899,  Validation Acc:0.8122, 
+DEBUG:root:Final Mean AUC: 0.018788
+DEBUG:root:Iteration: 3401, Training Loss: 0.2851407825946808,  Validation Acc:0.8428, *
+DEBUG:root:Final Mean AUC: 0.023769
+DEBUG:root:Iteration: 3501, Training Loss: 0.27232444286346436,  Validation Acc:0.8104, 
+DEBUG:root:Final Mean AUC: 0.024900
+DEBUG:root:Iteration: 3601, Training Loss: 1.067906141281128,  Validation Acc:0.8532, *
+DEBUG:root:Final Mean AUC: 0.018894
+DEBUG:root:Iteration: 3701, Training Loss: 1.3097723722457886,  Validation Acc:0.8069, 
+DEBUG:root:Final Mean AUC: 0.021123
+DEBUG:root:Iteration: 3801, Training Loss: 0.7515650391578674,  Validation Acc:0.833, 
+DEBUG:root:Final Mean AUC: 0.017690
+DEBUG:root:Iteration: 3901, Training Loss: 0.25524020195007324,  Validation Acc:0.8585, *
+DEBUG:root:Final Mean AUC: 0.022268
+DEBUG:root:Iteration: 4001, Training Loss: 0.24594026803970337,  Validation Acc:0.8328, 
+DEBUG:root:Final Mean AUC: 0.023527
+DEBUG:root:Iteration: 4101, Training Loss: 0.9798677563667297,  Validation Acc:0.8661, *
+DEBUG:root:Final Mean AUC: 0.017999
+DEBUG:root:Iteration: 4201, Training Loss: 1.206115484237671,  Validation Acc:0.8204, 
+DEBUG:root:Final Mean AUC: 0.020164
+DEBUG:root:Iteration: 4301, Training Loss: 0.6829703450202942,  Validation Acc:0.8462, 
+DEBUG:root:Final Mean AUC: 0.016926
+DEBUG:root:Iteration: 4401, Training Loss: 0.23227977752685547,  Validation Acc:0.8697, *
+DEBUG:root:Final Mean AUC: 0.020890
+DEBUG:root:Iteration: 4501, Training Loss: 0.22655242681503296,  Validation Acc:0.8476, 
 DEBUG:root:Final Mean AUC: 0.021301
-DEBUG:root:Iteration: 7101, Training Loss: 0,  Validation Acc:0.8854, *
-DEBUG:root:Final Mean AUC: 0.015746
-DEBUG:root:Iteration: 7201, Training Loss: 1,  Validation Acc:0.8508, 
-DEBUG:root:Final Mean AUC: 0.017413
-DEBUG:root:Iteration: 7301, Training Loss: 0,  Validation Acc:0.8604, 
-DEBUG:root:Final Mean AUC: 0.015540
-DEBUG:root:Iteration: 7401, Training Loss: 0,  Validation Acc:0.8813, 
-DEBUG:root:Final Mean AUC: 0.018406
-DEBUG:root:Iteration: 7501, Training Loss: 0,  Validation Acc:0.8767, 
-DEBUG:root:Final Mean AUC: 0.020908
-DEBUG:root:Iteration: 7601, Training Loss: 0,  Validation Acc:0.8882, *
-DEBUG:root:Final Mean AUC: 0.015402
-DEBUG:root:Iteration: 7701, Training Loss: 0,  Validation Acc:0.8565, 
-DEBUG:root:Final Mean AUC: 0.016524
-DEBUG:root:Iteration: 7801, Training Loss: 0,  Validation Acc:0.8662, 
-DEBUG:root:Final Mean AUC: 0.014585
-DEBUG:root:Iteration: 7901, Training Loss: 0,  Validation Acc:0.8846, 
-DEBUG:root:Final Mean AUC: 0.017732
-DEBUG:root:Iteration: 8001, Training Loss: 0,  Validation Acc:0.8852, 
-DEBUG:root:Final Mean AUC: 0.020010
-DEBUG:root:Iteration: 8101, Training Loss: 0,  Validation Acc:0.8914, *
-DEBUG:root:Final Mean AUC: 0.014607
-DEBUG:root:Iteration: 8201, Training Loss: 0,  Validation Acc:0.862, 
-DEBUG:root:Final Mean AUC: 0.015986
-DEBUG:root:Iteration: 8301, Training Loss: 0,  Validation Acc:0.8719, 
-DEBUG:root:Final Mean AUC: 0.013722
-DEBUG:root:Iteration: 8401, Training Loss: 0,  Validation Acc:0.8871, 
-DEBUG:root:Final Mean AUC: 0.017104
-DEBUG:root:Iteration: 8501, Training Loss: 0,  Validation Acc:0.8914, 
-DEBUG:root:Final Mean AUC: 0.019238
-DEBUG:root:Iteration: 8601, Training Loss: 0,  Validation Acc:0.8945, *
-DEBUG:root:Final Mean AUC: 0.013948
-DEBUG:root:Iteration: 8701, Training Loss: 0,  Validation Acc:0.869, 
-DEBUG:root:Final Mean AUC: 0.015174
-DEBUG:root:Iteration: 8801, Training Loss: 0,  Validation Acc:0.8781, 
-DEBUG:root:Final Mean AUC: 0.013163
-DEBUG:root:Iteration: 8901, Training Loss: 0,  Validation Acc:0.891, 
-DEBUG:root:Final Mean AUC: 0.016383
-DEBUG:root:Iteration: 9001, Training Loss: 0,  Validation Acc:0.8928, 
-DEBUG:root:Final Mean AUC: 0.017334
-DEBUG:root:Iteration: 9101, Training Loss: 0,  Validation Acc:0.898, *
-DEBUG:root:Final Mean AUC: 0.012773
-DEBUG:root:Iteration: 9201, Training Loss: 0,  Validation Acc:0.8664, 
-DEBUG:root:Final Mean AUC: 0.014148
-DEBUG:root:Iteration: 9301, Training Loss: 0,  Validation Acc:0.8831, 
-DEBUG:root:Final Mean AUC: 0.012760
-DEBUG:root:Iteration: 9401, Training Loss: 0,  Validation Acc:0.8985, *
-DEBUG:root:Final Mean AUC: 0.015510
-DEBUG:root:Iteration: 9501, Training Loss: 0,  Validation Acc:0.8969, 
-DEBUG:root:Final Mean AUC: 0.016598
-DEBUG:root:Iteration: 9601, Training Loss: 0,  Validation Acc:0.9025, *
-DEBUG:root:Final Mean AUC: 0.012099
-DEBUG:root:Iteration: 9701, Training Loss: 0,  Validation Acc:0.8803, 
-DEBUG:root:Final Mean AUC: 0.013178
-DEBUG:root:Iteration: 9801, Training Loss: 0,  Validation Acc:0.8874, 
-DEBUG:root:Final Mean AUC: 0.011869
-DEBUG:root:Iteration: 9901, Training Loss: 0,  Validation Acc:0.9064, *
-DEBUG:root:Final Mean AUC: 0.014723
-DEBUG:root:Iteration: 10001, Training Loss: 0,  Validation Acc:0.9032, 
+DEBUG:root:Iteration: 4601, Training Loss: 0.9300304651260376,  Validation Acc:0.8734, *
+DEBUG:root:Final Mean AUC: 0.017059
+DEBUG:root:Iteration: 4701, Training Loss: 1.1225781440734863,  Validation Acc:0.8304, 
+DEBUG:root:Final Mean AUC: 0.019323
+DEBUG:root:Iteration: 4801, Training Loss: 0.6362079977989197,  Validation Acc:0.8568, 
+DEBUG:root:Final Mean AUC: 0.015972
+DEBUG:root:Iteration: 4901, Training Loss: 0.22051149606704712,  Validation Acc:0.8772, *
+DEBUG:root:Final Mean AUC: 0.019924
+DEBUG:root:Iteration: 5001, Training Loss: 0.2140623927116394,  Validation Acc:0.8605, 
+DEBUG:root:Final Mean AUC: 0.019844
+DEBUG:root:Iteration: 5101, Training Loss: 0.8698965311050415,  Validation Acc:0.8831, *
+DEBUG:root:Final Mean AUC: 0.016479
+DEBUG:root:Iteration: 5201, Training Loss: 1.051560401916504,  Validation Acc:0.8394, 
+DEBUG:root:Final Mean AUC: 0.018674
+DEBUG:root:Iteration: 5301, Training Loss: 0.5984593629837036,  Validation Acc:0.8624, 
+DEBUG:root:Final Mean AUC: 0.015657
+DEBUG:root:Iteration: 5401, Training Loss: 0.212883859872818,  Validation Acc:0.8825, 
+DEBUG:root:Final Mean AUC: 0.018782
+DEBUG:root:Iteration: 5501, Training Loss: 0.19659321010112762,  Validation Acc:0.8702, 
+DEBUG:root:Final Mean AUC: 0.018563
+DEBUG:root:Iteration: 5601, Training Loss: 0.8122957944869995,  Validation Acc:0.8891, *
+DEBUG:root:Final Mean AUC: 0.015508
+DEBUG:root:Iteration: 5701, Training Loss: 0.9922117590904236,  Validation Acc:0.8451, 
+DEBUG:root:Final Mean AUC: 0.018103
+DEBUG:root:Iteration: 5801, Training Loss: 0.5540328621864319,  Validation Acc:0.8713, 
+DEBUG:root:Final Mean AUC: 0.014910
+DEBUG:root:Iteration: 5901, Training Loss: 0.2032981514930725,  Validation Acc:0.8891, 
+DEBUG:root:Final Mean AUC: 0.017856
+DEBUG:root:Iteration: 6001, Training Loss: 0.18398505449295044,  Validation Acc:0.8796, 
+DEBUG:root:Final Mean AUC: 0.017306
+DEBUG:root:Iteration: 6101, Training Loss: 0.7655214071273804,  Validation Acc:0.8949, *
+DEBUG:root:Final Mean AUC: 0.014725
+DEBUG:root:Iteration: 6201, Training Loss: 0.9322390556335449,  Validation Acc:0.8533, 
+DEBUG:root:Final Mean AUC: 0.017434
+DEBUG:root:Iteration: 6301, Training Loss: 0.5097289681434631,  Validation Acc:0.8789, 
+DEBUG:root:Final Mean AUC: 0.014182
+DEBUG:root:Iteration: 6401, Training Loss: 0.19359628856182098,  Validation Acc:0.8935, 
+DEBUG:root:Final Mean AUC: 0.017062
+DEBUG:root:Iteration: 6501, Training Loss: 0.17149290442466736,  Validation Acc:0.8862, 
+DEBUG:root:Final Mean AUC: 0.016510
+DEBUG:root:Iteration: 6601, Training Loss: 0.7249560952186584,  Validation Acc:0.8994, *
+DEBUG:root:Final Mean AUC: 0.013915
+DEBUG:root:Iteration: 6701, Training Loss: 0.8772368431091309,  Validation Acc:0.86, 
+DEBUG:root:Final Mean AUC: 0.016535
+DEBUG:root:Iteration: 6801, Training Loss: 0.47573399543762207,  Validation Acc:0.8836, 
+DEBUG:root:Final Mean AUC: 0.013632
+DEBUG:root:Iteration: 6901, Training Loss: 0.1799810379743576,  Validation Acc:0.8985, 
+DEBUG:root:Final Mean AUC: 0.016149
+DEBUG:root:Iteration: 7001, Training Loss: 0.16593918204307556,  Validation Acc:0.8956, 
+DEBUG:root:Final Mean AUC: 0.015279
+DEBUG:root:Iteration: 7101, Training Loss: 0.6806378364562988,  Validation Acc:0.9043, *
+DEBUG:root:Final Mean AUC: 0.013329
+DEBUG:root:Iteration: 7201, Training Loss: 0.8340089321136475,  Validation Acc:0.8644, 
+DEBUG:root:Final Mean AUC: 0.015365
+DEBUG:root:Iteration: 7301, Training Loss: 0.44224804639816284,  Validation Acc:0.8908, 
+DEBUG:root:Final Mean AUC: 0.012681
+DEBUG:root:Iteration: 7401, Training Loss: 0.17069199681282043,  Validation Acc:0.9043, 
+DEBUG:root:Final Mean AUC: 0.015287
+DEBUG:root:Iteration: 7501, Training Loss: 0.15111441910266876,  Validation Acc:0.9018, 
+DEBUG:root:Final Mean AUC: 0.014383
+DEBUG:root:Iteration: 7601, Training Loss: 0.6442809104919434,  Validation Acc:0.9069, *
+DEBUG:root:Final Mean AUC: 0.012404
+DEBUG:root:Iteration: 7701, Training Loss: 0.7825539708137512,  Validation Acc:0.8712, 
+DEBUG:root:Final Mean AUC: 0.014307
+DEBUG:root:Iteration: 7801, Training Loss: 0.4059378504753113,  Validation Acc:0.8963, 
+DEBUG:root:Final Mean AUC: 0.011877
+DEBUG:root:Iteration: 7901, Training Loss: 0.16183681786060333,  Validation Acc:0.9095, *
+DEBUG:root:Final Mean AUC: 0.014563
+DEBUG:root:Iteration: 8001, Training Loss: 0.13832919299602509,  Validation Acc:0.9071, 
+DEBUG:root:Final Mean AUC: 0.013912
+DEBUG:root:Iteration: 8101, Training Loss: 0.6255243420600891,  Validation Acc:0.9095, 
+DEBUG:root:Final Mean AUC: 0.011635
+DEBUG:root:Iteration: 8201, Training Loss: 0.733100950717926,  Validation Acc:0.8775, 
+DEBUG:root:Final Mean AUC: 0.013066
+DEBUG:root:Iteration: 8301, Training Loss: 0.3709610402584076,  Validation Acc:0.9026, 
+DEBUG:root:Final Mean AUC: 0.011090
+DEBUG:root:Iteration: 8401, Training Loss: 0.14935867488384247,  Validation Acc:0.9146, *
+DEBUG:root:Final Mean AUC: 0.013345
+DEBUG:root:Iteration: 8501, Training Loss: 0.13690310716629028,  Validation Acc:0.9125, 
+DEBUG:root:Final Mean AUC: 0.012661
+DEBUG:root:Iteration: 8601, Training Loss: 0.5927290320396423,  Validation Acc:0.9124, 
+DEBUG:root:Final Mean AUC: 0.011045
+DEBUG:root:Iteration: 8701, Training Loss: 0.6843444108963013,  Validation Acc:0.885, 
+DEBUG:root:Final Mean AUC: 0.012174
+DEBUG:root:Iteration: 8801, Training Loss: 0.3461759388446808,  Validation Acc:0.9058, 
+DEBUG:root:Final Mean AUC: 0.010358
+DEBUG:root:Iteration: 8901, Training Loss: 0.14021740853786469,  Validation Acc:0.9176, *
+DEBUG:root:Final Mean AUC: 0.012226
+DEBUG:root:Iteration: 9001, Training Loss: 0.12517330050468445,  Validation Acc:0.9165, 
+DEBUG:root:Final Mean AUC: 0.011573
+DEBUG:root:Iteration: 9101, Training Loss: 0.5820488929748535,  Validation Acc:0.9142, 
+DEBUG:root:Final Mean AUC: 0.010448
+DEBUG:root:Iteration: 9201, Training Loss: 0.6406795978546143,  Validation Acc:0.8888, 
+DEBUG:root:Final Mean AUC: 0.010948
+DEBUG:root:Iteration: 9301, Training Loss: 0.31771934032440186,  Validation Acc:0.9119, 
+DEBUG:root:Final Mean AUC: 0.009659
+DEBUG:root:Iteration: 9401, Training Loss: 0.130286306142807,  Validation Acc:0.9207, *
+DEBUG:root:Final Mean AUC: 0.011316
+DEBUG:root:Iteration: 9501, Training Loss: 0.11600001156330109,  Validation Acc:0.9219, *
+DEBUG:root:Final Mean AUC: 0.010837
+DEBUG:root:Iteration: 9601, Training Loss: 0.5629410743713379,  Validation Acc:0.9162, 
+DEBUG:root:Final Mean AUC: 0.010168
+DEBUG:root:Iteration: 9701, Training Loss: 0.592025101184845,  Validation Acc:0.8944, 
+DEBUG:root:Final Mean AUC: 0.009743
+DEBUG:root:Iteration: 9801, Training Loss: 0.28884464502334595,  Validation Acc:0.9174, 
+DEBUG:root:Final Mean AUC: 0.008786
+DEBUG:root:Iteration: 9901, Training Loss: 0.12132011353969574,  Validation Acc:0.9262, *
+DEBUG:root:Final Mean AUC: 0.009825
+DEBUG:root:Iteration: 10001, Training Loss: 0.10544198006391525,  Validation Acc:0.9258, 
+DEBUG:root:Final Mean AUC: 0.010035
+DEBUG:root:Iteration: 10101, Training Loss: 0.528614342212677,  Validation Acc:0.92, 
+DEBUG:root:Final Mean AUC: 0.009616
+DEBUG:root:Iteration: 10201, Training Loss: 0.5417855381965637,  Validation Acc:0.8973, 
+DEBUG:root:Final Mean AUC: 0.009070
+DEBUG:root:Iteration: 10301, Training Loss: 0.2625310719013214,  Validation Acc:0.9206, 
+DEBUG:root:Final Mean AUC: 0.008352
+DEBUG:root:Iteration: 10401, Training Loss: 0.11171689629554749,  Validation Acc:0.9297, *
+DEBUG:root:Final Mean AUC: 0.009215
+DEBUG:root:Iteration: 10501, Training Loss: 0.09210524708032608,  Validation Acc:0.9296, 
+DEBUG:root:Final Mean AUC: 0.009605
+DEBUG:root:Iteration: 10601, Training Loss: 0.49227604269981384,  Validation Acc:0.9212, 
+DEBUG:root:Final Mean AUC: 0.009003
+DEBUG:root:Iteration: 10701, Training Loss: 0.48946088552474976,  Validation Acc:0.9028, 
+DEBUG:root:Final Mean AUC: 0.008370
+DEBUG:root:Iteration: 10801, Training Loss: 0.24307109415531158,  Validation Acc:0.9236, 
+DEBUG:root:Final Mean AUC: 0.007955
+DEBUG:root:Iteration: 10901, Training Loss: 0.10351820290088654,  Validation Acc:0.9319, *
+DEBUG:root:Final Mean AUC: 0.008305
+DEBUG:root:Iteration: 11001, Training Loss: 0.0864696279168129,  Validation Acc:0.9326, *
+DEBUG:root:Final Mean AUC: 0.008822
+DEBUG:root:Iteration: 11101, Training Loss: 0.4619009792804718,  Validation Acc:0.9229, 
+DEBUG:root:Final Mean AUC: 0.008444
+DEBUG:root:Iteration: 11201, Training Loss: 0.44857728481292725,  Validation Acc:0.9077, 
+DEBUG:root:Final Mean AUC: 0.007785
+DEBUG:root:Iteration: 11301, Training Loss: 0.2293146848678589,  Validation Acc:0.9248, 
+DEBUG:root:Final Mean AUC: 0.007369
+DEBUG:root:Iteration: 11401, Training Loss: 0.09838175028562546,  Validation Acc:0.9356, *
+DEBUG:root:Final Mean AUC: 0.007706
+DEBUG:root:Iteration: 11501, Training Loss: 0.0814390704035759,  Validation Acc:0.9345, 
+DEBUG:root:Final Mean AUC: 0.008074
+DEBUG:root:Iteration: 11601, Training Loss: 0.4435952603816986,  Validation Acc:0.925, 
+DEBUG:root:Final Mean AUC: 0.007911
+DEBUG:root:Iteration: 11701, Training Loss: 0.4064829349517822,  Validation Acc:0.9129, 
+DEBUG:root:Final Mean AUC: 0.007153
+DEBUG:root:Iteration: 11801, Training Loss: 0.21736684441566467,  Validation Acc:0.928, 
+DEBUG:root:Final Mean AUC: 0.007170
+DEBUG:root:Iteration: 11901, Training Loss: 0.09403786808252335,  Validation Acc:0.9386, *
+DEBUG:root:Final Mean AUC: 0.007046
+DEBUG:root:Iteration: 12001, Training Loss: 0.06705211102962494,  Validation Acc:0.9376, 
+DEBUG:root:Final Mean AUC: 0.007258
+DEBUG:root:Iteration: 12101, Training Loss: 0.4224669933319092,  Validation Acc:0.9262, 
+DEBUG:root:Final Mean AUC: 0.007165
+DEBUG:root:Iteration: 12201, Training Loss: 0.3669126033782959,  Validation Acc:0.9175, 
+DEBUG:root:Final Mean AUC: 0.006346
+DEBUG:root:Iteration: 12301, Training Loss: 0.1971089094877243,  Validation Acc:0.9313, 
+DEBUG:root:Final Mean AUC: 0.006858
+DEBUG:root:Iteration: 12401, Training Loss: 0.08874258399009705,  Validation Acc:0.9384, 
+DEBUG:root:Final Mean AUC: 0.006238
+DEBUG:root:Iteration: 12501, Training Loss: 0.05284664034843445,  Validation Acc:0.9392, *
+DEBUG:root:Final Mean AUC: 0.006995
+DEBUG:root:Iteration: 12601, Training Loss: 0.39802324771881104,  Validation Acc:0.9271, 
+DEBUG:root:Final Mean AUC: 0.006929
+DEBUG:root:Iteration: 12701, Training Loss: 0.3248102068901062,  Validation Acc:0.922, 
+DEBUG:root:Final Mean AUC: 0.005730
+DEBUG:root:Iteration: 12801, Training Loss: 0.17905449867248535,  Validation Acc:0.9335, 
+DEBUG:root:Final Mean AUC: 0.006582
+DEBUG:root:Iteration: 12901, Training Loss: 0.08188221603631973,  Validation Acc:0.9431, *
+DEBUG:root:Final Mean AUC: 0.005770
+DEBUG:root:Iteration: 13001, Training Loss: 0.04210028424859047,  Validation Acc:0.9412, 
+DEBUG:root:Final Mean AUC: 0.006602
+DEBUG:root:Iteration: 13101, Training Loss: 0.3689729869365692,  Validation Acc:0.9291, 
+DEBUG:root:Final Mean AUC: 0.006333
+DEBUG:root:Iteration: 13201, Training Loss: 0.28663215041160583,  Validation Acc:0.9269, 
+DEBUG:root:Final Mean AUC: 0.005372
+DEBUG:root:Iteration: 13301, Training Loss: 0.16273102164268494,  Validation Acc:0.9368, 
+DEBUG:root:Final Mean AUC: 0.006237
+DEBUG:root:Iteration: 13401, Training Loss: 0.0751735046505928,  Validation Acc:0.9451, *
+DEBUG:root:Final Mean AUC: 0.005450
+DEBUG:root:Iteration: 13501, Training Loss: 0.03389597684144974,  Validation Acc:0.9437, 
+DEBUG:root:Final Mean AUC: 0.006141
+DEBUG:root:Iteration: 13601, Training Loss: 0.33962300419807434,  Validation Acc:0.9304, 
+DEBUG:root:Final Mean AUC: 0.006187
+DEBUG:root:Iteration: 13701, Training Loss: 0.24983736872673035,  Validation Acc:0.9296, 
+DEBUG:root:Final Mean AUC: 0.005030
+DEBUG:root:Iteration: 13801, Training Loss: 0.14650742709636688,  Validation Acc:0.9381, 
+DEBUG:root:Final Mean AUC: 0.005626
+DEBUG:root:Iteration: 13901, Training Loss: 0.06986401230096817,  Validation Acc:0.9454, *
+DEBUG:root:Final Mean AUC: 0.005090
+DEBUG:root:Iteration: 14001, Training Loss: 0.029142843559384346,  Validation Acc:0.9456, *
+DEBUG:root:Final Mean AUC: 0.005766
+DEBUG:root:Iteration: 14101, Training Loss: 0.3160330355167389,  Validation Acc:0.9324, 
+DEBUG:root:Final Mean AUC: 0.005659
+DEBUG:root:Iteration: 14201, Training Loss: 0.21567058563232422,  Validation Acc:0.9337, 
+DEBUG:root:Final Mean AUC: 0.004708
+DEBUG:root:Iteration: 14301, Training Loss: 0.128488689661026,  Validation Acc:0.94, 
+DEBUG:root:Final Mean AUC: 0.005289
+DEBUG:root:Iteration: 14401, Training Loss: 0.06410695612430573,  Validation Acc:0.9476, *
+DEBUG:root:Final Mean AUC: 0.004525
+DEBUG:root:Iteration: 14501, Training Loss: 0.023524858057498932,  Validation Acc:0.9459, 
+DEBUG:root:Final Mean AUC: 0.005467
+DEBUG:root:Iteration: 14601, Training Loss: 0.2946286201477051,  Validation Acc:0.934, 
+DEBUG:root:Final Mean AUC: 0.005088
+DEBUG:root:Iteration: 14701, Training Loss: 0.18571604788303375,  Validation Acc:0.9364, 
+DEBUG:root:Final Mean AUC: 0.004296
+DEBUG:root:Iteration: 14801, Training Loss: 0.11326511949300766,  Validation Acc:0.9414, 
+DEBUG:root:Final Mean AUC: 0.004939
+DEBUG:root:Iteration: 14901, Training Loss: 0.057699594646692276,  Validation Acc:0.949, *
+DEBUG:root:Final Mean AUC: 0.004254
+DEBUG:root:Iteration: 15001, Training Loss: 0.01845896616578102,  Validation Acc:0.9479, 
+DEBUG:root:Final Mean AUC: 0.004804
+DEBUG:root:Iteration: 15101, Training Loss: 0.2699836492538452,  Validation Acc:0.9357, 
+DEBUG:root:Final Mean AUC: 0.004758
+DEBUG:root:Iteration: 15201, Training Loss: 0.1625349372625351,  Validation Acc:0.9394, 
+DEBUG:root:Final Mean AUC: 0.003924
+DEBUG:root:Iteration: 15301, Training Loss: 0.0983043685555458,  Validation Acc:0.9434, 
+DEBUG:root:Final Mean AUC: 0.004493
+DEBUG:root:Iteration: 15401, Training Loss: 0.049757882952690125,  Validation Acc:0.9496, *
+DEBUG:root:Final Mean AUC: 0.003837
+DEBUG:root:Iteration: 15501, Training Loss: 0.014175884425640106,  Validation Acc:0.9499, *
+DEBUG:root:Final Mean AUC: 0.004590
+DEBUG:root:Iteration: 15601, Training Loss: 0.24719317257404327,  Validation Acc:0.9366, 
+DEBUG:root:Final Mean AUC: 0.004367
+DEBUG:root:Iteration: 15701, Training Loss: 0.14178147912025452,  Validation Acc:0.9418, 
+DEBUG:root:Final Mean AUC: 0.003567
+DEBUG:root:Iteration: 15801, Training Loss: 0.08643414080142975,  Validation Acc:0.9449, 
+DEBUG:root:Final Mean AUC: 0.004058
+DEBUG:root:Iteration: 15901, Training Loss: 0.040006719529628754,  Validation Acc:0.9505, *
+DEBUG:root:Final Mean AUC: 0.003566
+DEBUG:root:Iteration: 16001, Training Loss: 0.010475998744368553,  Validation Acc:0.9517, *
+DEBUG:root:Final Mean AUC: 0.004177
+DEBUG:root:Iteration: 16101, Training Loss: 0.22650820016860962,  Validation Acc:0.9384, 
+DEBUG:root:Final Mean AUC: 0.003881
+DEBUG:root:Iteration: 16201, Training Loss: 0.12149584293365479,  Validation Acc:0.9435, 
+DEBUG:root:Final Mean AUC: 0.003374
+DEBUG:root:Iteration: 16301, Training Loss: 0.07701312750577927,  Validation Acc:0.9456, 
+DEBUG:root:Final Mean AUC: 0.003756
+DEBUG:root:Iteration: 16401, Training Loss: 0.030351601541042328,  Validation Acc:0.951, 
+DEBUG:root:Final Mean AUC: 0.003243
+DEBUG:root:Iteration: 16501, Training Loss: 0.007829959504306316,  Validation Acc:0.9522, *
+DEBUG:root:Final Mean AUC: 0.003795
+DEBUG:root:Iteration: 16601, Training Loss: 0.20406082272529602,  Validation Acc:0.9404, 
+DEBUG:root:Final Mean AUC: 0.003355
+DEBUG:root:Iteration: 16701, Training Loss: 0.10370027273893356,  Validation Acc:0.9459, 
+DEBUG:root:Final Mean AUC: 0.002906
+DEBUG:root:Iteration: 16801, Training Loss: 0.06679388880729675,  Validation Acc:0.9466, 
+DEBUG:root:Final Mean AUC: 0.003613
+DEBUG:root:Iteration: 16901, Training Loss: 0.02330070175230503,  Validation Acc:0.9508, 
+DEBUG:root:Final Mean AUC: 0.002876
+DEBUG:root:Iteration: 17001, Training Loss: 0.00590733764693141,  Validation Acc:0.9536, *
+DEBUG:root:Final Mean AUC: 0.003626
+DEBUG:root:Iteration: 17101, Training Loss: 0.18342626094818115,  Validation Acc:0.9414, 
+DEBUG:root:Final Mean AUC: 0.002952
+DEBUG:root:Iteration: 17201, Training Loss: 0.08815762400627136,  Validation Acc:0.9483, 
+DEBUG:root:Final Mean AUC: 0.002808
+DEBUG:root:Iteration: 17301, Training Loss: 0.057504262775182724,  Validation Acc:0.9481, 
+DEBUG:root:Final Mean AUC: 0.003276
+DEBUG:root:Iteration: 17401, Training Loss: 0.01822665147483349,  Validation Acc:0.9521, 
+DEBUG:root:Final Mean AUC: 0.002560
+DEBUG:root:Iteration: 17501, Training Loss: 0.004330407828092575,  Validation Acc:0.9547, *
+DEBUG:root:Final Mean AUC: 0.003430
+DEBUG:root:Iteration: 17601, Training Loss: 0.16432072222232819,  Validation Acc:0.9433, 
+DEBUG:root:Final Mean AUC: 0.002657
+DEBUG:root:Iteration: 17701, Training Loss: 0.07264089584350586,  Validation Acc:0.9499, 
+DEBUG:root:Final Mean AUC: 0.002712
+DEBUG:root:Iteration: 17801, Training Loss: 0.048872482031583786,  Validation Acc:0.9497, 
+DEBUG:root:Final Mean AUC: 0.003150
+DEBUG:root:Iteration: 17901, Training Loss: 0.015337820164859295,  Validation Acc:0.9529, 
+DEBUG:root:Final Mean AUC: 0.002426
+DEBUG:root:Iteration: 18001, Training Loss: 0.0034639867953956127,  Validation Acc:0.9556, *
+DEBUG:root:Final Mean AUC: 0.003155
+DEBUG:root:Iteration: 18101, Training Loss: 0.1470508724451065,  Validation Acc:0.9444, 
+DEBUG:root:Final Mean AUC: 0.002486
+DEBUG:root:Iteration: 18201, Training Loss: 0.059228599071502686,  Validation Acc:0.9521, 
+DEBUG:root:Final Mean AUC: 0.002636
+DEBUG:root:Iteration: 18301, Training Loss: 0.03975928947329521,  Validation Acc:0.9518, 
+DEBUG:root:Final Mean AUC: 0.002934
+DEBUG:root:Iteration: 18401, Training Loss: 0.012568174861371517,  Validation Acc:0.9532, 
+DEBUG:root:Final Mean AUC: 0.002334
+DEBUG:root:Iteration: 18501, Training Loss: 0.002708692103624344,  Validation Acc:0.9572, *
+DEBUG:root:Final Mean AUC: 0.002824
+DEBUG:root:Iteration: 18601, Training Loss: 0.12682725489139557,  Validation Acc:0.9464, 
+DEBUG:root:Final Mean AUC: 0.002356
+DEBUG:root:Iteration: 18701, Training Loss: 0.048274099826812744,  Validation Acc:0.9536, 
+DEBUG:root:Final Mean AUC: 0.002394
+DEBUG:root:Iteration: 18801, Training Loss: 0.03150443732738495,  Validation Acc:0.953, 
+DEBUG:root:Final Mean AUC: 0.002694
+DEBUG:root:Iteration: 18901, Training Loss: 0.010154630988836288,  Validation Acc:0.9539, 
+DEBUG:root:Final Mean AUC: 0.002301
+DEBUG:root:Iteration: 19001, Training Loss: 0.0018832678906619549,  Validation Acc:0.9578, *
+DEBUG:root:Final Mean AUC: 0.002632
+DEBUG:root:Iteration: 19101, Training Loss: 0.10926700383424759,  Validation Acc:0.9472, 
+DEBUG:root:Final Mean AUC: 0.002214
+DEBUG:root:Iteration: 19201, Training Loss: 0.038981951773166656,  Validation Acc:0.9543, 
+DEBUG:root:Final Mean AUC: 0.002306
+DEBUG:root:Iteration: 19301, Training Loss: 0.0251148734241724,  Validation Acc:0.9541, 
+DEBUG:root:Final Mean AUC: 0.002371
+DEBUG:root:Iteration: 19401, Training Loss: 0.008194057270884514,  Validation Acc:0.9548, 
+DEBUG:root:Final Mean AUC: 0.002164
+DEBUG:root:Iteration: 19501, Training Loss: 0.0013829533709213138,  Validation Acc:0.9578, 
+DEBUG:root:Final Mean AUC: 0.002388
+DEBUG:root:Iteration: 19601, Training Loss: 0.09239739179611206,  Validation Acc:0.9482, 
+DEBUG:root:Final Mean AUC: 0.002005
+DEBUG:root:Iteration: 19701, Training Loss: 0.03164331242442131,  Validation Acc:0.9556, 
+DEBUG:root:Final Mean AUC: 0.002174
+DEBUG:root:Iteration: 19801, Training Loss: 0.020813176408410072,  Validation Acc:0.9557, 
+DEBUG:root:Final Mean AUC: 0.002212
+DEBUG:root:Iteration: 19901, Training Loss: 0.006755005102604628,  Validation Acc:0.9548, 
+DEBUG:root:Final Mean AUC: 0.001998
+DEBUG:root:Iteration: 20001, Training Loss: 0.0008938629180192947,  Validation Acc:0.9588, *
+DEBUG:root:Final Mean AUC: 0.002106
+DEBUG:root:Iteration: 20101, Training Loss: 0.07802736014127731,  Validation Acc:0.9494, 
+DEBUG:root:Final Mean AUC: 0.001870
+DEBUG:root:Iteration: 20201, Training Loss: 0.025065574795007706,  Validation Acc:0.9568, 
+DEBUG:root:Final Mean AUC: 0.002063
+DEBUG:root:Iteration: 20301, Training Loss: 0.01802174374461174,  Validation Acc:0.9566, 
+DEBUG:root:Final Mean AUC: 0.002018
+DEBUG:root:Iteration: 20401, Training Loss: 0.005630796775221825,  Validation Acc:0.9546, 
+DEBUG:root:Final Mean AUC: 0.001790
+DEBUG:root:Iteration: 20501, Training Loss: 0.0007153940969146788,  Validation Acc:0.9596, *
+DEBUG:root:Final Mean AUC: 0.001955
+DEBUG:root:Iteration: 20601, Training Loss: 0.06453568488359451,  Validation Acc:0.9512, 
+DEBUG:root:Final Mean AUC: 0.001660
+DEBUG:root:Iteration: 20701, Training Loss: 0.019995005801320076,  Validation Acc:0.9589, 
+DEBUG:root:Final Mean AUC: 0.001880
+DEBUG:root:Iteration: 20801, Training Loss: 0.016214853152632713,  Validation Acc:0.9585, 
+DEBUG:root:Final Mean AUC: 0.001882
+DEBUG:root:Iteration: 20901, Training Loss: 0.004485821817070246,  Validation Acc:0.9551, 
+DEBUG:root:Final Mean AUC: 0.001824
+DEBUG:root:Iteration: 21001, Training Loss: 0.0005300813354551792,  Validation Acc:0.9612, *
+DEBUG:root:Final Mean AUC: 0.001842
+DEBUG:root:Iteration: 21101, Training Loss: 0.054532334208488464,  Validation Acc:0.9529, 
+DEBUG:root:Final Mean AUC: 0.001578
+DEBUG:root:Iteration: 21201, Training Loss: 0.01627151109278202,  Validation Acc:0.9595, 
+DEBUG:root:Final Mean AUC: 0.001786
+DEBUG:root:Iteration: 21301, Training Loss: 0.012605314143002033,  Validation Acc:0.959, 
+DEBUG:root:Final Mean AUC: 0.001692
+DEBUG:root:Iteration: 21401, Training Loss: 0.0037410978693515062,  Validation Acc:0.9555, 
+DEBUG:root:Final Mean AUC: 0.001706
+DEBUG:root:Iteration: 21501, Training Loss: 0.00041333219269290566,  Validation Acc:0.9615, *
+DEBUG:root:Final Mean AUC: 0.001751
+DEBUG:root:Iteration: 21601, Training Loss: 0.04393812268972397,  Validation Acc:0.9538, 
+DEBUG:root:Final Mean AUC: 0.001377
+DEBUG:root:Iteration: 21701, Training Loss: 0.012744763866066933,  Validation Acc:0.9605, 
+DEBUG:root:Final Mean AUC: 0.001694
+DEBUG:root:Iteration: 21801, Training Loss: 0.009634234011173248,  Validation Acc:0.9604, 
+DEBUG:root:Final Mean AUC: 0.001417
+DEBUG:root:Iteration: 21901, Training Loss: 0.0031287975143641233,  Validation Acc:0.9554, 
+DEBUG:root:Final Mean AUC: 0.001482
+DEBUG:root:Iteration: 22001, Training Loss: 0.000367714703315869,  Validation Acc:0.962, *
+DEBUG:root:Final Mean AUC: 0.001512
+DEBUG:root:Iteration: 22101, Training Loss: 0.03439360857009888,  Validation Acc:0.9549, 
+DEBUG:root:Final Mean AUC: 0.001396
+DEBUG:root:Iteration: 22201, Training Loss: 0.009731939062476158,  Validation Acc:0.961, 
+DEBUG:root:Final Mean AUC: 0.001578
+DEBUG:root:Iteration: 22301, Training Loss: 0.006718140095472336,  Validation Acc:0.9608, 
+DEBUG:root:Final Mean AUC: 0.001349
+DEBUG:root:Iteration: 22401, Training Loss: 0.0026505524292588234,  Validation Acc:0.956, 
+DEBUG:root:Final Mean AUC: 0.001368
+DEBUG:root:Iteration: 22501, Training Loss: 0.00028662849217653275,  Validation Acc:0.9629, *
+DEBUG:root:Final Mean AUC: 0.001430
+DEBUG:root:Iteration: 22601, Training Loss: 0.02720063179731369,  Validation Acc:0.9562, 
+DEBUG:root:Final Mean AUC: 0.001200
+DEBUG:root:Iteration: 22701, Training Loss: 0.007393016945570707,  Validation Acc:0.9614, 
+DEBUG:root:Final Mean AUC: 0.001525
+DEBUG:root:Iteration: 22801, Training Loss: 0.0047412654384970665,  Validation Acc:0.9617, 
+DEBUG:root:Final Mean AUC: 0.001221
+DEBUG:root:Iteration: 22901, Training Loss: 0.002108474727720022,  Validation Acc:0.9568, 
+DEBUG:root:Final Mean AUC: 0.001352
+DEBUG:root:Iteration: 23001, Training Loss: 0.00020610407227650285,  Validation Acc:0.9631, *
+DEBUG:root:Final Mean AUC: 0.001337
+DEBUG:root:Iteration: 23101, Training Loss: 0.020727619528770447,  Validation Acc:0.9569, 
+DEBUG:root:Final Mean AUC: 0.001034
+DEBUG:root:Iteration: 23201, Training Loss: 0.005637493450194597,  Validation Acc:0.9628, 
+DEBUG:root:Final Mean AUC: 0.001403
+DEBUG:root:Iteration: 23301, Training Loss: 0.0033744540996849537,  Validation Acc:0.962, 
+DEBUG:root:Final Mean AUC: 0.001102
+DEBUG:root:Iteration: 23401, Training Loss: 0.0015086083440110087,  Validation Acc:0.9578, 
+DEBUG:root:Final Mean AUC: 0.001139
+DEBUG:root:Iteration: 23501, Training Loss: 0.00015124290075618774,  Validation Acc:0.9634, *
+DEBUG:root:Final Mean AUC: 0.001141
+DEBUG:root:Iteration: 23601, Training Loss: 0.015406124293804169,  Validation Acc:0.958, 
+DEBUG:root:Final Mean AUC: 0.000906
+DEBUG:root:Iteration: 23701, Training Loss: 0.004139457829296589,  Validation Acc:0.9639, *
+DEBUG:root:Final Mean AUC: 0.001322
+DEBUG:root:Iteration: 23801, Training Loss: 0.0025213700719177723,  Validation Acc:0.9619, 
+DEBUG:root:Final Mean AUC: 0.001088
+DEBUG:root:Iteration: 23901, Training Loss: 0.0011571415234357119,  Validation Acc:0.9578, 
+DEBUG:root:Final Mean AUC: 0.001065
+DEBUG:root:Iteration: 24001, Training Loss: 9.462579328101128e-05,  Validation Acc:0.9636, 
+DEBUG:root:Final Mean AUC: 0.001099
+DEBUG:root:Iteration: 24101, Training Loss: 0.012394770979881287,  Validation Acc:0.959, 
+DEBUG:root:Final Mean AUC: 0.000818
+DEBUG:root:Iteration: 24201, Training Loss: 0.003270561108365655,  Validation Acc:0.9651, *
+DEBUG:root:Final Mean AUC: 0.001162
+DEBUG:root:Iteration: 24301, Training Loss: 0.0021549544762820005,  Validation Acc:0.9623, 
+DEBUG:root:Final Mean AUC: 0.001077
+DEBUG:root:Iteration: 24401, Training Loss: 0.0010609030723571777,  Validation Acc:0.9586, 
+DEBUG:root:Final Mean AUC: 0.000972
+DEBUG:root:Iteration: 24501, Training Loss: 7.205006113508716e-05,  Validation Acc:0.9653, *
+DEBUG:root:Final Mean AUC: 0.000991
+DEBUG:root:Iteration: 24601, Training Loss: 0.00896460097283125,  Validation Acc:0.9597, 
+DEBUG:root:Final Mean AUC: 0.000759
+DEBUG:root:Iteration: 24701, Training Loss: 0.0026436010375618935,  Validation Acc:0.9645, 
+DEBUG:root:Final Mean AUC: 0.001187
+DEBUG:root:Iteration: 24801, Training Loss: 0.0018430937780067325,  Validation Acc:0.9624, 
+DEBUG:root:Final Mean AUC: 0.001016
+DEBUG:root:Iteration: 24901, Training Loss: 0.0008011575555428863,  Validation Acc:0.9601, 
+DEBUG:root:Final Mean AUC: 0.000841
+DEBUG:root:Iteration: 25001, Training Loss: 5.8727739087771624e-05,  Validation Acc:0.966, *
+DEBUG:root:Final Mean AUC: 0.000959
+DEBUG:root:Iteration: 25101, Training Loss: 0.005995650310069323,  Validation Acc:0.9607, 
+DEBUG:root:Final Mean AUC: 0.000631
+DEBUG:root:Iteration: 25201, Training Loss: 0.0020198586862534285,  Validation Acc:0.9655, 
+DEBUG:root:Final Mean AUC: 0.001134
+DEBUG:root:Iteration: 25301, Training Loss: 0.0015175790758803487,  Validation Acc:0.9628, 
+DEBUG:root:Final Mean AUC: 0.000940
+DEBUG:root:Iteration: 25401, Training Loss: 0.0006252918392419815,  Validation Acc:0.9603, 
+DEBUG:root:Final Mean AUC: 0.000730
+DEBUG:root:Iteration: 25501, Training Loss: 4.765364792547189e-05,  Validation Acc:0.9661, *
+DEBUG:root:Final Mean AUC: 0.000889
+DEBUG:root:Iteration: 25601, Training Loss: 0.004039350897073746,  Validation Acc:0.9621, 
+DEBUG:root:Final Mean AUC: 0.000639
+DEBUG:root:Iteration: 25701, Training Loss: 0.0015002249274402857,  Validation Acc:0.9656, 
+DEBUG:root:Final Mean AUC: 0.001015
+DEBUG:root:Iteration: 25801, Training Loss: 0.0019086850807070732,  Validation Acc:0.9636, 
+DEBUG:root:Final Mean AUC: 0.000872
+DEBUG:root:Iteration: 25901, Training Loss: 0.00040978018660098314,  Validation Acc:0.961, 
+DEBUG:root:Final Mean AUC: 0.000863
+DEBUG:root:Iteration: 26001, Training Loss: 3.7439967854879797e-05,  Validation Acc:0.9671, *
+DEBUG:root:Final Mean AUC: 0.000843
+DEBUG:root:Iteration: 26101, Training Loss: 0.002771404106169939,  Validation Acc:0.9628, 
+DEBUG:root:Final Mean AUC: 0.000611
+DEBUG:root:Iteration: 26201, Training Loss: 0.001242245314642787,  Validation Acc:0.966, 
+DEBUG:root:Final Mean AUC: 0.000903
+DEBUG:root:Iteration: 26301, Training Loss: 0.0014150756178423762,  Validation Acc:0.9651, 
+DEBUG:root:Final Mean AUC: 0.000709
+DEBUG:root:Iteration: 26401, Training Loss: 0.0002776444307528436,  Validation Acc:0.9625, 
+DEBUG:root:Final Mean AUC: 0.000903
+DEBUG:root:Iteration: 26501, Training Loss: 3.073363404837437e-05,  Validation Acc:0.9677, *
+DEBUG:root:Final Mean AUC: 0.000833
+DEBUG:root:Iteration: 26601, Training Loss: 0.0019470038823783398,  Validation Acc:0.9636, 
+DEBUG:root:Final Mean AUC: 0.000572
+DEBUG:root:Iteration: 26701, Training Loss: 0.0010240538977086544,  Validation Acc:0.9665, 
+DEBUG:root:Final Mean AUC: 0.000921
+DEBUG:root:Iteration: 26801, Training Loss: 0.0010665170848369598,  Validation Acc:0.9659, 
+DEBUG:root:Final Mean AUC: 0.000642
+DEBUG:root:Iteration: 26901, Training Loss: 0.00018417944374959916,  Validation Acc:0.9621, 
+DEBUG:root:Final Mean AUC: 0.000823
+DEBUG:root:Iteration: 27001, Training Loss: 2.937234239652753e-05,  Validation Acc:0.9682, *
+DEBUG:root:Final Mean AUC: 0.000755
+DEBUG:root:Iteration: 27101, Training Loss: 0.001475529745221138,  Validation Acc:0.9643, 
+DEBUG:root:Final Mean AUC: 0.000514
+DEBUG:root:Iteration: 27201, Training Loss: 0.0008929175673983991,  Validation Acc:0.9665, 
+DEBUG:root:Final Mean AUC: 0.000852
+DEBUG:root:Iteration: 27301, Training Loss: 0.0014938625972718,  Validation Acc:0.9665, 
+DEBUG:root:Final Mean AUC: 0.000586
+DEBUG:root:Iteration: 27401, Training Loss: 0.0006101017352193594,  Validation Acc:0.9633, 
+DEBUG:root:Final Mean AUC: 0.000738
+DEBUG:root:Iteration: 27501, Training Loss: 2.2721191271557473e-05,  Validation Acc:0.9685, *
+DEBUG:root:Final Mean AUC: 0.000738
+DEBUG:root:Iteration: 27601, Training Loss: 0.0011538562830537558,  Validation Acc:0.9649, 
+DEBUG:root:Final Mean AUC: 0.000408
+DEBUG:root:Iteration: 27701, Training Loss: 0.0009713061153888702,  Validation Acc:0.9669, 
+DEBUG:root:Final Mean AUC: 0.000846
+DEBUG:root:Iteration: 27801, Training Loss: 0.0016485282685607672,  Validation Acc:0.9677, 
+DEBUG:root:Final Mean AUC: 0.000500
+DEBUG:root:Iteration: 27901, Training Loss: 0.00026960927061736584,  Validation Acc:0.9651, 
+DEBUG:root:Final Mean AUC: 0.000662
+DEBUG:root:Iteration: 28001, Training Loss: 7.93672661529854e-05,  Validation Acc:0.9682, 
+DEBUG:root:Final Mean AUC: 0.000737
+DEBUG:root:Iteration: 28101, Training Loss: 0.0008268659003078938,  Validation Acc:0.9649, 
+DEBUG:root:Final Mean AUC: 0.000444
+DEBUG:root:Iteration: 28201, Training Loss: 0.0007515484467148781,  Validation Acc:0.9657, 
+DEBUG:root:Final Mean AUC: 0.000700
+DEBUG:root:Iteration: 28301, Training Loss: 0.0008298946777358651,  Validation Acc:0.9674, 
+DEBUG:root:Final Mean AUC: 0.000679
+DEBUG:root:Iteration: 28401, Training Loss: 7.555412594228983e-05,  Validation Acc:0.9631, 
+DEBUG:root:Final Mean AUC: 0.000654
+DEBUG:root:Iteration: 28501, Training Loss: 0.16174504160881042,  Validation Acc:0.9676, 
+DEBUG:root:Final Mean AUC: 0.001923
+DEBUG:root:Iteration: 28601, Training Loss: 0.5548416376113892,  Validation Acc:0.7455, 
+DEBUG:root:Final Mean AUC: 0.001450
+DEBUG:root:Iteration: 28701, Training Loss: 0.08708879351615906,  Validation Acc:0.8811, 
+DEBUG:root:Final Mean AUC: 0.001195
+DEBUG:root:Iteration: 28801, Training Loss: 0.279277503490448,  Validation Acc:0.9317, 
+DEBUG:root:Final Mean AUC: 0.000942
+DEBUG:root:Iteration: 28901, Training Loss: 0.01582498289644718,  Validation Acc:0.9532, 
+DEBUG:root:Final Mean AUC: 0.000598
+DEBUG:root:Iteration: 29001, Training Loss: 0.013592209666967392,  Validation Acc:0.9668, 
+DEBUG:root:Final Mean AUC: 0.000801
+DEBUG:root:Iteration: 29101, Training Loss: 0.004848993383347988,  Validation Acc:0.9649, 
+DEBUG:root:Final Mean AUC: 0.000540
+DEBUG:root:Iteration: 29201, Training Loss: 0.0078109875321388245,  Validation Acc:0.967, 
+DEBUG:root:Final Mean AUC: 0.000574
+DEBUG:root:Iteration: 29301, Training Loss: 0.0032494477927684784,  Validation Acc:0.9685, 
+DEBUG:root:Final Mean AUC: 0.000599
+DEBUG:root:Iteration: 29401, Training Loss: 0.008404651656746864,  Validation Acc:0.9682, 
+DEBUG:root:Final Mean AUC: 0.000576
+DEBUG:root:Iteration: 29501, Training Loss: 0.00041354718268848956,  Validation Acc:0.9701, *
+DEBUG:root:Final Mean AUC: 0.000640
+DEBUG:root:Iteration: 29601, Training Loss: 0.0004714567621704191,  Validation Acc:0.972, *
+DEBUG:root:Final Mean AUC: 0.000500
+DEBUG:root:Iteration: 29701, Training Loss: 0.00371609628200531,  Validation Acc:0.9702, 
+DEBUG:root:Final Mean AUC: 0.000639
+DEBUG:root:Iteration: 29801, Training Loss: 0.0017184738535434008,  Validation Acc:0.9713, 
+DEBUG:root:Final Mean AUC: 0.000552
+DEBUG:root:Iteration: 29901, Training Loss: 0.0007363770273514092,  Validation Acc:0.9722, *
+DEBUG:root:Final Mean AUC: 0.000579
+DEBUG:root:Iteration: 30001, Training Loss: 0.006278878077864647,  Validation Acc:0.9701, 
+DEBUG:root:Final Mean AUC: 0.000614
+DEBUG:root:Iteration: 30101, Training Loss: 0.00035413901787251234,  Validation Acc:0.9728, *
+DEBUG:root:Final Mean AUC: 0.000472
+DEBUG:root:Iteration: 30201, Training Loss: 0.0011901208199560642,  Validation Acc:0.9715, 
+DEBUG:root:Final Mean AUC: 0.000572
+DEBUG:root:Iteration: 30301, Training Loss: 0.0012913054088130593,  Validation Acc:0.9734, *
+DEBUG:root:Final Mean AUC: 0.000485
+DEBUG:root:Iteration: 30401, Training Loss: 0.0008680120226927102,  Validation Acc:0.9727, 
+DEBUG:root:Final Mean AUC: 0.000539
+DEBUG:root:Iteration: 30501, Training Loss: 0.0006169464904814959,  Validation Acc:0.9705, 
+DEBUG:root:Final Mean AUC: 0.000500
+DEBUG:root:Iteration: 30601, Training Loss: 0.00020045241399202496,  Validation Acc:0.974, *
+DEBUG:root:Final Mean AUC: 0.000531
+DEBUG:root:Iteration: 30701, Training Loss: 0.0007143748225644231,  Validation Acc:0.9718, 
+DEBUG:root:Final Mean AUC: 0.000422
+DEBUG:root:Iteration: 30801, Training Loss: 0.0010682395659387112,  Validation Acc:0.9745, *
+DEBUG:root:Final Mean AUC: 0.000429
+DEBUG:root:Iteration: 30901, Training Loss: 0.0006283652037382126,  Validation Acc:0.9737, 
+DEBUG:root:Final Mean AUC: 0.000412
+DEBUG:root:Iteration: 31001, Training Loss: 2.4108090656227432e-05,  Validation Acc:0.972, 
+DEBUG:root:Final Mean AUC: 0.000471
+DEBUG:root:Iteration: 31101, Training Loss: 0.00014844891848042607,  Validation Acc:0.9747, *
+DEBUG:root:Final Mean AUC: 0.000417
+DEBUG:root:Iteration: 31201, Training Loss: 0.0006155779701657593,  Validation Acc:0.9733, 
+DEBUG:root:Final Mean AUC: 0.000441
+DEBUG:root:Iteration: 31301, Training Loss: 0.0005695809959433973,  Validation Acc:0.9749, *
+DEBUG:root:Final Mean AUC: 0.000371
+DEBUG:root:Iteration: 31401, Training Loss: 0.00014080638356972486,  Validation Acc:0.9737, 
+DEBUG:root:Final Mean AUC: 0.000412
+DEBUG:root:Iteration: 31501, Training Loss: 5.375543423724594e-06,  Validation Acc:0.9726, 
+DEBUG:root:Final Mean AUC: 0.000469
+DEBUG:root:Iteration: 31601, Training Loss: 0.00011434810585342348,  Validation Acc:0.9746, 
+DEBUG:root:Final Mean AUC: 0.000397
+DEBUG:root:Iteration: 31701, Training Loss: 0.0004930379218421876,  Validation Acc:0.9738, 
+DEBUG:root:Final Mean AUC: 0.000431
+DEBUG:root:Iteration: 31801, Training Loss: 0.0003781086707022041,  Validation Acc:0.9745, 
+DEBUG:root:Final Mean AUC: 0.000340
+DEBUG:root:Iteration: 31901, Training Loss: 0.0001066207914846018,  Validation Acc:0.9739, 
+DEBUG:root:Final Mean AUC: 0.000381
+DEBUG:root:Iteration: 32001, Training Loss: 4.091977189091267e-06,  Validation Acc:0.9726, 
+DEBUG:root:Final Mean AUC: 0.000410
+DEBUG:root:Iteration: 32101, Training Loss: 0.00010048423428088427,  Validation Acc:0.9746, 
+DEBUG:root:Final Mean AUC: 0.000318
+DEBUG:root:Iteration: 32201, Training Loss: 0.00039554995601065457,  Validation Acc:0.9736, 
+DEBUG:root:Final Mean AUC: 0.000440
+DEBUG:root:Iteration: 32301, Training Loss: 0.0002661375910975039,  Validation Acc:0.9744, 
+DEBUG:root:Final Mean AUC: 0.000290
+DEBUG:root:Iteration: 32401, Training Loss: 0.0001070604776032269,  Validation Acc:0.9742, 
+DEBUG:root:Final Mean AUC: 0.000361
+DEBUG:root:Iteration: 32501, Training Loss: 3.7087656892254017e-06,  Validation Acc:0.9724, 
+DEBUG:root:Final Mean AUC: 0.000370
+DEBUG:root:Iteration: 32601, Training Loss: 9.44583080126904e-05,  Validation Acc:0.9746, 
+DEBUG:root:Final Mean AUC: 0.000308
+DEBUG:root:Iteration: 32701, Training Loss: 0.00033691697171889246,  Validation Acc:0.9737, 
+DEBUG:root:Final Mean AUC: 0.000420
+DEBUG:root:Iteration: 32801, Training Loss: 0.00020542473066598177,  Validation Acc:0.9749, 
+DEBUG:root:Final Mean AUC: 0.000280
+DEBUG:root:Iteration: 32901, Training Loss: 8.813286694930866e-05,  Validation Acc:0.9737, 
+DEBUG:root:Final Mean AUC: 0.000370
+DEBUG:root:Iteration: 33001, Training Loss: 3.3690671443764586e-06,  Validation Acc:0.9725, 
+DEBUG:root:Final Mean AUC: 0.000349
+DEBUG:root:Iteration: 33101, Training Loss: 9.153714927379042e-05,  Validation Acc:0.9744, 
+DEBUG:root:Final Mean AUC: 0.000317
+DEBUG:root:Iteration: 33201, Training Loss: 0.0002978353586513549,  Validation Acc:0.9737, 
+DEBUG:root:Final Mean AUC: 0.000390
+DEBUG:root:Iteration: 33301, Training Loss: 0.00016301324649248272,  Validation Acc:0.9749, 
+DEBUG:root:Final Mean AUC: 0.000289
+DEBUG:root:Iteration: 33401, Training Loss: 8.304184302687645e-05,  Validation Acc:0.9738, 
+DEBUG:root:Final Mean AUC: 0.000341
+DEBUG:root:Iteration: 33501, Training Loss: 3.0448600227828138e-06,  Validation Acc:0.9728, 
+DEBUG:root:Final Mean AUC: 0.000348
+DEBUG:root:Iteration: 33601, Training Loss: 9.502543252892792e-05,  Validation Acc:0.9739, 
+DEBUG:root:Final Mean AUC: 0.000307
+DEBUG:root:Iteration: 33701, Training Loss: 0.00025115010794252157,  Validation Acc:0.9738, 
+DEBUG:root:Final Mean AUC: 0.000351
+DEBUG:root:Iteration: 33801, Training Loss: 0.0001330253726337105,  Validation Acc:0.9744, 
+DEBUG:root:Final Mean AUC: 0.000298
+DEBUG:root:Iteration: 33901, Training Loss: 7.306609768420458e-05,  Validation Acc:0.9733, 
+DEBUG:root:Final Mean AUC: 0.000302
+DEBUG:root:Iteration: 34001, Training Loss: 2.8028864562656963e-06,  Validation Acc:0.9731, 
+DEBUG:root:Final Mean AUC: 0.000327
+DEBUG:root:Iteration: 34101, Training Loss: 9.85346341622062e-05,  Validation Acc:0.9739, 
+DEBUG:root:Final Mean AUC: 0.000307
+DEBUG:root:Iteration: 34201, Training Loss: 0.00022361785522662103,  Validation Acc:0.9735, 
+DEBUG:root:Final Mean AUC: 0.000341
+DEBUG:root:Iteration: 34301, Training Loss: 0.00011155023094033822,  Validation Acc:0.9743, 
+DEBUG:root:Final Mean AUC: 0.000307
+DEBUG:root:Iteration: 34401, Training Loss: 6.165493687149137e-05,  Validation Acc:0.9734, 
+DEBUG:root:Final Mean AUC: 0.000301
+DEBUG:root:Iteration: 34501, Training Loss: 2.635998271216522e-06,  Validation Acc:0.9727, 
+DEBUG:root:Final Mean AUC: 0.000298
+DEBUG:root:Iteration: 34601, Training Loss: 9.999304165830836e-05,  Validation Acc:0.9737, 
+DEBUG:root:Final Mean AUC: 0.000315
+DEBUG:root:Iteration: 34701, Training Loss: 0.0002032087359111756,  Validation Acc:0.973, 
+DEBUG:root:Final Mean AUC: 0.000339
+DEBUG:root:Iteration: 34801, Training Loss: 9.565053915139288e-05,  Validation Acc:0.9743, 
+DEBUG:root:Final Mean AUC: 0.000296
+DEBUG:root:Iteration: 34901, Training Loss: 5.868801235919818e-05,  Validation Acc:0.973, 
+DEBUG:root:Final Mean AUC: 0.000281
+DEBUG:root:Iteration: 35001, Training Loss: 2.2927461031940766e-06,  Validation Acc:0.9727, 
+DEBUG:root:Final Mean AUC: 0.000269
+DEBUG:root:Iteration: 35101, Training Loss: 9.67495288932696e-05,  Validation Acc:0.9733, 
+DEBUG:root:Final Mean AUC: 0.000342
+DEBUG:root:Iteration: 35201, Training Loss: 0.00018462646403349936,  Validation Acc:0.9728, 
+DEBUG:root:Final Mean AUC: 0.000339
+DEBUG:root:Iteration: 35301, Training Loss: 8.316407911479473e-05,  Validation Acc:0.9736, 
+DEBUG:root:Final Mean AUC: 0.000305
+DEBUG:root:Iteration: 35401, Training Loss: 5.7981626014225185e-05,  Validation Acc:0.9727, 
+DEBUG:root:Final Mean AUC: 0.000281
+DEBUG:root:Iteration: 35501, Training Loss: 1.8666560208657756e-06,  Validation Acc:0.9726, 
+DEBUG:root:Final Mean AUC: 0.000258
+DEBUG:root:Iteration: 35601, Training Loss: 9.237158519681543e-05,  Validation Acc:0.9736, 
+DEBUG:root:Final Mean AUC: 0.000295
+DEBUG:root:Iteration: 35701, Training Loss: 0.00016526068793609738,  Validation Acc:0.973, 
+DEBUG:root:Final Mean AUC: 0.000329
+DEBUG:root:Iteration: 35801, Training Loss: 7.587551226606593e-05,  Validation Acc:0.9737, 
+DEBUG:root:Final Mean AUC: 0.000295
+DEBUG:root:Iteration: 35901, Training Loss: 5.160486398381181e-05,  Validation Acc:0.9729, 
+DEBUG:root:Final Mean AUC: 0.000271
+DEBUG:root:Iteration: 36001, Training Loss: 1.6062297163443873e-06,  Validation Acc:0.9726, 
+DEBUG:root:Final Mean AUC: 0.000258
+DEBUG:root:Iteration: 36101, Training Loss: 7.760287553537637e-05,  Validation Acc:0.9737, 
+DEBUG:root:Final Mean AUC: 0.000276
+DEBUG:root:Iteration: 36201, Training Loss: 0.00014605723845306784,  Validation Acc:0.9727, 
+DEBUG:root:Final Mean AUC: 0.000289
+DEBUG:root:Iteration: 36301, Training Loss: 6.635470344917849e-05,  Validation Acc:0.9733, 
+DEBUG:root:No improvement found in a while, stopping optimization.
+DEBUG:root:Time usage: 0:18:41
+DEBUG:root:Final Mean AUC: 0.000422
+DEBUG:root:Accuracy on Test-Set: 97.5% (9749 / 10000)
+DEBUG:root:Confusion Matrix:
+DEBUG:root:[[ 970    0    2    0    1    2    2    0    2    1]
+ [   0 1129    1    3    0    0    1    0    1    0]
+ [   1    0 1013    5    0    0    0    4    9    0]
+ [   0    0    4  980    0    4    0    6   11    5]
+ [   1    2    0    0  958    1    2    0    1   17]
+ [   3    0    0    8    1  856   11    1   10    2]
+ [   5    5    0    0    4    5  933    0    6    0]
+ [   0    4    7    0    4    0    0  997    2   14]
+ [   2    0    4    9    1    4    1    3  945    5]
+ [   3    3    0    5   13    2    1    9    5  968]]

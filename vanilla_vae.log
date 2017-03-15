@@ -1,0 +1,5 @@
+DEBUG:root:num batches:1000, batch_size:50, epochs:0
+DEBUG:root:Training Vanilla VAE:
+DEBUG:root:Iteration: 1, Training:  Loss 27206, log_lik -543 Validation: Loss 27199, log_lik -543 *
+DEBUG:root:Iteration: 3, Training:  Loss 27195, log_lik -543 Validation: Loss 27193, log_lik -543 *
+DEBUG:root:Time usage: 0:00:08
