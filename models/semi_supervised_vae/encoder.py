@@ -30,5 +30,5 @@ def qy_given_z1(z1, input_dim, hidden_dim, num_classes, reuse=False):
 
         h1 = mlp_neuron(z1, w_h1, b_h1)
         h2 = mlp_neuron(h1, w_h2, b_h2)
-        logits = tf.nn.softmax(mlp_neuron(h2, w_y, b_y, activation=False))
+        logits = mlp_neuron(h2, w_y, b_y, activation=False)
     return logits

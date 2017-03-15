@@ -1,13 +1,14 @@
 import numpy as np
 
 from models.utils.MNIST_pickled_preprocess import extract_data
+from models.utils.metrics import plot_images
 from models.vanilla_vae.vae import VariationalAutoencoder
 
 
 def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, min_std=0.0, train=True):
     vae = VariationalAutoencoder(batch_size=50, learning_rate=FLAGS['learning_rate'],
                                  beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],
-                                 require_improvement=5000, seed=FLAGS['seed'],
+                                 require_improvement=1000, seed=FLAGS['seed'],
                                  num_iterations=FLAGS['num_iterations'],
                                  input_dim=FLAGS['input_dim'],
                                  latent_dim=FLAGS['latent_dim'],
@@ -22,6 +23,10 @@ def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, min_std=0.0, trai
         enc_x_ulab_mean, enc_x_ulab_var = vae.encode(train_unlab)
         enc_x_valid_mean, enc_x_valid_var = vae.encode(valid)
         enc_x_test_mean, enc_x_test_var = vae.encode(test)
+
+        num_images = 20
+        x_test = test[0:num_images, ]
+        plot_images(x_test, vae.encode(x_test), num_images, "vae")
 
         id_x_keep = np.std(enc_x_ulab_mean, axis=0) > min_std
         print("idx_keep shape:{}".format(id_x_keep.shape))
