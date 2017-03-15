@@ -12,7 +12,8 @@ def qz_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, is_tra
         w_h1_x, b_h1_x = create_nn_weights('h1_z_x', 'encoder', [input_dim, hidden_dim])
         w_h1_y, b_h1_y = create_nn_weights('h1_z_y', 'encoder', [num_classes, hidden_dim])
 
-        w_h1, b_h1 = create_nn_weights('h1_z', 'encoder', [hidden_dim, hidden_dim])
+        # w_h1, b_h1 = create_nn_weights('h1_z', 'encoder', [hidden_dim, hidden_dim])
+        w_h1, b_h1 = create_nn_weights('h1_z', 'encoder', [latent_dim + num_classes + input_dim, hidden_dim])
         w_h2, b_h2 = create_nn_weights('h1_z', 'encoder', [hidden_dim, hidden_dim])
 
         w_mu_z, b_mu_z = create_nn_weights('mu_z', 'encoder', [hidden_dim, latent_dim])
@@ -23,7 +24,7 @@ def qz_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, is_tra
         l_x_to_qz = mlp_neuron(x, w_h1_x, b_h1_x, activation=False)
         l_y_to_qz = mlp_neuron(y, w_h1_y, b_h1_y, activation=False)
 
-        h1 = normalized_mlp(l_y_to_qz + l_x_to_qz + l_qa_to_qz, w_h1, b_h1, is_training, batch_norm=batch_norm)
+        h1 = normalized_mlp(tf.concat((a, x, y), axis=1), is_training, batch_norm=batch_norm)
         h2 = normalized_mlp(h1, w_h2, b_h2, is_training, batch_norm=batch_norm)
         # Z2 latent layer mu and var
         logvar_z = mlp_neuron(h2, w_var_z, b_var_z, activation=False)
@@ -60,14 +61,15 @@ def qy_given_ax(a, x, input_dim, hidden_dim, latent_dim, num_classes, batch_norm
         w_h1_a, b_h1_a = create_nn_weights('y_h1_a', 'infer', [latent_dim, hidden_dim])
         w_h1_x, b_h1_x = create_nn_weights('y_h1_a', 'infer', [input_dim, hidden_dim])
 
-        w_h1, b_h1 = create_nn_weights('y_h1', 'infer', [hidden_dim, hidden_dim])
+        # w_h1, b_h1 = create_nn_weights('y_h1', 'infer', [hidden_dim, hidden_dim])
+        w_h1, b_h1 = create_nn_weights('y_h1', 'infer', [latent_dim + input_dim, hidden_dim])
         w_h2, b_h2 = create_nn_weights('y_h2', 'infer', [hidden_dim, hidden_dim])
         w_y, b_y = create_nn_weights('y_fully_connected', 'infer', [hidden_dim, num_classes])
 
         l_qa_to_qy = mlp_neuron(a, w_h1_a, b_h1_a, activation=False)
         l_x_to_qy = mlp_neuron(x, w_h1_x, b_h1_x, activation=False)
 
-        h1 = normalized_mlp(tf.add(l_qa_to_qy, l_x_to_qy), w_h1, b_h1, is_training, batch_norm=batch_norm)
+        h1 = normalized_mlp(tf.concat((a, x), axis=1), w_h1, b_h1, is_training, batch_norm=batch_norm)
         h2 = normalized_mlp(h1, w_h2, b_h2, is_training, batch_norm=batch_norm)
         logits = tf.nn.softmax(mlp_neuron(h2, w_y, b_y, activation=False))
     return logits
