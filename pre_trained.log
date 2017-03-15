@@ -1,0 +1,4 @@
+DEBUG:root:x_l:(100, 784), y_l:(100, 10), x_u:(49900, 784), y_(49900, 10)
+DEBUG:root:Training Vanilla VAE:
+DEBUG:root:Optimization Iteration: 1, Training:  Loss 271830, log_lik -543 Validation: Loss 271748, log_lik -543 *
+DEBUG:root:Optimization Iteration: 101, Training:  Loss 135961, log_lik -271 Validation: Loss 128296, log_lik -256 *
