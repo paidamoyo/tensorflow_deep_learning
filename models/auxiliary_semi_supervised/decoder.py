@@ -4,7 +4,7 @@ from models.utils.distributions import draw_norm
 from models.utils.tf_helpers import create_nn_weights, mlp_neuron, normalized_mlp
 
 
-def px_given_zy(z, y, hidden_dim, input_dim, latent_dim, num_classes, is_training, reuse=False):
+def px_given_zy(z, y, hidden_dim, input_dim, latent_dim, num_classes, is_training, batch_norm, reuse=False):
     # Generative p(x|z,y)
     with tf.variable_scope("decoder", reuse=reuse):
         # Variables
@@ -19,8 +19,9 @@ def px_given_zy(z, y, hidden_dim, input_dim, latent_dim, num_classes, is_trainin
         # Decoder hidden layer
         l_y_to_px = mlp_neuron(y, w_h1_y, b_h1_y, activation=False)
         l_qz_to_px = mlp_neuron(z, w_h1_z, b_h1_z, activation=False)
-        h1 = normalized_mlp(tf.add(l_y_to_px, l_qz_to_px), w_h1, b_h1, is_training)
-        h2 = normalized_mlp(h1, w_h2, b_h2, is_training)
+
+        h1 = normalized_mlp(tf.add(l_y_to_px, l_qz_to_px), w_h1, b_h1, is_training, batch_norm=batch_norm)
+        h2 = normalized_mlp(h1, w_h2, b_h2, is_training, batch_norm=batch_norm)
 
         # Reconstruction layer
         # x_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)
@@ -30,7 +31,7 @@ def px_given_zy(z, y, hidden_dim, input_dim, latent_dim, num_classes, is_trainin
         return x_mu
 
 
-def pa_given_zy(z, y, hidden_dim, latent_dim, num_classes, is_training, reuse=False):
+def pa_given_zy(z, y, hidden_dim, latent_dim, num_classes, is_training, batch_norm, reuse=False):
     # Generative p(a|z,y)
     with tf.variable_scope("decoder", reuse=reuse):
         # Variables
@@ -46,8 +47,8 @@ def pa_given_zy(z, y, hidden_dim, latent_dim, num_classes, is_training, reuse=Fa
         # Decoder hidden layer
         l_y_to_pa = mlp_neuron(y, w_h1_y, b_h1_y, activation=False)
         l_qz_to_pa = mlp_neuron(z, w_h1_z, b_h1_z, activation=False)
-        h1 = normalized_mlp(tf.add(l_y_to_pa, l_qz_to_pa), w_h1, b_h1, is_training)
-        h2 = normalized_mlp(h1, w_h2, b_h2, is_training)
+        h1 = normalized_mlp(tf.add(l_y_to_pa, l_qz_to_pa), w_h1, b_h1, is_training, batch_norm=batch_norm)
+        h2 = normalized_mlp(h1, w_h2, b_h2, is_training, batch_norm=batch_norm)
 
         # a latent layer mu and var
         logvar_a = mlp_neuron(h2, w_var_a, b_var_a, activation=False)

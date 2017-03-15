@@ -47,6 +47,7 @@ class Auxiliary(object):
         self.num_examples = 50000
         self.min_std = 0.1
         self.log_file = 'auxiliary.log'
+        self.batch_norm = False
         logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
         tf.set_random_seed(seed)
@@ -275,23 +276,25 @@ class Auxiliary(object):
 
         logits = qy_given_ax(a=a, x=self.x_unlab, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                             is_training=self.is_training, reuse=True)
+                             is_training=self.is_training, batch_norm=self.batch_norm, reuse=True)
         elbo = []
         total_log_lik = 0.0
         for label in range(self.num_classes):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
             z, z_mu, z_logvar = qz_given_ayx(a=a, y=y_ulab, x=self.x_unlab, latent_dim=self.latent_dim,
                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                             input_dim=self.input_dim, is_training=self.is_training, reuse=True)
+                                             input_dim=self.input_dim, is_training=self.is_training,
+                                             batch_norm=self.batch_norm, reuse=True)
 
             a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=y_ulab, latent_dim=self.latent_dim,
                                                               hidden_dim=self.hidden_dim,
                                                               num_classes=self.num_classes,
-                                                              is_training=self.is_training, reuse=True)
+                                                              is_training=self.is_training, batch_norm=self.batch_norm,
+                                                              reuse=True)
             x_recon_mu = px_given_zy(y=y_ulab, z=z, latent_dim=self.latent_dim,
                                      num_classes=self.num_classes,
                                      hidden_dim=self.hidden_dim, input_dim=self.input_dim, is_training=self.is_training,
-                                     reuse=True)
+                                     batch_norm=self.batch_norm, reuse=True)
             class_elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
                                                  qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
             elbo.append(class_elbo)
@@ -306,18 +309,20 @@ class Auxiliary(object):
 
         logits = qy_given_ax(a=a, x=self.x_lab, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                             is_training=self.is_training)
+                             is_training=self.is_training, batch_norm=self.batch_norm)
 
         z, z_mu, z_logvar = qz_given_ayx(a=a, y=self.y_lab, x=self.x_lab, latent_dim=self.latent_dim,
                                          num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                         input_dim=self.input_dim, is_training=self.is_training)
+                                         input_dim=self.input_dim, is_training=self.is_training,
+                                         batch_norm=self.batch_norm)
 
         a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=self.y_lab, latent_dim=self.latent_dim,
                                                           hidden_dim=self.hidden_dim,
-                                                          num_classes=self.num_classes, is_training=self.is_training)
+                                                          num_classes=self.num_classes, is_training=self.is_training,
+                                                          batch_norm=self.batch_norm)
         x_recon_mu = px_given_zy(y=self.y_lab, z=z, latent_dim=self.latent_dim,
                                  num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                                 is_training=self.is_training)
+                                 is_training=self.is_training, batch_norm=self.batch_norm)
         elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
                                        qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
 
