@@ -69,7 +69,7 @@ def qy_given_ax(a, x, input_dim, hidden_dim, latent_dim, num_classes, batch_norm
         l_qa_to_qy = mlp_neuron(a, w_h1_a, b_h1_a, activation=False)
         l_x_to_qy = mlp_neuron(x, w_h1_x, b_h1_x, activation=False)
 
-        h1 = normalized_mlp(tf.add(l_x_to_qy + l_qa_to_qy), w_h1, b_h1, is_training, batch_norm=batch_norm)
+        h1 = normalized_mlp(tf.add(l_x_to_qy, l_qa_to_qy), w_h1, b_h1, is_training, batch_norm=batch_norm)
         h2 = normalized_mlp(h1, w_h2, b_h2, is_training, batch_norm=batch_norm)
         logits = mlp_neuron(h2, w_y, b_y, activation=False)
     return logits
