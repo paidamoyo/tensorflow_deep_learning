@@ -17,6 +17,8 @@ from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labe
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
+# TODO binarize input images
+# TODO implement batch normalization
 class GenerativeClassifier(object):
     def __init__(self,
                  num_batches,
