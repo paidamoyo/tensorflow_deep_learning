@@ -20,6 +20,7 @@ from models.utils.tf_helpers import one_label_tensor, variable_summaries
 # TODO Batch Normalization , http://ruishu.io/2016/12/27/batchnorm/,
 # TODO http://r2rt.com/implementing-batch-normalization-in-tensorflow.html
 # TODO plot reconstructed images
+# TODO Elementwise sum vs. concat, reshuffle, reshape layers?
 
 class Auxiliary(object):
     def __init__(self,
@@ -77,17 +78,18 @@ class Auxiliary(object):
             self.train_x_l, self.train_l_y, self.train_u_x, self.train_u_y, self.valid_x, self.valid_y, \
             self.test_x, self.test_y, self.input_dim = self.extract_data()
             self.x = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x')
+            self.is_training = tf.placeholder(tf.bool)
             self.x_lab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_labeled')
             self.x_unlab = tf.placeholder(tf.float32, shape=[None, self.input_dim], name='x_unlabeled')
             self.y_lab = tf.placeholder(tf.float32, shape=[None, self.num_classes], name='y_lab')
             self.y_true_cls = tf.argmax(self.y_lab, axis=1)
             self._objective()
             self.saver = tf.train.Saver()
+            self.merged = tf.summary.merge_all()
             self.session = tf.Session()
             self.current_dir = os.getcwd()
             self.save_path = self.current_dir + "/summaries/auxiliary_semi_supervised_model"
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
-            self.merged = tf.summary.merge_all()
 
     def _objective(self):
         self.num_lab_batch, self.num_ulab_batch = 1, 499
@@ -159,7 +161,7 @@ class Auxiliary(object):
             x_u_batch, _, idx_unlabeled = get_next_batch(self.train_u_x, self.train_u_y, idx_unlabeled,
                                                          self.num_ulab_batch)
             feed_dict_train = {self.x_lab: x_l_batch, self.y_lab: y_l_batch,
-                               self.x_unlab: x_u_batch}
+                               self.x_unlab: x_u_batch, self.is_training: True}
 
             summary, batch_loss, _ = self.session.run([self.merged, self.cost, self.optimizer],
                                                       feed_dict=feed_dict_train)
@@ -199,7 +201,8 @@ class Auxiliary(object):
         logging.debug(time_dif_print)
 
     def reconstruct(self, x_test, y_test):
-        x_recon = self.session.run(self.x_recon_lab_mu, feed_dict={self.x_lab: x_test, self.y_lab: y_test})
+        x_recon = self.session.run(self.x_recon_lab_mu,
+                                   feed_dict={self.x_lab: x_test, self.y_lab: y_test, self.is_training: False})
         log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_test, x_approx=x_recon))
         return x_recon, log_lik.eval()
 
@@ -247,7 +250,8 @@ class Auxiliary(object):
             batch_images = images[i:j, :]
             batch_labels = labels[i:j, :]
             feed_dict = {self.x_lab: batch_images,
-                         self.y_lab: batch_labels}
+                         self.y_lab: batch_labels,
+                         self.is_training: False}
             cls_pred[i:j] = self.session.run(self.y_pred_cls,
                                              feed_dict=feed_dict)
             final_mean_value, auc = self.session.run([mean_auc, batch_auc], feed_dict=feed_dict)
@@ -271,25 +275,27 @@ class Auxiliary(object):
     def unlabeled_model(self):
         # Ulabeled
         a, a_mu, a_logvar = qa_given_x(self.x_unlab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                                       latent_dim=self.latent_dim, reuse=True)
+                                       latent_dim=self.latent_dim, is_training=self.is_training, reuse=True)
 
         logits = qy_given_ax(a=a, x=self.x_unlab, latent_dim=self.latent_dim,
                              num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                             reuse=True)
+                             is_training=self.is_training, reuse=True)
         elbo = []
         total_log_lik = 0.0
         for label in range(self.num_classes):
             y_ulab = one_label_tensor(label, self.num_ulab_batch, self.num_classes)
             z, z_mu, z_logvar = qz_given_ayx(a=a, y=y_ulab, x=self.x_unlab, latent_dim=self.latent_dim,
                                              num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                             input_dim=self.input_dim, reuse=True)
+                                             input_dim=self.input_dim, is_training=self.is_training, reuse=True)
 
             a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=y_ulab, latent_dim=self.latent_dim,
                                                               hidden_dim=self.hidden_dim,
-                                                              num_classes=self.num_classes, reuse=True)
+                                                              num_classes=self.num_classes,
+                                                              is_training=self.is_training, reuse=True)
             x_recon_mu = px_given_zy(y=y_ulab, z=z, latent_dim=self.latent_dim,
                                      num_classes=self.num_classes,
-                                     hidden_dim=self.hidden_dim, input_dim=self.input_dim, reuse=True)
+                                     hidden_dim=self.hidden_dim, input_dim=self.input_dim, is_training=self.is_training,
+                                     reuse=True)
             class_elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
                                                  qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
             elbo.append(class_elbo)
@@ -300,20 +306,22 @@ class Auxiliary(object):
 
     def labeled_model(self):
         a, a_mu, a_logvar = qa_given_x(self.x_lab, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                                       latent_dim=self.latent_dim)
+                                       latent_dim=self.latent_dim, is_training=self.is_training)
 
         logits = qy_given_ax(a=a, x=self.x_lab, latent_dim=self.latent_dim,
-                             num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
+                             num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                             is_training=self.is_training)
 
         z, z_mu, z_logvar = qz_given_ayx(a=a, y=self.y_lab, x=self.x_lab, latent_dim=self.latent_dim,
                                          num_classes=self.num_classes, hidden_dim=self.hidden_dim,
-                                         input_dim=self.input_dim)
+                                         input_dim=self.input_dim, is_training=self.is_training)
 
         a_recon, a_recon_mu, a_recon_logvar = pa_given_zy(z=z, y=self.y_lab, latent_dim=self.latent_dim,
                                                           hidden_dim=self.hidden_dim,
-                                                          num_classes=self.num_classes)
+                                                          num_classes=self.num_classes, is_training=self.is_training)
         x_recon_mu = px_given_zy(y=self.y_lab, z=z, latent_dim=self.latent_dim,
-                                 num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim)
+                                 num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                 is_training=self.is_training)
         elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
                                        qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
 

@@ -61,6 +61,35 @@ def one_label_tensor(label, num_ulab_batch, num_classes):
     return lab
 
 
+def batch_norm_wrapper(inputs, is_training):
+    # http://r2rt.com/implementing-batch-normalization-in-tensorflow.html
+    pop_mean = tf.Variable(tf.zeros([inputs.get_shape()[-1]]), trainable=False)
+    pop_var = tf.Variable(tf.ones([inputs.get_shape()[-1]]), trainable=False)
+    print("batch inputs {}".format(inputs.shape))
+
+    offset = tf.Variable(tf.zeros([inputs.shape[1]]))
+    scale = tf.Variable(tf.ones([inputs.shape[1]]))
+    epsilon = 1e-4
+    alpha = 0.999  # use numbers closer to 1 if you have more data
+
+    def batch_norm():
+        batch_mean, batch_var = tf.nn.moments(inputs, [0])
+        print("batch mean {}, var {}".format(batch_mean.shape, batch_var.shape))
+        train_mean = tf.assign(pop_mean,
+                               pop_mean * alpha + batch_mean * (1 - alpha))
+        train_var = tf.assign(pop_var,
+                              pop_var * alpha + batch_var * (1 - alpha))
+        with tf.control_dependencies([train_mean, train_var]):
+            return tf.nn.batch_normalization(inputs, mean=batch_mean, variance=batch_var, offset=offset, scale=scale,
+                                             variance_epsilon=epsilon)
+
+    def pop_norm():
+        return tf.nn.batch_normalization(inputs, pop_mean, pop_var, offset=offset, scale=scale,
+                                         variance_epsilon=epsilon)
+
+    return tf.cond(is_training, batch_norm, pop_norm)
+
+
 if __name__ == '__main__':
     y_ulab = one_label_tensor(2, 400, 10)
     with tf.Session() as session:

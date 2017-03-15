@@ -66,11 +66,11 @@ class GenerativeClassifier(object):
             self.y_true_cls = tf.argmax(self.y_lab, axis=1)
             self._objective()
             self.saver = tf.train.Saver()
+            self.merged = tf.summary.merge_all()
             self.session = tf.Session()
             self.current_dir = os.getcwd()
             self.save_path = self.current_dir + "/summaries/semi_supervised_model"
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
-            self.merged = tf.summary.merge_all()
 
     def _objective(self):
 
