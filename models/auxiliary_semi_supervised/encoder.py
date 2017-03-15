@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from models.utils.distributions import draw_norm
-from models.utils.tf_helpers import create_nn_weights, mlp_neuron, batch_norm_wrapper
+from models.utils.tf_helpers import create_nn_weights, mlp_neuron, normalized_mlp
 
 
 def qz_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, is_training, reuse=False):
@@ -14,9 +14,8 @@ def qz_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, is_tra
         w_var_z, b_var_z = create_nn_weights('var_z', 'encoder', [hidden_dim, latent_dim])
 
         # Hidden layers
-        h1 = mlp_neuron(tf.concat([y, x, a], axis=1), w_h1, b_h1, activation=False)
-        normalized_h1 = tf.nn.relu(batch_norm_wrapper(h1, is_training))
-        h2 = mlp_neuron(normalized_h1, w_h2, b_h2)
+        h1 = normalized_mlp(tf.concat([y, x, a], axis=1), w_h1, b_h1, is_training)
+        h2 = normalized_mlp(h1, w_h2, b_h2, is_training)
         # Z2 latent layer mu and var
         logvar_z = mlp_neuron(h2, w_var_z, b_var_z, activation=False)
         mu_z = mlp_neuron(h2, w_mu_z, b_mu_z, activation=False)
@@ -34,9 +33,8 @@ def qa_given_x(x, hidden_dim, input_dim, latent_dim, is_training, reuse=False):
         w_var_a, b_var_a = create_nn_weights('var_a', 'encoder', [hidden_dim, latent_dim])
 
         # Hidden layers
-        h1 = mlp_neuron(x, w_h1, b_h1, activation=False)
-        normalized_h1 = tf.nn.relu(batch_norm_wrapper(h1, is_training))
-        h2 = mlp_neuron(normalized_h1, w_h2, b_h2)
+        h1 = normalized_mlp(x, w_h1, b_h1, is_training)
+        h2 = normalized_mlp(h1, w_h2, b_h2, is_training)
 
         # a latent layer mu and var
         logvar_a = mlp_neuron(h2, w_var_a, b_var_a, activation=False)
@@ -52,8 +50,7 @@ def qy_given_ax(a, x, input_dim, hidden_dim, latent_dim, num_classes, is_trainin
         w_h2, b_h2 = create_nn_weights('y_h2', 'infer', [hidden_dim, hidden_dim])
         w_y, b_y = create_nn_weights('y_fully_connected', 'infer', [hidden_dim, num_classes])
 
-        h1 = mlp_neuron(tf.concat((a, x), axis=1), w_h1, b_h1, activation=False)
-        normalized_h1 = tf.nn.relu(batch_norm_wrapper(h1, is_training))
-        h2 = mlp_neuron(normalized_h1, w_h2, b_h2)
+        h1 = normalized_mlp(tf.concat((a, x), axis=1), w_h1, b_h1, is_training)
+        h2 = normalized_mlp(h1, w_h2, b_h2, is_training)
         y = mlp_neuron(h2, w_y, b_y, activation=False)
     return y

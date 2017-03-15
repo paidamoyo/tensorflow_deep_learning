@@ -17,8 +17,6 @@ from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labe
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
-# TODO Batch Normalization , http://ruishu.io/2016/12/27/batchnorm/,
-# TODO http://r2rt.com/implementing-batch-normalization-in-tensorflow.html
 # TODO plot reconstructed images
 # TODO Elementwise sum vs. concat, reshuffle, reshape layers?
 

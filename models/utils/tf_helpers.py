@@ -9,6 +9,12 @@ def mlp_neuron(layer_input, weights, biases, activation=True):
         return mlp
 
 
+def normalized_mlp(layer_input, weights, biases, is_training):
+    mlp = tf.add(tf.matmul(layer_input, weights), biases)
+    norm = batch_norm_wrapper(mlp, is_training)
+    return tf.nn.relu(norm)
+
+
 def create_nn_weights(layer, network, shape):
     h_vars = {}
     w_h = 'W_' + network + '_' + layer
