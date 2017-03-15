@@ -9,7 +9,7 @@ import tensorflow as tf
 from models.auxiliary_semi_supervised.decoder import px_given_zy, pa_given_zy
 from models.auxiliary_semi_supervised.encoder import qa_given_x, qz_given_ayx, qy_given_ax
 from models.classifier import softmax_classifier
-from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised, binarize_images
+from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised
 from models.utils.batch_processing import get_next_batch
 from models.utils.distributions import auxiliary_elbo, tf_binary_xentropy
 from models.utils.distributions import prior_weights
@@ -123,16 +123,16 @@ class Auxiliary(object):
         x_valid, y_valid = valid_x.T, valid_y.T
         x_test, y_test = test_x.T, test_y.T
 
-        id_x_keep = np.std(t_x_u, axis=0) > self.min_std
-        input_dim = len(id_x_keep[np.where(id_x_keep == True)])
-        idx_print = "idx_keep count:{}".format(input_dim)
-        print(idx_print)
-        logging.debug(idx_print)
-
-        t_x_l = binarize_images(t_x_l)[:, id_x_keep]
-        t_x_u = binarize_images(t_x_u)[:, id_x_keep]
-        x_valid = binarize_images(x_valid)[:, id_x_keep]
-        x_test = binarize_images(x_test)[:, id_x_keep]
+        # id_x_keep = np.std(t_x_u, axis=0) > self.min_std
+        # input_dim = len(id_x_keep[np.where(id_x_keep == True)])
+        # idx_print = "idx_keep count:{}".format(input_dim)
+        # print(idx_print)
+        # logging.debug(idx_print)
+        # 
+        # t_x_l = binarize_images(t_x_l)[:, id_x_keep]
+        # t_x_u = binarize_images(t_x_u)[:, id_x_keep]
+        # x_valid = binarize_images(x_valid)[:, id_x_keep]
+        # x_test = binarize_images(x_test)[:, id_x_keep]
 
         train_data_print = "x_l:{}, y_l:{}, x_u:{}, y_{}".format(t_x_l.shape, t_y_l.shape, t_x_u.shape, t_y_u.shape)
         print(train_data_print)
