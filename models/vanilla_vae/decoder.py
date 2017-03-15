@@ -16,6 +16,6 @@ def px_given_z1(z1, hidden_dim, input_dim, latent_dim, reuse=False):
         h2 = mlp_neuron(h1, w_h2, b_h2)
         # Reconstruction layer
         # x_mu = mlp_neuron(h2, w_mu, b_mu, activation=False)
-        x_mu = tf.nn.sigmoid(tf.add(tf.matmul(h2, w_mu), b_mu))
+        x_mu = tf.nn.sigmoid(mlp_neuron(h2, w_mu, b_mu, activation=False))
         tf.summary.image('x_mu', tf.reshape(x_mu[0], [1, 28, 28, 1]))
         return x_mu
