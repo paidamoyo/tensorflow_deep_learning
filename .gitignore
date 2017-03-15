@@ -10,4 +10,9 @@ VAE/utils/__pycache__/
 VAE/vanilla/__pycache__/
 VAE/vanilla/models/__pycache__/
 __pycache__/
+!pre_trained.log
+!auxiliary.log
+!mlp_classifier.log
+!pca_classifier.log
+!semi_supervised.log
 
