@@ -10,7 +10,7 @@ def qz_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, is_tra
         # Variables
         w_h1_a, b_h1_a = create_nn_weights('h1_z_a', 'encoder', [latent_dim, hidden_dim])
         w_h1_x, b_h1_x = create_nn_weights('h1_z_x', 'encoder', [input_dim, hidden_dim])
-        w_h1_y, b_h1_y = create_nn_weights('h1_z_x', 'encoder', [num_classes, hidden_dim])
+        w_h1_y, b_h1_y = create_nn_weights('h1_z_y', 'encoder', [num_classes, hidden_dim])
 
         w_h1, b_h1 = create_nn_weights('h1_z', 'encoder', [hidden_dim, hidden_dim])
         w_h2, b_h2 = create_nn_weights('h1_z', 'encoder', [hidden_dim, hidden_dim])
