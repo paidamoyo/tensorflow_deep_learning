@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix
+from  sklearn.metrics import roc_curve, auc
 
 
 def convert_labels_to_cls(labels):
@@ -34,6 +35,35 @@ def print_test_accuracy(correct, cls_pred, labels, logging):
 
     # print(tf.confusion_matrix(labels=convert_labels_to_cls(labels), predictions=cls_pred, num_classes=10))
     plot_confusion_matrix(cls_pred=cls_pred, labels=labels, logging=logging)
+
+
+def plot_roc(logits, y_true, n_classes, name):
+    # Compute ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_true[:, i], logits[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # Compute micro-average ROC curve and ROC area
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_true.ravel(), logits.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+    plt.figure()
+    lw = 2
+    plt.plot(fpr[2], tpr[2], color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[2])
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('FPR')
+    plt.ylabel('TPR')
+    title = 'ROC of ' + name + ' model'
+    plt.title(title)
+    plt.legend(loc="lower right")
+    save_path = name + "ROC"
+    plt.savefig(save_path)
 
 
 def plot_images(x_test, x_reconstruct, n_images, name):

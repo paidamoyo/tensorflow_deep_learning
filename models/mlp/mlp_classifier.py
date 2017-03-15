@@ -8,7 +8,7 @@ import tensorflow as tf
 
 from models.utils.MNIST_pickled_preprocess import extract_data
 from models.utils.batch_processing import get_next_batch
-from models.utils.metrics import convert_labels_to_cls, cls_accuracy, print_test_accuracy
+from models.utils.metrics import convert_labels_to_cls, cls_accuracy, print_test_accuracy, plot_roc
 from models.utils.tf_helpers import create_nn_weights, mlp_neuron
 
 
@@ -163,4 +163,8 @@ class MLPClassifier(object):
         correct, cls_pred = self.predict_cls(images=self.test_x,
                                              labels=self.test_y,
                                              cls_true=(convert_labels_to_cls(self.test_y)))
+
+        feed_dict = {self.x: self.test_x, self.y: self.test_y}
+        logits = self.session.run(self.y_logits, feed_dict=feed_dict)
+        plot_roc(logits, self.test_y, self.num_classes, name='MLP')
         print_test_accuracy(correct, cls_pred, self.test_y, logging)

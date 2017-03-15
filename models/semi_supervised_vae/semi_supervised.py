@@ -13,7 +13,7 @@ from models.utils.batch_processing import get_encoded_next_batch, get_batch_size
 from models.utils.distributions import draw_norm
 from models.utils.distributions import elbo_M2
 from models.utils.distributions import prior_weights
-from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
+from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images, plot_roc
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
@@ -152,9 +152,9 @@ class GenerativeClassifier(object):
                     improved_str = ''
 
                 print("Iteration: {}, Training Loss: {}, "
-                      " Validation Acc:{}, {}".format(i + 1, int(batch_loss), acc_validation, improved_str))
+                      " Validation Acc:{}, {}".format(i + 1, batch_loss, acc_validation, improved_str))
                 logging.debug("Iteration: {}, Training Loss: {}, "
-                              " Validation Acc:{}, {}".format(i + 1, int(batch_loss), acc_validation, improved_str))
+                              " Validation Acc:{}, {}".format(i + 1, batch_loss, acc_validation, improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 logging.debug("No improvement found in a while, stopping optimization.")
@@ -231,6 +231,11 @@ class GenerativeClassifier(object):
                                              logvar=self.test_x_logvar,
                                              labels=self.test_y,
                                              cls_true=(convert_labels_to_cls(self.test_y)))
+        feed_dict = {self.x_lab_mu: self.test_x_mu,
+                     self.x_lab_logvar: self.test_x_logvar,
+                     self.y_lab: self.test_y}
+        logits = self.session.run(self.y_lab_logits, feed_dict=feed_dict)
+        plot_roc(logits, self.test_y, self.num_classes, name='VAE')
         print_test_accuracy(correct, cls_pred, self.test_y, logging)
 
     def unlabeled_model(self):
