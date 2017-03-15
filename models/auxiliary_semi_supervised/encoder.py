@@ -24,7 +24,7 @@ def qz_given_ayx(a, y, x, latent_dim, num_classes, hidden_dim, input_dim, is_tra
         l_x_to_qz = mlp_neuron(x, w_h1_x, b_h1_x, activation=False)
         l_y_to_qz = mlp_neuron(y, w_h1_y, b_h1_y, activation=False)
 
-        h1 = normalized_mlp(tf.concat((a, x, y), axis=1), is_training, batch_norm=batch_norm)
+        h1 = normalized_mlp(tf.concat((a, x, y), axis=1), w_h1, b_h1, is_training, batch_norm=batch_norm)
         h2 = normalized_mlp(h1, w_h2, b_h2, is_training, batch_norm=batch_norm)
         # Z2 latent layer mu and var
         logvar_z = mlp_neuron(h2, w_var_z, b_var_z, activation=False)
