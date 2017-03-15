@@ -2,8 +2,7 @@ import tensorflow as tf
 
 
 def softmax_classifier(logits, y_true):
-    y_pred = tf.nn.softmax(logits)
-    y_pred_cls = tf.argmax(y_pred, axis=1)
+    y_pred_cls = tf.argmax(logits, axis=1)
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_true)
     return cross_entropy, y_pred_cls
 

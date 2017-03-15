@@ -24,7 +24,11 @@ def q_z2_given_z1y(z1, y, latent_dim, num_classes, hidden_dim, input_dim, reuse=
 
 def qy_given_z1(z1, input_dim, hidden_dim, num_classes, reuse=False):
     with tf.variable_scope("y_classifier", reuse=reuse):
-        w_mlp_h1, b_mlp_h1 = create_nn_weights('y_h1', 'infer', [input_dim, hidden_dim])
-        w_mlp_h2, b_mlp_h2 = create_nn_weights('y_h2', 'infer', [hidden_dim, num_classes])
-        h1 = mlp_neuron(z1, w_mlp_h1, b_mlp_h1)
-    return mlp_neuron(h1, w_mlp_h2, b_mlp_h2, activation=False)
+        w_h1, b_h1 = create_nn_weights('y_h1', 'infer', [input_dim, hidden_dim])
+        w_h2, b_h2 = create_nn_weights('y_h2', 'infer', [hidden_dim, hidden_dim])
+        w_y, b_y = create_nn_weights('y_fully_connected', 'infer', [hidden_dim, num_classes])
+
+        h1 = mlp_neuron(z1, w_h1, b_h1)
+        h2 = mlp_neuron(h1, w_h2, b_h2)
+        logits = tf.nn.softmax(mlp_neuron(h2, w_y, b_y, activation=False))
+    return logits
