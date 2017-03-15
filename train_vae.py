@@ -1,7 +1,4 @@
-import numpy as np
-
 from models.utils.MNIST_pickled_preprocess import extract_data
-from models.utils.metrics import plot_images
 from models.vanilla_vae.vae import VariationalAutoencoder
 
 
@@ -24,19 +21,20 @@ def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, min_std=0.0, trai
         enc_x_valid_mean, enc_x_valid_var = vae.encode(valid)
         enc_x_test_mean, enc_x_test_var = vae.encode(test)
 
-        num_images = 20
-        x_test = test[0:num_images, ]
-        plot_images(x_test, vae.encode(x_test), num_images, "vae")
-
-        id_x_keep = np.std(enc_x_ulab_mean, axis=0) > min_std
-        print("idx_keep shape:{}".format(id_x_keep.shape))
-        print("shape before red:{}".format(enc_x_lab_mean.shape))
-
-        enc_x_lab_mean, enc_x_lab_var = enc_x_lab_mean[:, id_x_keep], enc_x_lab_var[:, id_x_keep]
-        enc_x_ulab_mean, enc_x_ulab_var = enc_x_ulab_mean[:, id_x_keep], enc_x_ulab_var[:, id_x_keep]
-        enc_x_valid_mean, enc_x_valid_var = enc_x_valid_mean[:, id_x_keep], enc_x_valid_var[:, id_x_keep]
-        enc_x_test_mean, enc_x_test_var = enc_x_test_mean[:, id_x_keep], enc_x_test_var[:, id_x_keep]
-        print("shape reduction:{}".format(enc_x_lab_mean.shape))
+        # TODO enable dim reduction
+        # num_images = 20
+        # x_test = test[0:num_images, ]
+        # plot_images(x_test, vae.encode(x_test), num_images, "vae")
+        #
+        # id_x_keep = np.std(enc_x_ulab_mean, axis=0) > min_std
+        # print("idx_keep shape:{}".format(id_x_keep.shape))
+        # print("shape before red:{}".format(enc_x_lab_mean.shape))
+        #
+        # enc_x_lab_mean, enc_x_lab_var = enc_x_lab_mean[:, id_x_keep], enc_x_lab_var[:, id_x_keep]
+        # enc_x_ulab_mean, enc_x_ulab_var = enc_x_ulab_mean[:, id_x_keep], enc_x_ulab_var[:, id_x_keep]
+        # enc_x_valid_mean, enc_x_valid_var = enc_x_valid_mean[:, id_x_keep], enc_x_valid_var[:, id_x_keep]
+        # enc_x_test_mean, enc_x_test_var = enc_x_test_mean[:, id_x_keep], enc_x_test_var[:, id_x_keep]
+        # print("shape reduction:{}".format(enc_x_lab_mean.shape))
 
     return enc_x_lab_mean, enc_x_lab_var, enc_x_ulab_mean, enc_x_ulab_var, enc_x_valid_mean, \
            enc_x_valid_var, enc_x_test_mean, enc_x_test_var

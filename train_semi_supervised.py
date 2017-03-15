@@ -15,7 +15,7 @@ if __name__ == '__main__':
         'seed': 31415,
         'n_labeled': 50000,
         'alpha': 0.1,  # 0.1 - 2
-        'latent_dim': 50,
+        'latent_dim': 22,  # should be 50  TODO change back to 50
         'require_improvement': 5000,
         'n_train': 50000,
         'learning_rate': 3e-4,
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     train_x_l_mu, train_x_l_logvar, train_x_u_mu, train_x_u_logvar, valid_x_mu, \
     valid_x_logvar, test_x_mu, test_x_logvar = encode_dataset(FLAGS=FLAGS, train_lab=train_x_lab,
                                                               train_unlab=train_x_unlab, valid=valid_x,
-                                                              test=test_x, min_std=FLAGS['min_std'], train=False)
+                                                              test=test_x, min_std=FLAGS['min_std'])
     train_lab = [train_x_l_mu, train_x_l_logvar, train_l_y]
     train_unlab = [train_x_u_mu, train_x_u_logvar, train_u_y]
     valid = [valid_x_mu, valid_x_logvar, valid_y]

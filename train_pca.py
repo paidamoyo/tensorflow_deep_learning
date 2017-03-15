@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.decomposition import PCA
 
@@ -26,29 +25,6 @@ def transform_inputs(components, data):
     return np.dot(data, components.T)
 
 
-def plot_images(x_test, x_reconstruct, n_images, name):
-    assert len(x_test) == n_images
-    print("x_reconstruct:{}, x_test:{}".format(x_reconstruct.shape, x_test.shape))
-
-    plt.figure(figsize=(8, 12))
-    for i in range(n_images):
-        # Plot image.
-        plt.subplot(n_images, 2, 2 * i + 1)
-        s1 = plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
-        plt.subplot(n_images, 2, 2 * i + 2)
-        s2 = plt.imshow(x_reconstruct[i].reshape(4, 4), vmin=0, vmax=1, cmap="gray")
-        s1.axes.get_xaxis().set_visible(False)
-        s1.axes.get_yaxis().set_visible(False)
-        s2.axes.get_xaxis().set_visible(False)
-        s2.axes.get_yaxis().set_visible(False)
-
-    # plt.title("Left: Test input and Right: Reconstruction")
-    plt.tight_layout()
-    save_path = name + "_reconstructed_digit"
-    plt.savefig(save_path)
-    # plt.axis('off')
-
-
 if __name__ == '__main__':
     FLAGS = {
         'num_iterations': 40000,  # should 3000 epochs
@@ -61,7 +37,7 @@ if __name__ == '__main__':
         'beta1': 0.9,
         'beta2': 0.999,
         'num_classes': 10,
-        'n_components': 16
+        'n_components': 22
     }
 
     train_x_l, train_l_y, train_u_x, train_u_y, valid_x, valid_y, test_x, test_y = extract_data(
@@ -73,10 +49,6 @@ if __name__ == '__main__':
     train = [transform_inputs(components, train_x), train_y]
     valid = [transform_inputs(components, valid_x), valid_y]
     test = [transform_inputs(components, test_x), test_y]
-
-    num_images = 20
-    x_test = test_x[0:num_images, ]
-    plot_images(x_test, transform_inputs(components, x_test), num_images, "pca")
 
     pca = PCAClassifier(batch_size=FLAGS['batch_size'], learning_rate=FLAGS['learning_rate'],
                         beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],
