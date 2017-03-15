@@ -36,7 +36,8 @@ def create_weights(shape, name):
     print("name:{}, shape{}".format(name, shape))
     # initialize weights using Glorot and Bengio(2010) scheme
     a = tf.sqrt(6.0 / (shape[0] + shape[1]))
-    return tf.Variable(tf.random_uniform(shape, minval=-a, maxval=a, dtype=tf.float32))
+    return tf.Variable(tf.random_normal(shape, stddev=tf.square(0.0001)), name=name)
+    # return tf.Variable(tf.random_uniform(shape, minval=-a, maxval=a, dtype=tf.float32))
 
 
 def variable_summaries(var, summary_name):
