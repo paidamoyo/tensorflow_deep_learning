@@ -189,7 +189,7 @@ class GenerativeClassifier(object):
     def total_unlab_loss(self):
         # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
         const = 1e-10
-        y_ulab = tf.nn.softmax(logits=self.y_ulab_logits) + const
+        y_ulab = self.y_lab_logits + const
         variable_summaries(y_ulab, 'y_ulab')
         weighted_elbo = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(self.unlabeled_ELBO, tf.log(y_ulab))), 1)
         unlabeled_loss = tf.reduce_sum(weighted_elbo)

@@ -225,11 +225,9 @@ class Auxiliary(object):
     def total_unlab_loss(self):
         # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
         const = 1e-10
-        y_ulab = tf.nn.softmax(logits=self.y_ulab_logits)
-        variable_summaries(self.y_lab, 'y_lab')
-        weighted_elbo = tf.reduce_sum(
-            tf.multiply(y_ulab + const, tf.subtract(self.unlabeled_ELBO, tf.log(y_ulab + const))),
-            1)
+        y_ulab = self.y_lab_logits + const
+        variable_summaries(self.y_lab, 'y_unlab')
+        weighted_elbo = tf.reduce_sum(tf.multiply(y_ulab, tf.subtract(self.unlabeled_ELBO, tf.log(y_ulab))), 1)
         unlabeled_loss = tf.reduce_sum(weighted_elbo)
         print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(self.unlabeled_ELBO, unlabeled_loss))
         tf.summary.scalar('unlabeled_loss', unlabeled_loss)
