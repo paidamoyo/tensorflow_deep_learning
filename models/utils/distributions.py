@@ -70,17 +70,16 @@ def elbo_M2(z1_recon, z1, y, z2):
 
 def elbo_M1(x_recon, x_true, z1, z1_mu, z1_lsgms):
     log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_true, x_approx=x_recon))
-    marg_post = tf_gaussian_ent(z1_lsgms)
-    log_post_z = tf.reduce_sum(marg_post, axis=1)
-    marg_prior = tf_gaussian_marg(z1_mu, z1_lsgms)
-    log_prior_z = tf.reduce_sum(marg_prior, axis=1)
+    log_post_z = tf.reduce_sum(tf_gaussian_ent(z1_lsgms), axis=1)
+    log_prior_z = tf.reduce_sum(tf_gaussian_marg(z1_mu, z1_lsgms), axis=1)
 
     negative_log_lik = tf.scalar_mul(-1, log_lik)
     tf.summary.scalar('negative_log_lik', negative_log_lik)
     cost = log_lik + log_prior_z - log_post_z
     print("M1 cost {}, {}, {}".format(log_lik, log_post_z, log_prior_z))
     print("z1 shape:{}".format(z1.shape))
-    marginal_lik = tf.reduce_sum((marg_prior * log_lik) / marg_post)
+    marg_prior_z = tf_gaussian_marg(tf.zeros_like(z1_mu), tf.ones_like(z1_lsgms))
+    marginal_lik = tf.reduce_sum((marg_prior_z * log_lik) / tf_gaussian_marg(z1_mu, z1_lsgms))
     return cost, marginal_lik
 
 
