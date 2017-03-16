@@ -47,7 +47,7 @@ class Auxiliary(object):
         self.num_examples = 50000
         self.min_std = 0.1
         self.log_file = 'auxiliary.log'
-        self.batch_norm = True
+        self.batch_norm = False
         logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
         tf.set_random_seed(seed)
