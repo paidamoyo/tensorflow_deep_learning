@@ -77,7 +77,7 @@ def elbo_M1(x_recon, x_true, z1, z1_mu, z1_lsgms):
     # log_prior_z = tf.reduce_sum(tf_gaussian_marg(z1_mu, z1_lsgms), axis=1)
     marg_prior_z = tf_gaussian_marg(tf.zeros_like(z1_mu), tf.ones_like(z1_lsgms))
     marg_post_z = tf_gaussian_marg(z1_mu, z1_lsgms)
-    marginal_lik = tf.reduce_sum((marg_prior_z * log_lik) / marg_post_z, axis=1)
+    marginal_lik = tf.reduce_sum((marg_prior_z * log_lik) / marg_post_z)
 
     log_prior_z = tf.reduce_sum(marg_prior_z, axis=1)
     log_post_z = tf.reduce_sum(marg_post_z, axis=1)
