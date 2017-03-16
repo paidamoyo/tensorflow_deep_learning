@@ -11,5 +11,8 @@ train_vae.py
 ```
 train_semi_supervised.py
 ```
-
+* Auxiliary Deep Generative models: <https://arxiv.org/pdf/1602.05473.pdf>
+```
+train_auxiliary.py
+```
 
