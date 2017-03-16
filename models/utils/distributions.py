@@ -9,8 +9,8 @@ def tf_normal_logpdf(x, mu, log_var):
     return - 0.5 * logc - log_var / 2. - tf.div(tf.squared_difference(x, mu), 2 * tf.exp(log_var))
 
 
-def tf_stdnormal_logpdf(mu):
-    return - 0.5 * (logc + tf.square(mu))
+def tf_stdnormal_logpdf(x):
+    return - 0.5 * (logc + tf.square(x))
 
 
 def tf_gaussian_ent(log_sigma_sq):
@@ -70,14 +70,18 @@ def elbo_M2(z1_recon, z1, y, z2):
 
 def elbo_M1(x_recon, x_true, z1, z1_mu, z1_lsgms):
     log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_true, x_approx=x_recon))
-    log_post_z = tf.reduce_sum(tf_gaussian_ent(z1_lsgms), axis=1)
-    log_prior_z = tf.reduce_sum(tf_gaussian_marg(z1_mu, z1_lsgms), axis=1)
+    marg_post = tf_gaussian_ent(z1_lsgms)
+    log_post_z = tf.reduce_sum(marg_post, axis=1)
+    marg_prior = tf_gaussian_marg(z1_mu, z1_lsgms)
+    log_prior_z = tf.reduce_sum(marg_prior, axis=1)
 
     negative_log_lik = tf.scalar_mul(-1, log_lik)
     tf.summary.scalar('negative_log_lik', negative_log_lik)
     cost = log_lik + log_prior_z - log_post_z
     print("M1 cost {}, {}, {}".format(log_lik, log_post_z, log_prior_z))
-    return cost, log_lik
+    print("z1 shape:{}".format(z1.shape))
+    marginal_lik = tf.reduce_sum((marg_prior * log_lik) / marg_post)
+    return cost, marginal_lik
 
 
 def elbo_M1_M2(x_recon, z1_recon, xtrue, y, z2, z1):
@@ -108,14 +112,17 @@ def auxiliary_elbo(x_recon, x, y, qz, qa, pa):
 
     print(x, x_recon)
     log_px = -tf.reduce_sum(tf_binary_xentropy(x_true=x, x_approx=x_recon))
-    log_qz = tf.reduce_sum(tf_normal_logpdf(x=qz[0], mu=qz[1], log_var=qz[2]), 1)
+    logpdf_post_z = tf_normal_logpdf(x=qz[0], mu=qz[1], log_var=qz[2])
+    log_qz = tf.reduce_sum(logpdf_post_z, 1)
     log_qa = tf.reduce_sum(tf_normal_logpdf(x=qa[0], mu=qa[1], log_var=qa[2]))
 
-    log_pz = tf.reduce_sum(tf_stdnormal_logpdf(mu=qa[0]))
+    logpdf_prior_z = tf_stdnormal_logpdf(x=qa[0])
+    log_pz = tf.reduce_sum(logpdf_prior_z)
     log_py = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
     log_pa = tf.reduce_sum(tf_normal_logpdf(x=qa[0], mu=pa[1], log_var=pa[2]))
 
     negative_log_lik = tf.scalar_mul(-1, log_px)
     tf.summary.scalar('negative_log_lik', negative_log_lik)
     elbo = log_px + log_py + log_pz + log_pa - log_qa - log_qz
-    return elbo, log_px
+    marginal_lik = tf.reduce_sum((logpdf_prior_z * log_px) / logpdf_post_z)
+    return elbo, marginal_lik
