@@ -62,24 +62,30 @@ def elbo_M2(z1_recon, z1, y, z2):
     log_prior_y = - tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
 
     log_lik = tf.reduce_sum(tf_normal_logpdf(x=z1, mu=z1_recon[0], log_var=z1_recon[1]), 1)
-    log_post_z = tf.reduce_sum(tf_gaussian_ent(z2[2]), 1)
-    log_prior_z = tf.reduce_sum(tf_gaussian_marg(z2[1], z2[2]), 1)
-
+    # log_post_z = tf.reduce_sum(tf_gaussian_ent(z2[2]), 1)
+    # log_prior_z = tf.reduce_sum(tf_gaussian_marg(z2[1], z2[2]), 1)
+    marg_prior_z = tf_gaussian_marg(tf.zeros_like(z2[1]), tf.ones_like(z2[2]))
+    marg_post_z = tf_gaussian_marg(z2[1], z2[2])
+    log_prior_z = tf.reduce_sum(marg_prior_z, axis=1)
+    log_post_z = tf.reduce_sum(marg_post_z, axis=1)
     return log_prior_y + log_lik + log_prior_z - log_post_z
 
 
 def elbo_M1(x_recon, x_true, z1, z1_mu, z1_lsgms):
     log_lik = -tf.reduce_sum(tf_binary_xentropy(x_true=x_true, x_approx=x_recon))
-    log_post_z = tf.reduce_sum(tf_gaussian_ent(z1_lsgms), axis=1)
-    log_prior_z = tf.reduce_sum(tf_gaussian_marg(z1_mu, z1_lsgms), axis=1)
+    # log_post_z = tf.reduce_sum(tf_gaussian_ent(z1_lsgms), axis=1)
+    # log_prior_z = tf.reduce_sum(tf_gaussian_marg(z1_mu, z1_lsgms), axis=1)
+    marg_prior_z = tf_gaussian_marg(tf.zeros_like(z1_mu), tf.ones_like(z1_lsgms))
+    marg_post_z = tf_gaussian_marg(z1_mu, z1_lsgms)
+    marginal_lik = tf.reduce_sum((marg_prior_z * log_lik) / marg_post_z, axis=1)
 
+    log_prior_z = tf.reduce_sum(marg_prior_z, axis=1)
+    log_post_z = tf.reduce_sum(marg_post_z, axis=1)
     negative_log_lik = tf.scalar_mul(-1, log_lik)
     tf.summary.scalar('negative_log_lik', negative_log_lik)
     cost = log_lik + log_prior_z - log_post_z
     print("M1 cost {}, {}, {}".format(log_lik, log_post_z, log_prior_z))
     print("z1 shape:{}".format(z1.shape))
-    marg_prior_z = tf_gaussian_marg(tf.zeros_like(z1_mu), tf.ones_like(z1_lsgms))
-    marginal_lik = tf.reduce_sum((marg_prior_z * log_lik) / tf_gaussian_marg(z1_mu, z1_lsgms))
     return cost, marginal_lik
 
 
