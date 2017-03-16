@@ -110,13 +110,12 @@ def auxiliary_elbo(x_recon, x, y, qz, qa, pa):
     num_classes = 10
     y_prior = (1. / num_classes) * tf.ones_like(y)
 
-    print(x, x_recon)
     log_px = -tf.reduce_sum(tf_binary_xentropy(x_true=x, x_approx=x_recon))
-    logpdf_post_z = tf_gaussian_ent(log_sigma_sq=qz[2])
+    logpdf_post_z = tf_normal_logpdf(x=qz[0], mu=qz[1], log_var=qz[2])
     log_qz = tf.reduce_sum(logpdf_post_z, 1)
     log_qa = tf.reduce_sum(tf_normal_logpdf(x=qa[0], mu=qa[1], log_var=qa[2]))
 
-    logpdf_prior_z = tf_gaussian_marg(mu=qa[1], log_sigma_sq=qa[2])
+    logpdf_prior_z = tf_stdnormal_logpdf(x=qa[0])
     log_pz = tf.reduce_sum(logpdf_prior_z)
     log_py = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
     log_pa = tf.reduce_sum(tf_normal_logpdf(x=qa[0], mu=pa[1], log_var=pa[2]))
@@ -124,5 +123,5 @@ def auxiliary_elbo(x_recon, x, y, qz, qa, pa):
     negative_log_lik = tf.scalar_mul(-1, log_px)
     tf.summary.scalar('negative_log_lik', negative_log_lik)
     elbo = log_px + log_py + log_pz + log_pa - log_qa - log_qz
-    marginal_lik = tf.reduce_sum((logpdf_prior_z * log_px) / logpdf_post_z)
-    return elbo, marginal_lik
+
+    return elbo, log_px
