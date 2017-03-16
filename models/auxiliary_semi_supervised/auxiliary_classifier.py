@@ -13,7 +13,7 @@ from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semis
 from models.utils.batch_processing import get_next_batch
 from models.utils.distributions import auxiliary_elbo, tf_binary_xentropy
 from models.utils.distributions import prior_weights
-from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images
+from models.utils.metrics import cls_accuracy, print_test_accuracy, convert_labels_to_cls, plot_images, plot_roc
 from models.utils.tf_helpers import one_label_tensor, variable_summaries
 
 
@@ -267,7 +267,12 @@ class Auxiliary(object):
         correct, cls_pred = self.predict_cls(images=self.test_x,
                                              labels=self.test_y,
                                              cls_true=(convert_labels_to_cls(self.test_y)))
+        feed_dict = {self.x_lab: self.test_x,
+                     self.y_lab: self.test_y,
+                     self.is_training: False}
         print_test_accuracy(correct, cls_pred, self.test_y, logging)
+        logits = self.session.run(self.y_lab_logits, feed_dict=feed_dict)
+        plot_roc(logits, self.test_y, self.num_classes, name='auxiliary')
         self.test_reconstruction()
 
     def unlabeled_model(self):
