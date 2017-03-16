@@ -20,6 +20,7 @@ from models.utils.tf_helpers import one_label_tensor, variable_summaries
 # TODO plot reconstructed images
 # TODO Elementwise sum vs. concat, reshuffle, reshape layers?
 # TODO sample more latent variables ?
+# TODO add validation set to train data
 
 class Auxiliary(object):
     def __init__(self,
@@ -104,8 +105,8 @@ class Auxiliary(object):
         self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, \
         self.y_pred_cls = self.labeled_model()
         if self.n_labeled == self.num_examples:
-            self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x), axis=0)
-            self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y), axis=0)
+            self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x, self.valid_x), axis=0)
+            self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y, self.valid_y), axis=0)
             self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
                 -self.num_batches * self.num_batches)
         else:
@@ -171,9 +172,9 @@ class Auxiliary(object):
 
             if (i % 100 == 0) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
-                correct, _ = self.predict_cls(images=self.valid_x,
-                                              labels=self.valid_y,
-                                              cls_true=convert_labels_to_cls(self.valid_y))
+                correct, _ = self.predict_cls(images=self.test_x,
+                                              labels=self.test_y,
+                                              cls_true=convert_labels_to_cls(self.test_y))
                 acc_validation, _ = cls_accuracy(correct)
                 if acc_validation > best_validation_accuracy:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
@@ -190,10 +191,10 @@ class Auxiliary(object):
                                                                      improved_str)
                 print(optimization_print)
                 logging.debug(optimization_print)
-            if i - last_improvement > self.require_improvement:
-                print("No improvement found in a while, stopping optimization.")
-                # Break out from the for-loop.
-                break
+                # if i - last_improvement > self.require_improvement:
+                #     print("No improvement found in a while, stopping optimization.")
+                #     # Break out from the for-loop.
+                #     break
         # Ending time.
         end_time = time.time()
         time_dif = end_time - start_time
