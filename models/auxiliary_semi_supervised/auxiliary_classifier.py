@@ -107,12 +107,13 @@ class Auxiliary(object):
         if self.n_labeled == self.num_examples:
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x, self.valid_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y, self.valid_y), axis=0)
-            self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
-                -self.num_batches * self.num_batches)
+            #TODO check calculations
+            self.cost = ((self.total_lab_loss() * self.num_examples) + prior_weights()) / (
+                -self.batch_size * self.num_examples)
         else:
             self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
-            self.cost = ((self.total_lab_loss() + self.total_unlab_loss()) * self.num_batches + prior_weights()) / (
-                -self.batch_size * self.num_batches)
+            self.cost = ((self.total_lab_loss() + self.total_unlab_loss()) * self.num_examples + prior_weights()) / (
+                -self.batch_size * self.num_examples)
 
         tf.summary.scalar('cost', self.cost)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,

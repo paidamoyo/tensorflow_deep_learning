@@ -94,7 +94,7 @@ class GenerativeClassifier(object):
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y), axis=0)
 
             self.cost = ((self.total_lab_loss() * self.num_batches) + prior_weights()) / (
-                -self.num_batches * self.num_batches)
+                -self.batch_size * self.num_batches)
         else:
             self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
             self.cost = ((self.total_lab_loss() + self.total_unlab_loss()) * self.num_batches + prior_weights()) / (
