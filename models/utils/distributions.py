@@ -58,8 +58,7 @@ def regularization_loss(z_mu, z_logvar):
 
 def elbo_M2(z1_recon, z1, y, z2):
     num_classes = 10
-    # TODO check of zeros or ones make sense
-    y_prior = (1. / num_classes) * tf.zeros_like(y)
+    y_prior = (1. / num_classes) * tf.ones_like(y)
     log_prior_y = - tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
 
     log_lik = tf.reduce_sum(tf_normal_logpdf(x=z1, mu=z1_recon[0], log_var=z1_recon[1]), 1)
@@ -106,8 +105,7 @@ def compute_ELBO(x_recon, x, y, z):
 
 def auxiliary_elbo(x_recon, x, y, qz, qa, pa):
     num_classes = 10
-    # TODO check of zeros or ones make sense
-    y_prior = (1. / num_classes) * tf.zeros_like(y)
+    y_prior = (1. / num_classes) * tf.ones_like(y)
 
     log_px = -tf.reduce_sum(tf_binary_xentropy(x_true=x, x_approx=x_recon))
     logpdf_post_z = tf_normal_logpdf(x=qz[0], mu=qz[1], log_var=qz[2])
