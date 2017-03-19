@@ -149,7 +149,7 @@ class VariationalAutoencoder(object):
         self.test_reconstruction()
 
     def test_reconstruction(self):
-        num_images = 20
+        num_images = 5
         x_test = self.test_x[0:num_images, ]
         plot_images(x_test, self.decode(x_test), num_images, "vae")
 
