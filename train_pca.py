@@ -30,13 +30,6 @@ def transform_inputs(components, data):
     return np.dot(data, components.T)
 
 
-def test_recon(data):
-    num_images = 5
-    x_test = data[0:, num_images]
-    recon = pca.inverse_transform(pca.transform(x_test))
-    plot_images(x_test, recon, num_images, 'pca')
-
-
 if __name__ == '__main__':
     FLAGS = {
         'num_iterations': 40000,  # should 3000 epochs
@@ -58,11 +51,23 @@ if __name__ == '__main__':
     train_y = np.concatenate((train_l_y, train_u_y), axis=0)
 
     pca = pca_components(train_x, FLAGS['n_components'])
-    train = [pca.transform(train_x), train_y]
-    valid = [pca.transform(valid_x), valid_y]
-    test = [pca.transform(test_x), test_y]
 
-    test_recon(test_x)
+    train_x_tran = pca.transform(train_x)
+    train = [train_x_tran, train_y]
+
+    valid_x_tran = pca.transform(valid_x)
+    valid = [valid_x_tran, valid_y]
+
+    test_x_tran = pca.transform(test_x)
+    test = [test_x_tran, test_y]
+
+    print("train_x_tran:{},  valid_x_tran:{}, test_x_tran:{} ".format(train_x_tran.shape, valid_x_tran.shape,
+                                                                      test_x_tran.shape))
+
+    num_images = 5
+    recon = pca.inverse_transform(test_x_tran)
+    print("recon :{}".format(recon.shape))
+    plot_images(test_x[0:num_images], recon[0:num_images], num_images, 'pca')
 
     pca = PCAClassifier(batch_size=FLAGS['batch_size'], learning_rate=FLAGS['learning_rate'],
                         beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],

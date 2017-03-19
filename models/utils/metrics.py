@@ -75,8 +75,10 @@ def plot_images(x_test, x_reconstruct, n_images, name):
         # Plot image.
         plt.subplot(n_images, 2, 2 * i + 1)
         s1 = plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        plt.title("Test input")
         plt.subplot(n_images, 2, 2 * i + 2)
         s2 = plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        plt.title("Reconstruction")
         s1.axes.get_xaxis().set_visible(False)
         s1.axes.get_yaxis().set_visible(False)
         s2.axes.get_xaxis().set_visible(False)
