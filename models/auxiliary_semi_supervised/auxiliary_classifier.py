@@ -254,8 +254,8 @@ class Auxiliary(object):
         num_images = len(images)
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
-        mean_auc, batch_auc = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
-        final_mean_value = 0.0
+        # mean_auc, batch_auc = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
+        # final_mean_value = 0.0
         self.session.run(tf.local_variables_initializer())
         while i < num_images:
             # The ending index for the next batch is denoted j.
@@ -267,11 +267,11 @@ class Auxiliary(object):
                          self.is_training: False}
             cls_pred[i:j] = self.session.run(self.y_pred_cls,
                                              feed_dict=feed_dict)
-            final_mean_value, auc = self.session.run([mean_auc, batch_auc], feed_dict=feed_dict)
+            # final_mean_value, auc = self.session.run([mean_auc, batch_auc], feed_dict=feed_dict)
             i = j
-        mean_auc_print = 'Final Mean AUC: %f' % final_mean_value
-        print(mean_auc_print)
-        logging.debug(mean_auc_print)
+        # mean_auc_print = 'Final Mean AUC: %f' % final_mean_value
+        # print(mean_auc_print)
+        # logging.debug(mean_auc_print)
         # Create a boolean array whether each image is correctly classified.
         correct = (cls_true == cls_pred)
         return correct, cls_pred
