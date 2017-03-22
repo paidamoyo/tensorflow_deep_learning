@@ -20,7 +20,7 @@ from models.utils.tf_helpers import one_label_tensor, variable_summaries
 # TODO plot reconstructed images
 # TODO Elementwise sum vs. concat, reshuffle, reshape layers?
 # TODO sample more latent variables ?
-# TODO add validation set to train data
+# TODO log validation accuracy
 
 class Auxiliary(object):
     def __init__(self,
@@ -108,12 +108,18 @@ class Auxiliary(object):
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x, self.valid_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y, self.valid_y), axis=0)
             # TODO check calculations
-            self.cost = ((self.total_lab_loss() * self.num_examples) + prior_weights()) / (
-                -self.batch_size * self.num_examples)
+            self.cost = ((self.mean_lab_loss() * self.num_examples) + prior_weights()) / (
+                -self.num_examples)
+            loss = "labeled loss"
+            print(loss)
+            logging.debug(loss)
         else:
             self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
-            self.cost = ((self.total_lab_loss() + self.total_unlab_loss()) * self.num_examples + prior_weights()) / (
-                -self.batch_size * self.num_examples)
+            self.cost = ((self.mean_lab_loss() + self.mean_unlab_loss()) * self.num_examples + prior_weights()) / (
+                -self.num_examples)
+            loss = "labeled + unlabeled loss"
+            print(loss)
+            logging.debug(loss)
 
         tf.summary.scalar('cost', self.cost)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
@@ -168,6 +174,11 @@ class Auxiliary(object):
 
             summary, batch_loss, _ = self.session.run([self.merged, self.cost, self.optimizer],
                                                       feed_dict=feed_dict_train)
+            train_correct, _ = self.predict_cls(images=self.train_x_l,
+                                                labels=self.train_l_y,
+                                                cls_true=convert_labels_to_cls(self.train_l_y))
+            acc_train, _ = cls_accuracy(train_correct)
+
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
             self.train_writer.add_summary(summary, i)
 
@@ -187,8 +198,8 @@ class Auxiliary(object):
                 else:
                     improved_str = ''
 
-                optimization_print = "Iteration: {}, Training Loss: {}, " \
-                                     " Validation Acc {}, {}".format(i + 1, int(batch_loss), acc_validation,
+                optimization_print = "Iteration: {}, Training Loss: {}, Acc: {} " \
+                                     " Validation Acc {}, {}".format(i + 1, int(batch_loss), acc_train, acc_validation,
                                                                      improved_str)
                 print(optimization_print)
                 logging.debug(optimization_print)
@@ -219,15 +230,15 @@ class Auxiliary(object):
         logging.debug(log_lik_print)
         plot_images(x_test, x_recon, num_images, "auxiliary")
 
-    def total_lab_loss(self):
+    def mean_lab_loss(self):
         # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
         beta = self.alpha * (float(self.batch_size) / self.num_lab_batch)
         weighted_classifier_loss = beta * self.classifier_loss
         labeled_loss = tf.reduce_sum(tf.subtract(self.labeled_ELBO, weighted_classifier_loss))
         tf.summary.scalar('labeled_loss', labeled_loss)
-        return labeled_loss
+        return labeled_loss / self.batch_size
 
-    def total_unlab_loss(self):
+    def mean_unlab_loss(self):
         # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
         const = 1e-10
         y_ulab = tf.nn.softmax(self.y_ulab_logits) + const
@@ -236,7 +247,7 @@ class Auxiliary(object):
         unlabeled_loss = tf.reduce_sum(weighted_elbo)
         print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(self.unlabeled_ELBO, unlabeled_loss))
         tf.summary.scalar('unlabeled_loss', unlabeled_loss)
-        return unlabeled_loss
+        return unlabeled_loss / self.batch_size
 
     def predict_cls(self, images, labels, cls_true):
         num_images = len(images)
