@@ -21,6 +21,8 @@ from models.utils.tf_helpers import one_label_tensor, variable_summaries
 # TODO Elementwise sum vs. concat, reshuffle, reshape layers?
 # TODO sample more latent variables ?
 # TODO log validation accuracy
+# TODO Add Training Base and Model
+# TODO extract base Model
 
 class Auxiliary(object):
     def __init__(self,
@@ -324,10 +326,9 @@ class Auxiliary(object):
                                       hidden_dim=self.hidden_dim, input_dim=self.input_dim,
                                       is_training=self.is_training,
                                       batch_norm=self.batch_norm, reuse=True)
-            class_elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
-                                                 qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
+            class_elbo = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
+                                        qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
             elbo.append(class_elbo)
-            total_log_lik += log_lik
         elbo = tf.convert_to_tensor(elbo)
         print("unlabeled class_elbo:{}".format(elbo))
         return tf.transpose(elbo), logits
@@ -352,8 +353,8 @@ class Auxiliary(object):
         x_recon_mu = px_given_zya(y=self.y_lab, z=z, qa=a, latent_dim=self.latent_dim,
                                   num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
                                   is_training=self.is_training, batch_norm=self.batch_norm)
-        elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
-                                       qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
+        elbo = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
+                              qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
 
         classifier_loss, y_pred_cls = softmax_classifier(logits=logits, y_true=self.y_lab)
         return elbo, logits, x_recon_mu, classifier_loss, y_pred_cls

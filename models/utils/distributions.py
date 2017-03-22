@@ -115,8 +115,4 @@ def auxiliary_elbo(x_recon, x, y, qz, qa, pa):
     log_py = -tf.nn.softmax_cross_entropy_with_logits(logits=y_prior, labels=y)
     log_pa = tf.reduce_sum(tf_normal_logpdf(x=qa[0], mu=pa[1], log_var=pa[2]))
 
-    negative_log_lik = tf.scalar_mul(-1, log_px)
-    tf.summary.scalar('negative_log_lik', negative_log_lik)
-    elbo = log_px + log_py + log_pz + log_pa - log_qa - log_qz
-
-    return elbo
+    return log_px + log_py + log_pz + log_pa - log_qa - log_qz
