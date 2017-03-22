@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     FLAGS = {
         'num_iterations': 300000,  # should 3000 epochs (30000/100)
-        'batch_size': 500,
+        'batch_size': 200,
         'seed': 31415,
         'n_labeled': 100,
         'alpha': 0.1,

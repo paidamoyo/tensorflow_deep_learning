@@ -93,7 +93,8 @@ class Auxiliary(object):
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
 
     def _objective(self):
-        self.num_lab_batch, self.num_ulab_batch = 100, 100
+        split_batch_size = int(self.batch_size / 2)
+        self.num_lab_batch, self.num_ulab_batch = split_batch_size, split_batch_size
         self.num_batches = self.num_examples / self.batch_size
         logging.debug(
             "num batches:{}, batch_size:{},  num_lab_batch {}, num_ulab_batch:{}, epochs:{}".format(self.num_batches,
