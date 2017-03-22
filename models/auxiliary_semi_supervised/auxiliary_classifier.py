@@ -94,7 +94,8 @@ class Auxiliary(object):
 
     def _objective(self):
         split_batch_size = int(self.batch_size / 2)
-        self.num_lab_batch, self.num_ulab_batch = split_batch_size, split_batch_size
+        # TODO clean up batch assignment
+        self.num_lab_batch, self.num_ulab_batch = 1, 199
         self.num_batches = self.num_examples / self.batch_size
         logging.debug(
             "num batches:{}, batch_size:{},  num_lab_batch {}, num_ulab_batch:{}, epochs:{}".format(self.num_batches,
