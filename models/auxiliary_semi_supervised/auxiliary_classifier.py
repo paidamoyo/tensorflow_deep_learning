@@ -111,6 +111,7 @@ class Auxiliary(object):
             # TODO check calculations
             self.cost = ((self.mean_lab_loss() * self.num_examples) + prior_weights()) / (
                 -self.num_examples)
+            self.marginal_lik = self.mean_lab_loss()
             loss = "labeled loss"
             print(loss)
             logging.debug(loss)
@@ -118,6 +119,7 @@ class Auxiliary(object):
             self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
             self.cost = ((self.mean_lab_loss() + self.mean_unlab_loss()) * self.num_examples + prior_weights()) / (
                 -self.num_examples)
+            self.marginal_lik = self.mean_lab_loss() + self.mean_unlab_loss()
             loss = "labeled + unlabeled loss"
             print(loss)
             logging.debug(loss)
@@ -173,11 +175,12 @@ class Auxiliary(object):
             feed_dict_train = {self.x_lab: x_l_batch, self.y_lab: y_l_batch,
                                self.x_unlab: x_u_batch, self.is_training: True}
 
-            summary, batch_loss, _ = self.session.run([self.merged, self.cost, self.optimizer],
-                                                      feed_dict=feed_dict_train)
-            train_correct, _ = self.predict_cls(images=self.train_x_l,
-                                                labels=self.train_l_y,
-                                                cls_true=convert_labels_to_cls(self.train_l_y))
+            summary, batch_loss, batch_marg_lik, _ = self.session.run(
+                [self.merged, self.cost, self.marginal_lik, self.optimizer],
+                feed_dict=feed_dict_train)
+            train_correct, _ = self.predict_cls(images=x_l_batch,
+                                                labels=y_l_batch,
+                                                cls_true=convert_labels_to_cls(y_l_batch))
             acc_train, _ = cls_accuracy(train_correct)
 
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
@@ -188,6 +191,10 @@ class Auxiliary(object):
                 correct, _ = self.predict_cls(images=self.test_x,
                                               labels=self.test_y,
                                               cls_true=convert_labels_to_cls(self.test_y))
+                val_feed_dict = {self.x_lab: self.test_x,
+                                 self.y_lab: self.test_y,
+                                 self.is_training: False}
+                val_marg_lik = self.session.run(self.marginal_lik, feed_dict={val_feed_dict})
                 acc_validation, _ = cls_accuracy(correct)
                 if acc_validation > best_validation_accuracy:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
@@ -199,9 +206,11 @@ class Auxiliary(object):
                 else:
                     improved_str = ''
 
-                optimization_print = "Iteration: {}, Training Loss: {}, Acc: {} " \
-                                     " Validation Acc {}, {}".format(i + 1, int(batch_loss), acc_train, acc_validation,
-                                                                     improved_str)
+                optimization_print = "Iteration: {}, Training Loss: {} Acc:{} marg_lik: {} " \
+                                     " Validation Acc:{} marg_lik: {} , {}".format(i + 1, int(batch_loss), acc_train,
+                                                                                   batch_marg_lik,
+                                                                                   acc_validation, val_marg_lik,
+                                                                                   improved_str)
                 print(optimization_print)
                 logging.debug(optimization_print)
                 # if i - last_improvement > self.require_improvement:
@@ -254,9 +263,6 @@ class Auxiliary(object):
         num_images = len(images)
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
-        # mean_auc, batch_auc = tf.contrib.metrics.streaming_auc(self.y_lab_logits, self.y_lab, curve='ROC')
-        # final_mean_value = 0.0
-        self.session.run(tf.local_variables_initializer())
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
@@ -267,12 +273,7 @@ class Auxiliary(object):
                          self.is_training: False}
             cls_pred[i:j] = self.session.run(self.y_pred_cls,
                                              feed_dict=feed_dict)
-            # final_mean_value, auc = self.session.run([mean_auc, batch_auc], feed_dict=feed_dict)
             i = j
-        # mean_auc_print = 'Final Mean AUC: %f' % final_mean_value
-        # print(mean_auc_print)
-        # logging.debug(mean_auc_print)
-        # Create a boolean array whether each image is correctly classified.
         correct = (cls_true == cls_pred)
         return correct, cls_pred
 

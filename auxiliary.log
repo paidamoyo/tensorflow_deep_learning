@@ -1,6 +1,6 @@
 DEBUG:root:idx_keep count:443
 DEBUG:root:x_l:(100, 443), y_l:(100, 10), x_u:(49900, 443), y_(49900, 10)
-DEBUG:root:num batches:100.0, batch_size:500,  num_lab_batch 1, num_ulab_batch:499, epochs:3000
+DEBUG:root:num batches:250.0, batch_size:200,  num_lab_batch 100, num_ulab_batch:100, epochs:1200
+DEBUG:root:labeled + unlabeled loss
 DEBUG:root:Training Auxiliary VAE:
-DEBUG:root:Final Mean AUC: 0.458842
-DEBUG:root:Iteration: 1, Training Loss: 241214,  Validation Acc 0.0894, *
+DEBUG:root:Iteration: 1, Training Loss: 61433, Acc: 0.19  Validation Acc 0.1606, *
