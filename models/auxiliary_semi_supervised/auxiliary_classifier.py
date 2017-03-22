@@ -6,7 +6,7 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 
-from models.auxiliary_semi_supervised.decoder import px_given_zy, pa_given_zy
+from models.auxiliary_semi_supervised.decoder import px_given_zya, pa_given_zy
 from models.auxiliary_semi_supervised.encoder import qa_given_x, qz_given_ayx, qy_given_ax
 from models.classifier import softmax_classifier
 from models.utils.MNIST_pickled_preprocess import load_numpy_split, create_semisupervised, binarize_images
@@ -107,7 +107,7 @@ class Auxiliary(object):
         if self.n_labeled == self.num_examples:
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x, self.valid_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y, self.valid_y), axis=0)
-            #TODO check calculations
+            # TODO check calculations
             self.cost = ((self.total_lab_loss() * self.num_examples) + prior_weights()) / (
                 -self.batch_size * self.num_examples)
         else:
@@ -300,10 +300,11 @@ class Auxiliary(object):
                                                               num_classes=self.num_classes,
                                                               is_training=self.is_training, batch_norm=self.batch_norm,
                                                               reuse=True)
-            x_recon_mu = px_given_zy(y=y_ulab, z=z, latent_dim=self.latent_dim,
-                                     num_classes=self.num_classes,
-                                     hidden_dim=self.hidden_dim, input_dim=self.input_dim, is_training=self.is_training,
-                                     batch_norm=self.batch_norm, reuse=True)
+            x_recon_mu = px_given_zya(y=y_ulab, z=z, qa=a, latent_dim=self.latent_dim,
+                                      num_classes=self.num_classes,
+                                      hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                      is_training=self.is_training,
+                                      batch_norm=self.batch_norm, reuse=True)
             class_elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_unlab, y=y_ulab, qz=[z, z_mu, z_logvar],
                                                  qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
             elbo.append(class_elbo)
@@ -329,9 +330,9 @@ class Auxiliary(object):
                                                           hidden_dim=self.hidden_dim,
                                                           num_classes=self.num_classes, is_training=self.is_training,
                                                           batch_norm=self.batch_norm)
-        x_recon_mu = px_given_zy(y=self.y_lab, z=z, latent_dim=self.latent_dim,
-                                 num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
-                                 is_training=self.is_training, batch_norm=self.batch_norm)
+        x_recon_mu = px_given_zya(y=self.y_lab, z=z, qa=a, latent_dim=self.latent_dim,
+                                  num_classes=self.num_classes, hidden_dim=self.hidden_dim, input_dim=self.input_dim,
+                                  is_training=self.is_training, batch_norm=self.batch_norm)
         elbo, log_lik = auxiliary_elbo(x_recon=x_recon_mu, x=self.x_lab, y=self.y_lab, qz=[z, z_mu, z_logvar],
                                        qa=[a, a_mu, a_logvar], pa=[a_recon, a_recon_mu, a_recon_logvar])
 
