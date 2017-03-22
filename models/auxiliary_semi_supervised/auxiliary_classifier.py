@@ -194,7 +194,7 @@ class Auxiliary(object):
                 val_feed_dict = {self.x_lab: self.test_x,
                                  self.y_lab: self.test_y,
                                  self.is_training: False}
-                val_marg_lik = self.session.run(self.marginal_lik, feed_dict={val_feed_dict})
+                val_marg_lik = self.session.run(self.marginal_lik, feed_dict=val_feed_dict)
                 acc_validation, _ = cls_accuracy(correct)
                 if acc_validation > best_validation_accuracy:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
