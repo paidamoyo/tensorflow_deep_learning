@@ -111,7 +111,7 @@ class Auxiliary(object):
             # TODO check calculations
             self.cost = ((self.mean_lab_loss() * self.num_examples) + prior_weights()) / (
                 -self.num_examples)
-            self.marginal_lik = self.mean_lab_loss()
+            self.marginal_lik_lab = self.mean_lab_loss()
             loss = "labeled loss"
             print(loss)
             logging.debug(loss)
@@ -119,7 +119,8 @@ class Auxiliary(object):
             self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
             self.cost = ((self.mean_lab_loss() + self.mean_unlab_loss()) * self.num_examples + prior_weights()) / (
                 -self.num_examples)
-            self.marginal_lik = self.mean_lab_loss() + self.mean_unlab_loss()
+            self.marginal_lik_lab = self.mean_lab_loss()
+            self.marginal_lik_unlab = self.mean_unlab_loss()
             loss = "labeled + unlabeled loss"
             print(loss)
             logging.debug(loss)
@@ -174,9 +175,10 @@ class Auxiliary(object):
                                                          self.num_ulab_batch)
             feed_dict_train = {self.x_lab: x_l_batch, self.y_lab: y_l_batch,
                                self.x_unlab: x_u_batch, self.is_training: True}
+            total_marg_lik = self.marginal_lik_lab + self.mean_unlab_loss()
 
             summary, batch_loss, batch_marg_lik, _ = self.session.run(
-                [self.merged, self.cost, self.marginal_lik, self.optimizer],
+                [self.merged, self.cost, total_marg_lik, self.optimizer],
                 feed_dict=feed_dict_train)
             train_correct, _ = self.predict_cls(images=x_l_batch,
                                                 labels=y_l_batch,
@@ -194,7 +196,7 @@ class Auxiliary(object):
                 val_feed_dict = {self.x_lab: self.test_x,
                                  self.y_lab: self.test_y,
                                  self.is_training: False}
-                val_marg_lik = self.session.run(self.marginal_lik, feed_dict=val_feed_dict)
+                val_marg_lik = self.session.run(self.marginal_lik_lab, feed_dict=val_feed_dict)
                 acc_validation, _ = cls_accuracy(correct)
                 if acc_validation > best_validation_accuracy:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
@@ -287,7 +289,7 @@ class Auxiliary(object):
                      self.y_lab: self.test_y,
                      self.is_training: False}
         print_test_accuracy(correct, cls_pred, self.test_y, logging)
-        logits = self.session.run(self.y_lab_logits, feed_dict=feed_dict)
+        logits, test_marg_lik = self.session.run([self.y_lab_logits, self.marginal_lik_lab], feed_dict=feed_dict)
         plot_roc(logits, self.test_y, self.num_classes, name='auxiliary')
         self.test_reconstruction()
 
