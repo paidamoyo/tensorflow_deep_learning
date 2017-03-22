@@ -175,7 +175,7 @@ class Auxiliary(object):
                                                          self.num_ulab_batch)
             feed_dict_train = {self.x_lab: x_l_batch, self.y_lab: y_l_batch,
                                self.x_unlab: x_u_batch, self.is_training: True}
-            total_marg_lik = self.marginal_lik_lab + self.mean_unlab_loss()
+            total_marg_lik = self.marginal_lik_lab + self.marginal_lik_unlab
 
             summary, batch_loss, batch_marg_lik, _ = self.session.run(
                 [self.merged, self.cost, total_marg_lik, self.optimizer],
