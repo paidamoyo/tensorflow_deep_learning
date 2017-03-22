@@ -180,9 +180,9 @@ class Auxiliary(object):
             summary, batch_loss, batch_marg_lik, _ = self.session.run(
                 [self.merged, self.cost, total_marg_lik, self.optimizer],
                 feed_dict=feed_dict_train)
-            train_correct, _ = self.predict_cls(images=x_l_batch,
-                                                labels=y_l_batch,
-                                                cls_true=convert_labels_to_cls(y_l_batch))
+            train_correct, _, _ = self.predict_cls(images=x_l_batch,
+                                                   labels=y_l_batch,
+                                                   cls_true=convert_labels_to_cls(y_l_batch))
             acc_train, _ = cls_accuracy(train_correct)
 
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
@@ -190,13 +190,9 @@ class Auxiliary(object):
 
             if (i % 100 == 0) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
-                correct, _ = self.predict_cls(images=self.test_x,
-                                              labels=self.test_y,
-                                              cls_true=convert_labels_to_cls(self.test_y))
-                val_feed_dict = {self.x_lab: self.test_x,
-                                 self.y_lab: self.test_y,
-                                 self.is_training: False}
-                val_marg_lik = self.session.run(self.marginal_lik_lab, feed_dict=val_feed_dict)
+                correct, _, val_marg_lik = self.predict_cls(images=self.test_x,
+                                                            labels=self.test_y,
+                                                            cls_true=convert_labels_to_cls(self.test_y))
                 acc_validation, _ = cls_accuracy(correct)
                 if acc_validation > best_validation_accuracy:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
@@ -265,6 +261,7 @@ class Auxiliary(object):
         num_images = len(images)
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
+        total_marg = 0.0
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
@@ -273,23 +270,27 @@ class Auxiliary(object):
             feed_dict = {self.x_lab: batch_images,
                          self.y_lab: batch_labels,
                          self.is_training: False}
-            cls_pred[i:j] = self.session.run(self.y_pred_cls,
-                                             feed_dict=feed_dict)
+            cls_pred[i:j], batch_marg = self.session.run([self.y_pred_cls, self.marginal_lik_lab],
+                                                         feed_dict=feed_dict)
+            total_marg += batch_marg
             i = j
         correct = (cls_true == cls_pred)
-        return correct, cls_pred
+        return correct, cls_pred, total_marg
 
     def train_test(self):
         self.train_neural_network()
         self.saver.restore(sess=self.session, save_path=self.save_path)
-        correct, cls_pred = self.predict_cls(images=self.test_x,
-                                             labels=self.test_y,
-                                             cls_true=(convert_labels_to_cls(self.test_y)))
+        correct, cls_pred, test_marg_lik = self.predict_cls(images=self.test_x,
+                                                            labels=self.test_y,
+                                                            cls_true=(convert_labels_to_cls(self.test_y)))
         feed_dict = {self.x_lab: self.test_x,
                      self.y_lab: self.test_y,
                      self.is_training: False}
+        marg_print = "test marginal_likelihood:{}".format(test_marg_lik)
+        print(marg_print)
+        logging.debug(marg_print)
         print_test_accuracy(correct, cls_pred, self.test_y, logging)
-        logits, test_marg_lik = self.session.run([self.y_lab_logits, self.marginal_lik_lab], feed_dict=feed_dict)
+        logits = self.session.run(self.y_lab_logits, feed_dict=feed_dict)
         plot_roc(logits, self.test_y, self.num_classes, name='auxiliary')
         self.test_reconstruction()
 
