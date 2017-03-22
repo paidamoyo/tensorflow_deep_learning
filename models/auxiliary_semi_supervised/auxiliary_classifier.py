@@ -262,6 +262,7 @@ class Auxiliary(object):
         num_images = len(images)
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
+        num_batches = num_images / self.batch_size
         total_marg = 0.0
         while i < num_images:
             # The ending index for the next batch is denoted j.
@@ -276,7 +277,7 @@ class Auxiliary(object):
             total_marg += batch_marg
             i = j
         correct = (cls_true == cls_pred)
-        return correct, cls_pred, total_marg
+        return correct, cls_pred, total_marg / num_batches
 
     def train_test(self):
         self.train_neural_network()
