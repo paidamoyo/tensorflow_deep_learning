@@ -108,28 +108,24 @@ class Auxiliary(object):
                                                                                                         self.num_iterations / self.num_batches)))
         self.labeled_ELBO, self.y_lab_logits, self.x_recon_lab_mu, self.classifier_loss, \
         self.y_pred_cls = self.labeled_model()
-        self.marginal_lik_lab = self.mean_lab_loss()
+        self.marginal_lik_lab = tf.reduce_mean(self.total_lab_loss())
         if self.n_labeled == self.num_examples:
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x, self.valid_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y, self.valid_y), axis=0)
             # TODO check calculations
-            self.cost = ((self.marginal_lik_lab * self.num_examples) + prior_weights()) / (
-                -self.num_examples)
-            self.total_marg_lik = self.marginal_lik_lab
+            self.total_marg_lik = tf.reduce_mean(self.total_lab_loss())
             loss = "labeled loss"
             print(loss)
             logging.debug(loss)
         else:
             self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
-            self.marginal_lik_unlab = self.mean_unlab_loss()
-            self.total_marg_lik = (self.marginal_lik_lab + self.marginal_lik_unlab) / 2
-            total_elbo = self.marginal_lik_lab + self.marginal_lik_unlab
-            self.cost = ((total_elbo) * self.num_examples + prior_weights()) / (
-                -self.num_examples)
+            self.total_marg_lik = tf.reduce_mean(self.total_lab_loss() + self.total_lab_loss())
             loss = "labeled + unlabeled loss"
             print(loss)
-            logging.debug(loss)
 
+            logging.debug(loss)
+        self.cost = ((self.total_marg_lik) * self.num_examples + prior_weights()) / (
+            -self.num_examples)
         tf.summary.scalar('cost', self.cost)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=self.beta1,
                                                 beta2=self.beta2).minimize(self.cost)
@@ -242,15 +238,15 @@ class Auxiliary(object):
         logging.debug(log_lik_print)
         plot_images(x_test, x_recon, num_images, "auxiliary")
 
-    def mean_lab_loss(self):
+    def total_lab_loss(self):
         # gradient of -KL(q(z|y,x) ~p(x,y) || p(x,y,z))
         beta = self.alpha * (float(self.batch_size) / self.num_lab_batch)
         weighted_classifier_loss = beta * self.classifier_loss
         labeled_loss = tf.reduce_sum(tf.subtract(self.labeled_ELBO, weighted_classifier_loss))
         tf.summary.scalar('labeled_loss', labeled_loss)
-        return labeled_loss / self.batch_size
+        return labeled_loss
 
-    def mean_unlab_loss(self):
+    def total_unlab_loss(self):
         # -KL(q(z|x,y)q(y|x) ~p(x) || p(x,y,z))
         const = 1e-10
         y_ulab = tf.nn.softmax(self.y_ulab_logits) + const
@@ -259,7 +255,7 @@ class Auxiliary(object):
         unlabeled_loss = tf.reduce_sum(weighted_elbo)
         print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(self.unlabeled_ELBO, unlabeled_loss))
         tf.summary.scalar('unlabeled_loss', unlabeled_loss)
-        return unlabeled_loss / self.split_batch_size
+        return unlabeled_loss
 
     def predict_cls(self, images, labels, cls_true):
         num_images = len(images)
