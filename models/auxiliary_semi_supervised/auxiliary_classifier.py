@@ -95,9 +95,9 @@ class Auxiliary(object):
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
 
     def _objective(self):
-        split_batch_size = int(self.batch_size / 2)
+        self.split_batch_size = int(self.batch_size / 2)
         # TODO clean up batch assignment
-        self.num_lab_batch, self.num_ulab_batch = split_batch_size, split_batch_size
+        self.num_lab_batch, self.num_ulab_batch = self.split_batch_size, self.split_batch_size
         self.num_batches = self.num_examples / self.batch_size
         logging.debug(
             "num batches:{}, batch_size:{},  num_lab_batch {}, num_ulab_batch:{}, epochs:{}".format(self.num_batches,
@@ -113,7 +113,8 @@ class Auxiliary(object):
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x, self.valid_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y, self.valid_y), axis=0)
             # TODO check calculations
-            self.cost = -((self.marginal_lik_lab * self.num_examples) + prior_weights())
+            self.cost = ((self.marginal_lik_lab * self.num_examples) + prior_weights()) / (
+                -self.num_examples)
             self.total_marg_lik = self.marginal_lik_lab
             loss = "labeled loss"
             print(loss)
@@ -123,7 +124,8 @@ class Auxiliary(object):
             self.marginal_lik_unlab = self.mean_unlab_loss()
             self.total_marg_lik = (self.marginal_lik_lab + self.marginal_lik_unlab) / 2
             total_elbo = self.marginal_lik_lab + self.marginal_lik_unlab
-            self.cost = -((total_elbo) * self.num_examples + prior_weights())
+            self.cost = ((total_elbo) * self.num_examples + prior_weights()) / (
+                -self.num_examples)
             loss = "labeled + unlabeled loss"
             print(loss)
             logging.debug(loss)
@@ -257,13 +259,13 @@ class Auxiliary(object):
         unlabeled_loss = tf.reduce_sum(weighted_elbo)
         print("unlabeled_ELBO:{}, unlabeled_loss:{}".format(self.unlabeled_ELBO, unlabeled_loss))
         tf.summary.scalar('unlabeled_loss', unlabeled_loss)
-        return unlabeled_loss / self.batch_size
+        return unlabeled_loss / self.split_batch_size
 
     def predict_cls(self, images, labels, cls_true):
         num_images = len(images)
         cls_pred = np.zeros(shape=num_images, dtype=np.int)
         i = 0
-        num_batches = num_images / self.batch_size
+        num_batches = num_images / self.split_batch_size
         total_marg = 0.0
         while i < num_images:
             # The ending index for the next batch is denoted j.
