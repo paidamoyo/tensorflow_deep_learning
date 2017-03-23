@@ -113,8 +113,7 @@ class Auxiliary(object):
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x, self.valid_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y, self.valid_y), axis=0)
             # TODO check calculations
-            self.cost = ((self.marginal_lik_lab * self.num_examples) + prior_weights()) / (
-                -self.num_examples)
+            self.cost = -((self.marginal_lik_lab * self.num_examples) + prior_weights())
             self.total_marg_lik = self.marginal_lik_lab
             loss = "labeled loss"
             print(loss)
@@ -124,8 +123,7 @@ class Auxiliary(object):
             self.marginal_lik_unlab = self.mean_unlab_loss()
             self.total_marg_lik = (self.marginal_lik_lab + self.marginal_lik_unlab) / 2
             total_elbo = self.marginal_lik_lab + self.marginal_lik_unlab
-            self.cost = ((total_elbo) * self.num_examples + prior_weights()) / (
-                -self.num_examples)
+            self.cost = -((total_elbo) * self.num_examples + prior_weights())
             loss = "labeled + unlabeled loss"
             print(loss)
             logging.debug(loss)

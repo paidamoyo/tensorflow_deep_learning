@@ -13,12 +13,12 @@ def tf_stdnormal_logpdf(x):
     return - 0.5 * (logc + tf.square(x))
 
 
-def tf_gaussian_ent(log_sigma_sq):
-    return - 0.5 * (logc + 1.0 + log_sigma_sq)
+def tf_gaussian_ent(log_var):
+    return - 0.5 * (logc + 1.0 + log_var)
 
 
-def tf_gaussian_marg(mu, log_sigma_sq):
-    return - 0.5 * (logc + (tf.square(mu) + tf.exp(log_sigma_sq)))
+def tf_gaussian_marg(mu, log_var):
+    return - 0.5 * (logc + (tf.square(mu) + tf.exp(log_var)))
 
 
 def tf_binary_xentropy(x_true, x_approx, const=1e-10):
