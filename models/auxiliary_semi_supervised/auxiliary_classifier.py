@@ -113,13 +113,13 @@ class Auxiliary(object):
             self.train_x_l = np.concatenate((self.train_x_l, self.train_u_x, self.valid_x), axis=0)
             self.train_l_y = np.concatenate((self.train_l_y, self.train_u_y, self.valid_y), axis=0)
             # TODO check calculations
-            self.total_marg_lik = tf.reduce_mean(self.total_lab_loss())
+            self.total_marg_lik = self.marginal_lik_lab
             loss = "labeled loss"
             print(loss)
             logging.debug(loss)
         else:
             self.unlabeled_ELBO, self.y_ulab_logits = self.unlabeled_model()
-            self.total_marg_lik = tf.reduce_mean(self.total_lab_loss() + self.total_lab_loss())
+            self.total_marg_lik = tf.reduce_mean(self.total_lab_loss() + self.total_unlab_loss())
             loss = "labeled + unlabeled loss"
             print(loss)
 
@@ -177,12 +177,12 @@ class Auxiliary(object):
             feed_dict_train = {self.x_lab: x_l_batch, self.y_lab: y_l_batch,
                                self.x_unlab: x_u_batch, self.is_training: True}
 
-            summary, batch_loss, batch_marg_lik, _ = self.session.run(
-                [self.merged, self.cost, self.total_marg_lik, self.optimizer],
+            summary, batch_loss, _ = self.session.run(
+                [self.merged, self.cost, self.optimizer],
                 feed_dict=feed_dict_train)
-            train_correct, _, _ = self.predict_cls(images=x_l_batch,
-                                                   labels=y_l_batch,
-                                                   cls_true=convert_labels_to_cls(y_l_batch))
+            train_correct, _, batch_marg_lik_lab = self.predict_cls(images=x_l_batch,
+                                                                    labels=y_l_batch,
+                                                                    cls_true=convert_labels_to_cls(y_l_batch))
             acc_train, _ = cls_accuracy(train_correct)
 
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
@@ -206,7 +206,7 @@ class Auxiliary(object):
 
                 optimization_print = "Iteration: {}, Training Loss: {} Acc:{} marg_lik: {} " \
                                      " Validation Acc:{} marg_lik: {} , {}".format(i + 1, int(batch_loss), acc_train,
-                                                                                   batch_marg_lik,
+                                                                                   batch_marg_lik_lab,
                                                                                    acc_validation, val_marg_lik,
                                                                                    improved_str)
                 print(optimization_print)
