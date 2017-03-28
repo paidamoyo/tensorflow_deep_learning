@@ -21,6 +21,13 @@ def get_next_batch(x_images, y_labels, idx, batch_size):
     return x_batch, y_true_batch, j
 
 
+def get_last_batch_index(input_size, idx, batch_size):
+    if idx == input_size:
+        idx = 0
+    j = min(idx + batch_size, input_size)
+    return j
+
+
 def get_encoded_next_batch(x_mu, x_logvar, y_labels, idx, batch_size):
     num_images = x_mu.shape[0]
     if idx == num_images:
