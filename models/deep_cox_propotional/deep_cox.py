@@ -8,8 +8,8 @@ import numpy as np
 import tensorflow as tf
 from lifelines.utils import concordance_index
 
-from models.deep_cox_propotional.data.simulated import SimulatedData
 from models.deep_cox_propotional.faraggi_model import log_hazard_ratio
+from models.deep_cox_propotional.simulated_data import SimulatedData
 from models.utils.batch_processing import get_last_batch_index
 from models.utils.distributions import prior_weights
 

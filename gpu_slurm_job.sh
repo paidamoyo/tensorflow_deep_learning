@@ -8,5 +8,5 @@
 uname -n && echo "The job has begun"
 source .bashrc
 pwd && cd research/tensorflow_deep_learning/ && echo  "directory change"
-pyenv activate tensorflow && pip list && echo  "pyenv activated"
-python train_auxiliary.py && echo  "The job completed"
+pyenv activate tensorflow  && echo  "pyenv activated"
+python train_deep_cox.py  && echo  "The job completed"
