@@ -227,6 +227,7 @@ class DeepCox(object):
             fig: matplotlib figure object.
         """
         fig = plt.figure(figsize=figsize)
+        print("data:{}, risk:{}".format(data.shape, risk.shape))
         X = data[:, i]
         Y = data[:, j]
 
@@ -238,12 +239,13 @@ class DeepCox(object):
             c_lims = [np.round(np.min(risk)), np.round(np.max(risk))]
 
         ax = plt.scatter(X, Y, c=risk, edgecolors='none', marker='.')
-        ax.set_clim(*c_lims)
+        ax.set_clim(c_lims)
         plt.colorbar()
-        plt.xlim(*x_lims)
-        plt.ylim(*y_lims)
+        plt.xlim(x_lims)
+        plt.ylim(y_lims)
         plt.xlabel('$x_{%d}$' % i, fontsize=18)
         plt.ylabel('$x_{%d}$' % j, fontsize=18)
+        plt.savefig("predicted_risk")
 
         return fig
 
@@ -261,22 +263,3 @@ class DeepCox(object):
         lik_print = "test neg_likelihood:{}, ci_pred:{}".format(test_neg_lik, ci_pred)
         print(lik_print)
         logging.debug(lik_print)
-
-
-if __name__ == '__main__':
-    FLAGS = {
-        'num_iterations': 3,  # should 3000 epochs (30000/100)
-        'batch_size': 200,
-        'seed': 31415,
-        'require_improvement': 5000,  # 50 epochs
-        'n_train': 50000,
-        'learning_rate': 3e-4,
-        'beta1': 0.9,
-        'beta2': 0.999,
-        'num_classes': 10
-    }
-    deep_cox = DeepCox(batch_size=FLAGS['batch_size'], learning_rate=FLAGS['learning_rate'], beta1=FLAGS['beta1'],
-                       beta2=FLAGS['beta2'], require_improvement=FLAGS['require_improvement'],
-                       num_iterations=FLAGS['num_iterations'], seed=FLAGS['seed'])
-    with deep_cox.session:
-        deep_cox.train_test()
