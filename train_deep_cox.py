@@ -2,7 +2,7 @@ from models.deep_cox_propotional.deep_cox import DeepCox
 
 if __name__ == '__main__':
     FLAGS = {
-        'num_iterations': 3,  # should 3000 epochs (30000/100)
+        'num_iterations': 10000,  # should 3000 epochs (30000/100)
         'batch_size': 200,
         'seed': 31415,
         'require_improvement': 5000,  # 50 epochs
