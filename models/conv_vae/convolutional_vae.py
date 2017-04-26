@@ -29,7 +29,8 @@ class ConvVariationalAutoencoder(object):
                  fc_size,
                  num_filters,
                  batch_norm=False,
-                 keep_prob=1
+                 keep_prob=1,
+                 gpu_memory_fraction=1
                  ):
         self.input_dim, self.latent_dim = input_dim, latent_dim
         self.filter_sizes = filter_sizes
@@ -46,6 +47,8 @@ class ConvVariationalAutoencoder(object):
         logging.basicConfig(filename=self.log_file, filemode='w', level=logging.DEBUG)
         np.random.seed(seed)
         tf.set_random_seed(seed)
+        self.config = tf.ConfigProto(log_device_placement=False)
+        self.config.gpu_options.per_process_gpu_memory_fraction = gpu_memory_fraction
 
         self.current_dir = os.getcwd()
         self.save_path = self.current_dir + "/summaries/vae_model"
@@ -58,7 +61,7 @@ class ConvVariationalAutoencoder(object):
             self.x_image = tf.reshape(self.x, [-1, 28, 28, 1])
             self._objective()
             self.saver = tf.train.Saver()
-            self.session = tf.Session()
+            self.session = tf.Session(config=self.config)
             self.train_writer = tf.summary.FileWriter(self.save_path, self.session.graph)
             self.merged = tf.summary.merge_all()
 
