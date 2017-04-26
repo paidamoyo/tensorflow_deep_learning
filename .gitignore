@@ -16,4 +16,5 @@ __pycache__/
 !pca_classifier.log
 !semi_supervised.log
 !vanilla_vae.log
+!conv_vae.log
 
