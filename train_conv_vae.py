@@ -4,7 +4,7 @@ from models.conv_vae.convolutional_vae import ConvVariationalAutoencoder
 from models.utils.MNIST_pickled_preprocess import extract_data
 
 
-def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, train=True):
+def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, gpu_memory_fraction, train=True):
     conv_vae = ConvVariationalAutoencoder(batch_size=50, learning_rate=FLAGS['learning_rate'],
                                           beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],
                                           require_improvement=1000, seed=FLAGS['seed'],
@@ -13,7 +13,8 @@ def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, train=True):
                                           latent_dim=FLAGS['latent_dim'],
                                           filter_sizes=FLAGS['filter_sizes'], fc_size=FLAGS['fc_size'],
                                           num_filters=FLAGS[
-                                              'num_filters'])  # Should be consistent with model being loaded
+                                              'num_filters'],
+                                          gpu_memory_fraction=gpu_memory_fraction)  # Should be consistent with model being loaded
 
     with conv_vae.session:
         if train:
@@ -64,4 +65,4 @@ if __name__ == '__main__':
  \
     valid_x_logvar, test_x_mu, test_x_logvar = encode_dataset(FLAGS=FLAGS_, train_lab=train_x_lab,
                                                               train_unlab=train_x_unlab, valid=valid_x,
-                                                              test=test_x,  gpu_memory_fraction=vm)
+                                                              test=test_x, gpu_memory_fraction=vm)
