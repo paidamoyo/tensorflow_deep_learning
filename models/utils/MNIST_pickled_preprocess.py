@@ -3,6 +3,8 @@
 Borrowed from original implementation: https://github.com/dpkingma/nips14-ssl (anglepy)
 '''
 ###
+import matplotlib
+matplotlib.use('Agg')
 
 import gzip
 import os

@@ -1,6 +1,6 @@
 import matplotlib
 
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 print("matplotlib: %s, %s" % (matplotlib.__version__, matplotlib.__file__))
 import matplotlib.pyplot as plt
 import numpy as np
