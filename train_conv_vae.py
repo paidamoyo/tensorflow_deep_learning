@@ -5,7 +5,7 @@ from models.utils.MNIST_pickled_preprocess import extract_data
 
 
 def encode_dataset(FLAGS, train_lab, train_unlab, valid, test, gpu_memory_fraction, train=True):
-    conv_vae = ConvVariationalAutoencoder(batch_size=50, learning_rate=FLAGS['learning_rate'],
+    conv_vae = ConvVariationalAutoencoder(batch_size=250, learning_rate=FLAGS['learning_rate'],
                                           beta1=FLAGS['beta1'], beta2=FLAGS['beta2'],
                                           require_improvement=1000, seed=FLAGS['seed'],
                                           num_iterations=FLAGS['num_iterations'],
