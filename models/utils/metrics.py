@@ -1,6 +1,7 @@
 import matplotlib
 
 matplotlib.use('TkAgg')
+print("matplotlib: %s, %s" % (matplotlib.__version__, matplotlib.__file__))
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix
