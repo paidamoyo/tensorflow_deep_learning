@@ -108,8 +108,6 @@ class ConvVariationalAutoencoder(object):
             summary, batch_loss, batch_log_lik, _ = self.session.run(
                 [self.merged, self.cost, self.loglik, self.optimizer],
                 feed_dict={self.x: x_batch})
-            self.train_cost.append(batch_loss)
-            self.train_log_lik.append(batch_log_lik)
             # Batch Trainin
             if idx == self.num_examples:
                 epochs += 1
@@ -121,9 +119,11 @@ class ConvVariationalAutoencoder(object):
             self.train_writer.add_summary(summary, i)
 
             validation_loss, val_log_lik = self.validation_loss(images=self.valid_x)
-            self.validation_cost.append(validation_loss)
-            self.validation_log_lik.append(val_log_lik)
             if (is_epoch) or (i == (self.num_iterations - 1)):
+                self.train_log_lik.append(batch_log_lik)
+                self.train_cost.append(batch_loss)
+                self.validation_cost.append(validation_loss)
+                self.validation_log_lik.append(val_log_lik)
                 # Calculate the accuracy
                 if validation_loss < best_validation_loss:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
