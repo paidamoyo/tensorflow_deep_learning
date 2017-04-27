@@ -125,7 +125,6 @@ class ConvVariationalAutoencoder(object):
             self.validation_log_lik.append(val_log_lik)
             if (is_epoch) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
-
                 if validation_loss < best_validation_loss:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
                     self.saver.save(sess=self.session, save_path=self.save_path)
@@ -163,7 +162,6 @@ class ConvVariationalAutoencoder(object):
         total_log_lik = 0.0
         i = 0
         num_val_batches = int(num_images / self.batch_size)
-        print("size of valid {}".format(num_images))
         while i < num_images:
             # The ending index for the next batch is denoted j.
             j = min(i + self.batch_size, num_images)
@@ -206,6 +204,7 @@ class ConvVariationalAutoencoder(object):
         self.test_reconstruction()
 
     def test_reconstruction(self):
+        # TODO improve reconstruction plot and plot many images
         num_images = 5
         x_test = self.test_x[0:num_images, ]
         plot_images(x_test, self.decode(x_test), num_images, "vae")
