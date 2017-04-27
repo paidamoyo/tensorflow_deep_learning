@@ -118,8 +118,8 @@ class ConvVariationalAutoencoder(object):
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
             self.train_writer.add_summary(summary, i)
 
-            validation_loss, val_log_lik = self.validation_loss(images=self.valid_x)
             if (is_epoch) or (i == (self.num_iterations - 1)):
+                validation_loss, val_log_lik = self.validation_loss(images=self.valid_x)
                 self.train_log_lik.append(batch_log_lik)
                 self.train_cost.append(batch_loss)
                 self.validation_cost.append(validation_loss)
@@ -197,6 +197,11 @@ class ConvVariationalAutoencoder(object):
     def train_test(self):
         epochs, best_it = self.train()
         self.saver.restore(sess=self.session, save_path=self.save_path)
+        test_loss, test_log_lik = self.validation_loss(images=self.test_x)
+        test_perf = "Test Loss:{}, Log_lik:{}".format(test_loss, test_log_lik)
+        print(test_perf)
+        logging.debug(test_perf)
+
         plot_cost(validation=self.validation_log_lik, training=self.train_log_lik, name='Log_lik', epochs=epochs,
                   best_iteration=best_it)
         plot_cost(validation=self.validation_cost, training=self.train_cost, name='Cost', epochs=epochs,
@@ -207,7 +212,7 @@ class ConvVariationalAutoencoder(object):
         # TODO improve reconstruction plot and plot many images
         num_images = 20
         x_test = self.test_x[0:num_images, ]
-        plot_images(x_test, self.decode(x_test), num_images, "vae")
+        plot_images(x_test, self.decode(x_test), num_images, "conv_vae")
 
     def decode(self, x_test):
         return self.session.run(self.x_recon_mu, feed_dict={self.x: x_test})

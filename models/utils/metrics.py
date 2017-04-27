@@ -1,6 +1,6 @@
-import matplotlib as mpl
+import matplotlib
 
-mpl.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix
@@ -84,9 +84,9 @@ def plot_images(x_test, x_reconstruct, n_images, name):
 
         # plt.title("Top: Test input and Bottom: Reconstruction")
     #    plt.tight_layout()
+    plt.axis('off')
     save_path = name + "_reconstructed_digit"
     plt.savefig(save_path)
-    plt.axis('off')
 
 
 def plot_cost(training, validation, name, epochs, best_iteration):
