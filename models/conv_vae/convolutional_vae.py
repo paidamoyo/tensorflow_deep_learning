@@ -195,17 +195,20 @@ class ConvVariationalAutoencoder(object):
         return tf.reduce_sum(loss), x_mu, z, z_mu, z_logvar, log_lik / self.batch_size
 
     def train_test(self):
-        epochs, best_it = self.train()
+        epochs, best_epoch = self.train()
         self.saver.restore(sess=self.session, save_path=self.save_path)
         test_loss, test_log_lik = self.validation_loss(images=self.test_x)
         test_perf = "Test Loss:{}, Log_lik:{}".format(test_loss, test_log_lik)
         print(test_perf)
         logging.debug(test_perf)
 
-        plot_cost(validation=self.validation_log_lik, training=self.train_log_lik, name='Log_lik', epochs=epochs,
-                  best_iteration=best_it)
+        nega_valid_log_lik = np.multiply(self.validation_log_lik, -1)
+        neg_train_log_lik = np.multiply(self.train_log_lik, -1)
+        plot_cost(validation=nega_valid_log_lik, training=neg_train_log_lik, name='negative_log_lik',
+                  epochs=epochs,
+                  best_epoch=best_epoch)
         plot_cost(validation=self.validation_cost, training=self.train_cost, name='Cost', epochs=epochs,
-                  best_iteration=best_it)
+                  best_epoch=best_epoch)
         self.test_reconstruction()
 
     def test_reconstruction(self):

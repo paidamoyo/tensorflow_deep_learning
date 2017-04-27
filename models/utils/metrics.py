@@ -78,10 +78,15 @@ def plot_images(x_test, x_reconstruct, n_images, name):
     # fig.subplots_adjust(hspace=0.3, wspace=0.3)
     for i in range(n_images):
         # Plot image.
-        ax[0, i].imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
-        plt.title("Test input")
-        ax[1, i].imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
-        plt.title("Reconstruction")
+        true = ax[0, i]
+        true.imshow(x_test[i].reshape(28, 28), cmap="binary")
+        true.set_xticks([])
+        true.set_yticks([])
+
+        recon = ax[1, i]
+        recon.imshow(x_reconstruct[i].reshape(28, 28), cmap="binary")
+        recon.set_xticks([])
+        recon.set_yticks([])
 
         # plt.title("Top: Test input and Bottom: Reconstruction")
     #    plt.tight_layout()
@@ -90,15 +95,15 @@ def plot_images(x_test, x_reconstruct, n_images, name):
     plt.savefig(save_path)
 
 
-def plot_cost(training, validation, name, epochs, best_iteration):
+def plot_cost(training, validation, name, epochs, best_epoch):
     x = np.arange(start=0, stop=len(training), step=1).tolist()
     plt.figure()
     plt.xlim(min(x), max(x))
     plt.ylim(0, max(max(training), max(validation)) + 0.2)
     plt.plot(x, training, color='blue', linestyle='-', label='training')
     plt.plot(x, validation, color='green', linestyle='-', label='validation')
-    plt.axvline(x=best_iteration, color='red')
-    title = '{}: epochs={}, best_iteration={} '.format(name, epochs, best_iteration)
+    plt.axvline(x=best_epoch, color='red')
+    title = '{}: epochs={}, best_epoch={} '.format(name, epochs, best_epoch)
     plt.title(title)
     plt.xlabel('Iteration')
     plt.legend(loc='best')
