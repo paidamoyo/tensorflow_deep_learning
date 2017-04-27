@@ -1,0 +1,108 @@
+DEBUG:root:num batches:200, batch_size:250, epochs:200
+DEBUG:root:Training Conv VAE Model:
+DEBUG:root:Parameters: filter_sizes:[5, 5], num_filters:[36, 16], learning_rate:0.0003, momentum: beta1=0.9 beta2=0.999, batch_size:250, batch_norm:False, latent_dim:50 num_of_batches:200, keep_prob:1, fc_size:128, require_improvement:1000
+DEBUG:root:Iteration: 200, Training:  Loss 51298, batch_log_lik -203 Validation: Loss 54481, batch_log_lik -216 *
+DEBUG:root:Iteration: 400, Training:  Loss 48420, batch_log_lik -192 Validation: Loss 50950, batch_log_lik -202 *
+DEBUG:root:Iteration: 600, Training:  Loss 45004, batch_log_lik -178 Validation: Loss 46853, batch_log_lik -186 *
+DEBUG:root:Iteration: 800, Training:  Loss 42974, batch_log_lik -170 Validation: Loss 44197, batch_log_lik -175 *
+DEBUG:root:Iteration: 1000, Training:  Loss 41111, batch_log_lik -163 Validation: Loss 42600, batch_log_lik -169 *
+DEBUG:root:Iteration: 1200, Training:  Loss 39279, batch_log_lik -155 Validation: Loss 40691, batch_log_lik -161 *
+DEBUG:root:Iteration: 1400, Training:  Loss 38106, batch_log_lik -151 Validation: Loss 39168, batch_log_lik -155 *
+DEBUG:root:Iteration: 1600, Training:  Loss 36933, batch_log_lik -146 Validation: Loss 37364, batch_log_lik -148 *
+DEBUG:root:Iteration: 1800, Training:  Loss 34940, batch_log_lik -138 Validation: Loss 35630, batch_log_lik -141 *
+DEBUG:root:Iteration: 2000, Training:  Loss 32823, batch_log_lik -129 Validation: Loss 34221, batch_log_lik -135 *
+DEBUG:root:Iteration: 2200, Training:  Loss 31320, batch_log_lik -123 Validation: Loss 32596, batch_log_lik -128 *
+DEBUG:root:Iteration: 2400, Training:  Loss 29514, batch_log_lik -116 Validation: Loss 31389, batch_log_lik -123 *
+DEBUG:root:Iteration: 2600, Training:  Loss 28625, batch_log_lik -112 Validation: Loss 30750, batch_log_lik -121 *
+DEBUG:root:Iteration: 2800, Training:  Loss 28000, batch_log_lik -110 Validation: Loss 30230, batch_log_lik -119 *
+DEBUG:root:Iteration: 3000, Training:  Loss 27499, batch_log_lik -108 Validation: Loss 29713, batch_log_lik -117 *
+DEBUG:root:Iteration: 3200, Training:  Loss 27003, batch_log_lik -106 Validation: Loss 29183, batch_log_lik -115 *
+DEBUG:root:Iteration: 3400, Training:  Loss 26609, batch_log_lik -104 Validation: Loss 28725, batch_log_lik -113 *
+DEBUG:root:Iteration: 3600, Training:  Loss 26097, batch_log_lik -102 Validation: Loss 28198, batch_log_lik -111 *
+DEBUG:root:Iteration: 3800, Training:  Loss 25741, batch_log_lik -101 Validation: Loss 27769, batch_log_lik -109 *
+DEBUG:root:Iteration: 4000, Training:  Loss 25332, batch_log_lik -99 Validation: Loss 27385, batch_log_lik -107 *
+DEBUG:root:Iteration: 4200, Training:  Loss 24913, batch_log_lik -97 Validation: Loss 26988, batch_log_lik -106 *
+DEBUG:root:Iteration: 4400, Training:  Loss 24710, batch_log_lik -97 Validation: Loss 26677, batch_log_lik -105 *
+DEBUG:root:Iteration: 4600, Training:  Loss 24298, batch_log_lik -95 Validation: Loss 26398, batch_log_lik -104 *
+DEBUG:root:Iteration: 4800, Training:  Loss 24001, batch_log_lik -94 Validation: Loss 26135, batch_log_lik -103 *
+DEBUG:root:Iteration: 5000, Training:  Loss 23711, batch_log_lik -93 Validation: Loss 25901, batch_log_lik -102 *
+DEBUG:root:Iteration: 5200, Training:  Loss 23525, batch_log_lik -92 Validation: Loss 25718, batch_log_lik -101 *
+DEBUG:root:Iteration: 5400, Training:  Loss 23320, batch_log_lik -91 Validation: Loss 25491, batch_log_lik -100 *
+DEBUG:root:Iteration: 5600, Training:  Loss 23008, batch_log_lik -90 Validation: Loss 25274, batch_log_lik -99 *
+DEBUG:root:Iteration: 5800, Training:  Loss 22806, batch_log_lik -89 Validation: Loss 25081, batch_log_lik -98 *
+DEBUG:root:Iteration: 6000, Training:  Loss 22614, batch_log_lik -89 Validation: Loss 24927, batch_log_lik -98 *
+DEBUG:root:Iteration: 6200, Training:  Loss 22387, batch_log_lik -88 Validation: Loss 24734, batch_log_lik -97 *
+DEBUG:root:Iteration: 6400, Training:  Loss 22177, batch_log_lik -87 Validation: Loss 24485, batch_log_lik -96 *
+DEBUG:root:Iteration: 6600, Training:  Loss 21961, batch_log_lik -86 Validation: Loss 24358, batch_log_lik -96 *
+DEBUG:root:Iteration: 6800, Training:  Loss 21709, batch_log_lik -85 Validation: Loss 24138, batch_log_lik -95 *
+DEBUG:root:Iteration: 7000, Training:  Loss 21538, batch_log_lik -84 Validation: Loss 23979, batch_log_lik -94 *
+DEBUG:root:Iteration: 7200, Training:  Loss 21368, batch_log_lik -84 Validation: Loss 23850, batch_log_lik -94 *
+DEBUG:root:Iteration: 7400, Training:  Loss 21084, batch_log_lik -82 Validation: Loss 23682, batch_log_lik -93 *
+DEBUG:root:Iteration: 7600, Training:  Loss 21063, batch_log_lik -82 Validation: Loss 23582, batch_log_lik -93 *
+DEBUG:root:Iteration: 7800, Training:  Loss 20918, batch_log_lik -82 Validation: Loss 23559, batch_log_lik -93 *
+DEBUG:root:Iteration: 8000, Training:  Loss 20786, batch_log_lik -81 Validation: Loss 23309, batch_log_lik -92 *
+DEBUG:root:Iteration: 8200, Training:  Loss 20703, batch_log_lik -81 Validation: Loss 23252, batch_log_lik -91 *
+DEBUG:root:Iteration: 8400, Training:  Loss 20686, batch_log_lik -81 Validation: Loss 23202, batch_log_lik -91 *
+DEBUG:root:Iteration: 8600, Training:  Loss 20573, batch_log_lik -81 Validation: Loss 23108, batch_log_lik -91 *
+DEBUG:root:Iteration: 8800, Training:  Loss 20501, batch_log_lik -80 Validation: Loss 23033, batch_log_lik -91 *
+DEBUG:root:Iteration: 9000, Training:  Loss 20570, batch_log_lik -81 Validation: Loss 22949, batch_log_lik -90 *
+DEBUG:root:Iteration: 9200, Training:  Loss 20350, batch_log_lik -80 Validation: Loss 22916, batch_log_lik -90 *
+DEBUG:root:Iteration: 9400, Training:  Loss 20318, batch_log_lik -80 Validation: Loss 22839, batch_log_lik -90 *
+DEBUG:root:Iteration: 9600, Training:  Loss 20318, batch_log_lik -80 Validation: Loss 22853, batch_log_lik -90 
+DEBUG:root:Iteration: 9800, Training:  Loss 20308, batch_log_lik -80 Validation: Loss 22794, batch_log_lik -90 *
+DEBUG:root:Iteration: 10000, Training:  Loss 20159, batch_log_lik -79 Validation: Loss 22676, batch_log_lik -89 *
+DEBUG:root:Iteration: 10200, Training:  Loss 20147, batch_log_lik -79 Validation: Loss 22576, batch_log_lik -89 *
+DEBUG:root:Iteration: 10400, Training:  Loss 20133, batch_log_lik -79 Validation: Loss 22526, batch_log_lik -89 *
+DEBUG:root:Iteration: 10600, Training:  Loss 20021, batch_log_lik -79 Validation: Loss 22515, batch_log_lik -89 *
+DEBUG:root:Iteration: 10800, Training:  Loss 19958, batch_log_lik -78 Validation: Loss 22383, batch_log_lik -88 *
+DEBUG:root:Iteration: 11000, Training:  Loss 20015, batch_log_lik -79 Validation: Loss 22372, batch_log_lik -88 *
+DEBUG:root:Iteration: 11200, Training:  Loss 19969, batch_log_lik -78 Validation: Loss 22278, batch_log_lik -88 *
+DEBUG:root:Iteration: 11400, Training:  Loss 19896, batch_log_lik -78 Validation: Loss 22431, batch_log_lik -88 
+DEBUG:root:Iteration: 11600, Training:  Loss 19839, batch_log_lik -78 Validation: Loss 22302, batch_log_lik -88 
+DEBUG:root:Iteration: 11800, Training:  Loss 19802, batch_log_lik -78 Validation: Loss 22234, batch_log_lik -88 *
+DEBUG:root:Iteration: 12000, Training:  Loss 19866, batch_log_lik -78 Validation: Loss 22142, batch_log_lik -87 *
+DEBUG:root:Iteration: 12200, Training:  Loss 19623, batch_log_lik -77 Validation: Loss 22144, batch_log_lik -87 
+DEBUG:root:Iteration: 12400, Training:  Loss 19559, batch_log_lik -77 Validation: Loss 22115, batch_log_lik -87 *
+DEBUG:root:Iteration: 12600, Training:  Loss 19660, batch_log_lik -77 Validation: Loss 22092, batch_log_lik -87 *
+DEBUG:root:Iteration: 12800, Training:  Loss 19507, batch_log_lik -77 Validation: Loss 21963, batch_log_lik -87 *
+DEBUG:root:Iteration: 13000, Training:  Loss 19447, batch_log_lik -76 Validation: Loss 21903, batch_log_lik -86 *
+DEBUG:root:Iteration: 13200, Training:  Loss 19488, batch_log_lik -77 Validation: Loss 21872, batch_log_lik -86 *
+DEBUG:root:Iteration: 13400, Training:  Loss 19383, batch_log_lik -76 Validation: Loss 21843, batch_log_lik -86 *
+DEBUG:root:Iteration: 13600, Training:  Loss 19413, batch_log_lik -76 Validation: Loss 21805, batch_log_lik -86 *
+DEBUG:root:Iteration: 13800, Training:  Loss 19355, batch_log_lik -76 Validation: Loss 21826, batch_log_lik -86 
+DEBUG:root:Iteration: 14000, Training:  Loss 19329, batch_log_lik -76 Validation: Loss 21779, batch_log_lik -86 *
+DEBUG:root:Iteration: 14200, Training:  Loss 19322, batch_log_lik -76 Validation: Loss 21753, batch_log_lik -86 *
+DEBUG:root:Iteration: 14400, Training:  Loss 20399, batch_log_lik -80 Validation: Loss 22163, batch_log_lik -87 
+DEBUG:root:Iteration: 14600, Training:  Loss 19370, batch_log_lik -76 Validation: Loss 21674, batch_log_lik -85 *
+DEBUG:root:Iteration: 14800, Training:  Loss 19366, batch_log_lik -76 Validation: Loss 21659, batch_log_lik -85 *
+DEBUG:root:Iteration: 15000, Training:  Loss 19195, batch_log_lik -75 Validation: Loss 21577, batch_log_lik -85 *
+DEBUG:root:Iteration: 15200, Training:  Loss 19159, batch_log_lik -75 Validation: Loss 21570, batch_log_lik -85 *
+DEBUG:root:Iteration: 15400, Training:  Loss 19112, batch_log_lik -75 Validation: Loss 21585, batch_log_lik -85 
+DEBUG:root:Iteration: 15600, Training:  Loss 19085, batch_log_lik -75 Validation: Loss 21492, batch_log_lik -85 *
+DEBUG:root:Iteration: 15800, Training:  Loss 19070, batch_log_lik -75 Validation: Loss 21479, batch_log_lik -85 *
+DEBUG:root:Iteration: 16000, Training:  Loss 19118, batch_log_lik -75 Validation: Loss 21489, batch_log_lik -85 
+DEBUG:root:Iteration: 16200, Training:  Loss 19012, batch_log_lik -75 Validation: Loss 21466, batch_log_lik -85 *
+DEBUG:root:Iteration: 16400, Training:  Loss 19027, batch_log_lik -75 Validation: Loss 21430, batch_log_lik -85 *
+DEBUG:root:Iteration: 16600, Training:  Loss 18973, batch_log_lik -75 Validation: Loss 21461, batch_log_lik -85 
+DEBUG:root:Iteration: 16800, Training:  Loss 18943, batch_log_lik -75 Validation: Loss 21409, batch_log_lik -84 *
+DEBUG:root:Iteration: 17000, Training:  Loss 19028, batch_log_lik -75 Validation: Loss 21439, batch_log_lik -85 
+DEBUG:root:Iteration: 17200, Training:  Loss 18988, batch_log_lik -75 Validation: Loss 21350, batch_log_lik -84 *
+DEBUG:root:Iteration: 17400, Training:  Loss 18932, batch_log_lik -74 Validation: Loss 21385, batch_log_lik -84 
+DEBUG:root:Iteration: 17600, Training:  Loss 19024, batch_log_lik -75 Validation: Loss 21445, batch_log_lik -85 
+DEBUG:root:Iteration: 17800, Training:  Loss 18899, batch_log_lik -74 Validation: Loss 21247, batch_log_lik -84 *
+DEBUG:root:Iteration: 18000, Training:  Loss 19090, batch_log_lik -75 Validation: Loss 21385, batch_log_lik -84 
+DEBUG:root:Iteration: 18200, Training:  Loss 18816, batch_log_lik -74 Validation: Loss 21329, batch_log_lik -84 
+DEBUG:root:Iteration: 18400, Training:  Loss 18784, batch_log_lik -74 Validation: Loss 21259, batch_log_lik -84 
+DEBUG:root:Iteration: 18600, Training:  Loss 18659, batch_log_lik -73 Validation: Loss 21173, batch_log_lik -84 *
+DEBUG:root:Iteration: 18800, Training:  Loss 18736, batch_log_lik -74 Validation: Loss 21175, batch_log_lik -84 
+DEBUG:root:Iteration: 19000, Training:  Loss 18756, batch_log_lik -74 Validation: Loss 21150, batch_log_lik -83 *
+DEBUG:root:Iteration: 19200, Training:  Loss 18654, batch_log_lik -73 Validation: Loss 21121, batch_log_lik -83 *
+DEBUG:root:Iteration: 19400, Training:  Loss 18673, batch_log_lik -74 Validation: Loss 21106, batch_log_lik -83 *
+DEBUG:root:Iteration: 19600, Training:  Loss 18623, batch_log_lik -73 Validation: Loss 21130, batch_log_lik -83 
+DEBUG:root:Iteration: 19800, Training:  Loss 18671, batch_log_lik -74 Validation: Loss 21150, batch_log_lik -83 
+DEBUG:root:Iteration: 20000, Training:  Loss 18619, batch_log_lik -73 Validation: Loss 21179, batch_log_lik -84 
+DEBUG:root:Iteration: 20200, Training:  Loss 18606, batch_log_lik -73 Validation: Loss 21110, batch_log_lik -83 
+DEBUG:root:Iteration: 20400, Training:  Loss 18613, batch_log_lik -73 Validation: Loss 21152, batch_log_lik -84 
+DEBUG:root:No improvement found in a while, stopping optimization.
+DEBUG:root:Time usage: 0:35:59
+DEBUG:root:Test Loss:20821.92822265625, Log_lik:-82.65440807342529
