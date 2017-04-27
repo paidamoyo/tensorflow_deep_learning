@@ -73,25 +73,20 @@ def plot_images(x_test, x_reconstruct, n_images, name):
     assert len(x_test) == n_images
     print("x_reconstruct:{}, x_test:{}".format(x_reconstruct.shape, x_test.shape))
 
-    plt.figure(figsize=(8, 12))
+    fig, ax = plt.subplots(nrows=2, ncols=n_images)
+    # fig.subplots_adjust(hspace=0.3, wspace=0.3)
     for i in range(n_images):
         # Plot image.
-        plt.subplot(n_images, 2, 2 * i + 1)
-        s1 = plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        ax[0, i].imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
         plt.title("Test input")
-        plt.subplot(n_images, 2, 2 * i + 2)
-        s2 = plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        ax[1, i].imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
         plt.title("Reconstruction")
-        s1.axes.get_xaxis().set_visible(False)
-        s1.axes.get_yaxis().set_visible(False)
-        s2.axes.get_xaxis().set_visible(False)
-        s2.axes.get_yaxis().set_visible(False)
 
-    # plt.title("Left: Test input and Right: Reconstruction")
-    plt.tight_layout()
+        # plt.title("Top: Test input and Bottom: Reconstruction")
+    #    plt.tight_layout()
     save_path = name + "_reconstructed_digit"
     plt.savefig(save_path)
-    # plt.axis('off')
+    plt.axis('off')
 
 
 def plot_cost(training, validation, name, epochs, best_iteration):
