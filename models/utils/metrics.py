@@ -74,25 +74,25 @@ def plot_images(x_test, x_reconstruct, n_images, name):
     assert len(x_test) == n_images
     print("x_reconstruct:{}, x_test:{}".format(x_reconstruct.shape, x_test.shape))
 
-    fig, ax = plt.subplots(nrows=2, ncols=n_images)
-    # fig.subplots_adjust(hspace=0.3, wspace=0.3)
+    plt.figure(figsize=(8, 12))
     for i in range(n_images):
         # Plot image.
-        true = ax[0, i]
-        true.imshow(x_test[i].reshape(28, 28), cmap="binary")
-        true.set_xticks([])
-        true.set_yticks([])
+        plt.subplot(n_images, 2, 2 * i + 1)
+        s1 = plt.imshow(x_test[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        plt.title("Test input")
+        plt.subplot(n_images, 2, 2 * i + 2)
+        s2 = plt.imshow(x_reconstruct[i].reshape(28, 28), vmin=0, vmax=1, cmap="gray")
+        plt.title("Reconstruction")
+        s1.axes.get_xaxis().set_visible(False)
+        s1.axes.get_yaxis().set_visible(False)
+        s2.axes.get_xaxis().set_visible(False)
+        s2.axes.get_yaxis().set_visible(False)
 
-        recon = ax[1, i]
-        recon.imshow(x_reconstruct[i].reshape(28, 28), cmap="binary")
-        recon.set_xticks([])
-        recon.set_yticks([])
-
-        # plt.title("Top: Test input and Bottom: Reconstruction")
-    #    plt.tight_layout()
-    plt.axis('off')
+    # plt.title("Left: Test input and Right: Reconstruction")
+    plt.tight_layout()
     save_path = name + "_reconstructed_digit"
     plt.savefig(save_path)
+    # plt.axis('off')
 
 
 def plot_cost(training, validation, name, epochs, best_epoch):
@@ -102,6 +102,19 @@ def plot_cost(training, validation, name, epochs, best_epoch):
     plt.ylim(0, max(max(training), max(validation)) + 0.2)
     plt.plot(x, training, color='blue', linestyle='-', label='training')
     plt.plot(x, validation, color='green', linestyle='-', label='validation')
+    plt.axvline(x=best_epoch, color='red')
+    title = '{}: epochs={}, best_epoch={} '.format(name, epochs, best_epoch)
+    plt.title(title)
+    plt.xlabel('Iteration')
+    plt.legend(loc='best')
+    plt.savefig(name)
+
+
+def plot_line(input_func, name, epochs, best_epoch):
+    x = np.arange(start=0, stop=len(input_func), step=1).tolist()
+    plt.figure()
+    plt.xlim(min(x), max(x))
+    plt.plot(x, input_func, color='blue', linestyle='-', label='training')
     plt.axvline(x=best_epoch, color='red')
     title = '{}: epochs={}, best_epoch={} '.format(name, epochs, best_epoch)
     plt.title(title)

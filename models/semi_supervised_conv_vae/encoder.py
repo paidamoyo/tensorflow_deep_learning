@@ -1,34 +1,64 @@
 import tensorflow as tf
 
 from models.utils.distributions import draw_norm
-from models.utils.tf_helpers import create_nn_weights, mlp_neuron
+from models.utils.tf_helpers import conv_layer, flatten_layer, fc_layer
 
 
-def q_z2_given_z1y(z1, y, latent_dim, num_classes, hidden_dim, input_dim, reuse=False):
+def q_z2_given_z1y(z1, y, latent_dim, input_dim, fc_size, filter_sizes, num_channels,
+                   num_filters, reuse=False):
     with tf.variable_scope("encoder_M2", reuse=reuse):
-        # Variables
-        w_h1, b_h1 = create_nn_weights('h1_z2', 'encoder',
-                                       [input_dim + num_classes, hidden_dim])
+        z1y = tf.concat([y, z1], axis=1)
+        expanded_z1y = tf.expand_dims(tf.expand_dims(z1y, 1), 1)
+        print("filter_sizes:{}".format(filter_sizes))
+        layer_conv1, weights_conv1 = conv_layer(input=expanded_z1y, num_input_channels=num_channels,
+                                                filter_size=filter_sizes[0],
+                                                num_filters=num_filters[0], use_pooling=True, layer_name='layer1')
+        print("layer conv1: {}".format(layer_conv1))
+        # ### Convolutional Layer 2
+        layer_conv2, weights_conv2 = conv_layer(input=layer_conv1, num_input_channels=num_filters[0],
+                                                filter_size=filter_sizes[1], num_filters=num_filters[1],
+                                                use_pooling=True, layer_name='layer2')
+        print("layer conv2: {}".format(layer_conv2))
 
-        w_mu_z2, b_mu_z2 = create_nn_weights('mu_z2', 'encoder', [hidden_dim, latent_dim])
-        w_var_z2, b_var_z2 = create_nn_weights('var_z2', 'encoder', [hidden_dim, latent_dim])
+        # ### Flatten Layer
+        layer_flat, num_features = flatten_layer(layer_conv2)
+        print("layer flat: {}".format(layer_flat))
+        print("num_features: {}".format(num_features))
 
-        # Hidden layers
-        h1 = mlp_neuron(tf.concat([z1, y], axis=1), w_h1, b_h1)
-        # Z2 latent layer mu and var
-        logvar_z2 = mlp_neuron(h1, w_var_z2, b_var_z2, activation=False)
-        mu_z2 = mlp_neuron(h1, w_mu_z2, b_mu_z2, activation=False)
+        # ### Fully-Connected Layer 1
+        layer_fc1 = fc_layer(input=layer_flat, num_inputs=num_features, num_outputs=fc_size, use_relu=True)
+        print("layer fc1: {}".format(layer_fc1))
+
+        logvar_z2 = fc_layer(input=layer_fc1, num_inputs=fc_size, num_outputs=input_dim, use_relu=False)
+        mu_z2 = fc_layer(input=layer_fc1, num_inputs=fc_size, num_outputs=input_dim, use_relu=False)
         z2 = draw_norm(latent_dim, mu_z2, logvar_z2)
+
         return z2, mu_z2, logvar_z2
 
 
-def qy_given_z1(z1, input_dim, hidden_dim, num_classes, reuse=False):
+def qy_given_z1(z1, num_classes, filter_sizes, num_channels, num_filters, fc_size, reuse=False):
     with tf.variable_scope("y_classifier", reuse=reuse):
-        w_h1, b_h1 = create_nn_weights('y_h1', 'infer', [input_dim, hidden_dim])
-        w_h2, b_h2 = create_nn_weights('y_h2', 'infer', [hidden_dim, hidden_dim])
-        w_y, b_y = create_nn_weights('y_fully_connected', 'infer', [hidden_dim, num_classes])
+        print("filter_sizes:{}".format(filter_sizes))
+        expanded_z1 = tf.expand_dims(tf.expand_dims(z1, 1), 1)
+        layer_conv1, weights_conv1 = conv_layer(input=expanded_z1, num_input_channels=num_channels,
+                                                filter_size=filter_sizes[0],
+                                                num_filters=num_filters[0], use_pooling=True, layer_name='layer1')
+        print("layer conv1: {}".format(layer_conv1))
 
-        h1 = mlp_neuron(z1, w_h1, b_h1)
-        h2 = mlp_neuron(h1, w_h2, b_h2)
-        logits = mlp_neuron(h2, w_y, b_y, activation=False)
+        # ### Convolutional Layer 2
+        layer_conv2, weights_conv2 = conv_layer(input=layer_conv1, num_input_channels=num_filters[0],
+                                                filter_size=filter_sizes[1], num_filters=num_filters[1],
+                                                use_pooling=True, layer_name='layer2')
+        print("layer conv2: {}".format(layer_conv2))
+
+        # ### Flatten Layer
+        layer_flat, num_features = flatten_layer(layer_conv2)
+        print("layer flat: {}".format(layer_flat))
+        print("num_features: {}".format(num_features))
+
+        # ### Fully-Connected Layer 1
+        layer_fc1 = fc_layer(input=layer_flat, num_inputs=num_features, num_outputs=fc_size, use_relu=True)
+        print("layer fc1: {}".format(layer_fc1))
+
+        logits = fc_layer(input=layer_fc1, num_inputs=fc_size, num_outputs=num_classes, use_relu=False)
     return logits

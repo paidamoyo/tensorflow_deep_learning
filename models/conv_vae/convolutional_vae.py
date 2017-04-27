@@ -112,7 +112,6 @@ class ConvVariationalAutoencoder(object):
             if idx == self.num_examples:
                 epochs += 1
                 is_epoch = True
-                idx = 0
             else:
                 is_epoch = False
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
@@ -213,7 +212,7 @@ class ConvVariationalAutoencoder(object):
 
     def test_reconstruction(self):
         # TODO improve reconstruction plot and plot many images
-        num_images = 20
+        num_images = 5
         x_test = self.test_x[0:num_images, ]
         plot_images(x_test, self.decode(x_test), num_images, "conv_vae")
 
