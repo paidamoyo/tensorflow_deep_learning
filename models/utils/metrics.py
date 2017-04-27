@@ -1,3 +1,6 @@
+import matplotlib as mpl
+
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix
@@ -89,3 +92,18 @@ def plot_images(x_test, x_reconstruct, n_images, name):
     save_path = name + "_reconstructed_digit"
     plt.savefig(save_path)
     # plt.axis('off')
+
+
+def plot_cost(training, validation, name, epochs, best_iteration):
+    x = np.arange(start=0, stop=len(training), step=1).tolist()
+    plt.figure()
+    plt.xlim(min(x), max(x))
+    plt.ylim(0, max(max(training), max(validation)) + 0.2)
+    plt.plot(x, training, color='blue', linestyle='-', label='training')
+    plt.plot(x, validation, color='green', linestyle='-', label='validation')
+    plt.axvline(x=best_iteration, color='red')
+    title = '{}: epochs={}, best_iteration={} '.format(name, epochs, best_iteration)
+    plt.title(title)
+    plt.xlabel('Iteration')
+    plt.legend(loc='best')
+    plt.savefig(name)

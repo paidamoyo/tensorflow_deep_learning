@@ -11,7 +11,7 @@ from models.conv_vae.encoder import q_z1_given_x
 from models.utils.MNIST_pickled_preprocess import extract_data
 from models.utils.batch_processing import get_next_batch
 from models.utils.distributions import elbo_M1, prior_weights
-from models.utils.metrics import plot_images
+from models.utils.metrics import plot_images, plot_cost
 
 
 class ConvVariationalAutoencoder(object):
@@ -52,6 +52,10 @@ class ConvVariationalAutoencoder(object):
 
         self.current_dir = os.getcwd()
         self.save_path = self.current_dir + "/summaries/vae_model"
+        self.validation_cost = []
+        self.validation_log_lik = []
+        self.train_cost = []
+        self.train_log_lik = []
         self._build_graph()
 
     def _build_graph(self):
@@ -83,10 +87,10 @@ class ConvVariationalAutoencoder(object):
         train_print = "Training Conv VAE Model:"
         params_print = "Parameters: filter_sizes:{}, num_filters:{}, learning_rate:{}," \
                        " momentum: beta1={} beta2={}, batch_size:{}, batch_norm:{}," \
-                       " latent_dim:{} num_of_batches:{}, keep_prob:{}, fc_size:{}" \
+                       " latent_dim:{} num_of_batches:{}, keep_prob:{}, fc_size:{}, require_improvement:{}" \
             .format(self.filter_sizes, self.num_filters, self.learning_rate, self.beta1, self.beta2,
                     self.batch_size, self.batch_norm, self.latent_dim, self.num_batches, self.keep_prob,
-                    self.fc_size)
+                    self.fc_size, self.require_improvement)
         print(train_print)
         print(params_print)
         logging.debug(train_print)
@@ -98,13 +102,14 @@ class ConvVariationalAutoencoder(object):
         start_time = time.time()
         idx = 0
         epochs = 0
-        is_epoch = False
-
         for i in range(self.num_iterations):
             # Batch Training
             x_batch, _, idx = get_next_batch(self.train_x, self.train_y, idx, self.batch_size)
-            summary, batch_loss, log_lik, _ = self.session.run([self.merged, self.cost, self.loglik, self.optimizer],
-                                                               feed_dict={self.x: x_batch})
+            summary, batch_loss, batch_log_lik, _ = self.session.run(
+                [self.merged, self.cost, self.loglik, self.optimizer],
+                feed_dict={self.x: x_batch})
+            self.train_cost.append(batch_loss)
+            self.train_log_lik.append(batch_log_lik)
             # Batch Trainin
             if idx == self.num_examples:
                 epochs += 1
@@ -115,10 +120,12 @@ class ConvVariationalAutoencoder(object):
             # print("Optimization Iteration: {}, Training Loss: {}".format(i, batch_loss))
             self.train_writer.add_summary(summary, i)
 
+            validation_loss, val_log_lik = self.validation_loss(images=self.valid_x)
+            self.validation_cost.append(validation_loss)
+            self.validation_log_lik.append(val_log_lik)
             if (is_epoch) or (i == (self.num_iterations - 1)):
                 # Calculate the accuracy
 
-                validation_loss, val_log_lik = self.validation_loss(images=self.valid_x)
                 if validation_loss < best_validation_loss:
                     # Save  Best Perfoming all variables of the TensorFlow graph to file.
                     self.saver.save(sess=self.session, save_path=self.save_path)
@@ -130,14 +137,15 @@ class ConvVariationalAutoencoder(object):
                 else:
                     improved_str = ''
 
-                print("Epochs: {}, Training:  Loss {}, log_lik {}"
-                      " Validation: Loss {}, log_lik {} {}".format(epochs, int(batch_loss), int(log_lik),
-                                                                   int(validation_loss),
-                                                                   int(val_log_lik), improved_str))
-                logging.debug("Iteration: {}, Training:  Loss {}, log_lik {}"
-                              " Validation: Loss {}, log_lik {} {}".format(i + 1, int(batch_loss), int(log_lik),
-                                                                           int(validation_loss),
-                                                                           int(val_log_lik), improved_str))
+                print("Epochs: {}, Training:  Loss {}, batch_log_lik {}"
+                      " Validation: Loss {}, batch_log_lik {} {}".format(epochs, int(batch_loss), int(batch_log_lik),
+                                                                         int(validation_loss),
+                                                                         int(val_log_lik), improved_str))
+                logging.debug("Iteration: {}, Training:  Loss {}, batch_log_lik {}"
+                              " Validation: Loss {}, batch_log_lik {} {}".format(i + 1, int(batch_loss),
+                                                                                 int(batch_log_lik),
+                                                                                 int(validation_loss),
+                                                                                 int(val_log_lik), improved_str))
             if i - last_improvement > self.require_improvement:
                 print("No improvement found in a while, stopping optimization.")
                 logging.debug("No improvement found in a while, stopping optimization.")
@@ -147,6 +155,7 @@ class ConvVariationalAutoencoder(object):
         time_dif = end_time - start_time
         print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
         logging.debug("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
+        return epochs, last_improvement
 
     def validation_loss(self, images):
         num_images = len(images)
@@ -188,8 +197,12 @@ class ConvVariationalAutoencoder(object):
         return tf.reduce_sum(loss), x_mu, z, z_mu, z_logvar, log_lik / self.batch_size
 
     def train_test(self):
-        self.train()
+        epochs, best_it = self.train()
         self.saver.restore(sess=self.session, save_path=self.save_path)
+        plot_cost(validation=self.validation_log_lik, training=self.train_log_lik, name='Log_lik', epochs=epochs,
+                  best_iteration=best_it)
+        plot_cost(validation=self.validation_cost, training=self.train_cost, name='Cost', epochs=epochs,
+                  best_iteration=best_it)
         self.test_reconstruction()
 
     def test_reconstruction(self):
